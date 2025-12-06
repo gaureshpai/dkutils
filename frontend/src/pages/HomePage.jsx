@@ -1,32 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { ArrowRight, Image as ImageIcon, FileText, Type, Globe, Zap, Shield, Layout, Layers } from 'lucide-react';
 
 const HomePage = () => {
   const categories = [
     {
       title: 'Image Tools',
-      description: 'Your go-to suite for all image manipulation needs. Convert between various formats (JPG, PNG, WebP, TIFF, AVIF), compress images to save space without losing quality, resize photos for web or print, combine multiple images into a single PDF document, quickly convert PNG to JPG, crop images to a specific area, convert to grayscale, flip horizontally or vertically, and convert images to Base64 strings.',
+      icon: <ImageIcon className="h-10 w-10 mb-4 text-blue-500" />,
+      description: 'Your go-to suite for all image manipulation needs. Convert, compress, resize, and edit images instantly.',
       link: '/images',
-      tools: ['Image Converter', 'Image Compressor', 'Image Resizer', 'Image to PDF', 'PNG to JPG', 'Image Cropper', 'Image Grayscaler', 'Image Flipper', 'Image to Base64'],
+      tools: ['Image Converter', 'Compressor', 'Resizer', 'Cropper', 'Grayscaler', 'Flipper'],
     },
     {
       title: 'PDF Tools',
-      description: 'Comprehensive tools for managing your PDF documents. Merge multiple PDFs into one, split large PDFs into smaller files, compress PDF file size, protect PDFs with passwords, remove PDF passwords, convert PDF to text, rotate PDF pages, and generate PDFs from plain text.',
+      icon: <FileText className="h-10 w-10 mb-4 text-red-500" />,
+      description: 'Comprehensive tools for managing PDF documents. Merge, split, compress, protect, and convert PDFs with ease.',
       link: '/pdfs',
-      tools: ['PDF Merger', 'PDF Splitter', 'PDF Compressor', 'PDF Password Protector', 'PDF Password Remover', 'PDF to Text', 'PDF Rotator', 'Text to PDF'],
+      tools: ['PDF Merger', 'Splitter', 'Compressor', 'Password Protect', 'PDF to Text', 'Text to PDF'],
     },
     {
       title: 'Text Tools',
-      description: 'A versatile collection of text utilities. Easily convert text to different cases (uppercase, lowercase, title case), compare two texts to find differences, encode/decode text to/from Base64, convert between HTML and Markdown, validate and format JSON data, generate various cryptographic hashes, create strong, random, and customizable passwords, and convert CSV data to JSON format.',
+      icon: <Type className="h-10 w-10 mb-4 text-green-500" />,
+      description: 'Versatile utilities for text processing. Convert cases, compare texts, encode/decode, and generate passwords.',
       link: '/text',
-      tools: ['Text Case Converter', 'Text Difference Checker', 'Base64 Converter', 'HTML/Markdown Converter', 'JSON Formatter', 'Hash Generator', 'Password Generator', 'CSV to JSON'],
+      tools: ['Case Converter', 'Diff Checker', 'Base64', 'JSON Formatter', 'Hash Generator'],
     },
     {
       title: 'Web Tools',
-      description: 'Essential tools for web-related tasks. Shorten long URLs for easier sharing and tracking, generate custom QR codes for text or links, scan QR codes from uploaded images, capture full-page screenshots of any website, extract favicons, trace and analyze URL redirect chains, view and validate robots.txt and sitemap.xml files for SEO analysis, convert between JSON and XML data formats, and analyze the strength of your password.',
+      icon: <Globe className="h-10 w-10 mb-4 text-purple-500" />,
+      description: 'Essential tools for web tasks. URL shortener, QR codes, screenshots, favicon extraction, and more.',
       link: '/web',
-      tools: ['URL Shortener', 'QR Code Generator', 'QR Code Scanner', 'Website Screenshot', 'Favicon Extractor', 'URL Redirect Checker', 'Robots.txt/Sitemap Viewer', 'JSON <-> XML Converter', 'Password Strength Checker'],
+      tools: ['URL Shortener', 'QR Generator', 'Screenshot', 'Favicon Extractor', 'Password Strength'],
     },
   ];
 
@@ -34,48 +42,146 @@ const HomePage = () => {
     <>
       <Helmet>
         <title>Utility Hub - Your One-Stop Solution for Everyday Tools</title>
-        <meta name="description" content="Utility Hub provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation. Convert image formats, compress images, resize photos, merge and split PDFs, protect PDFs with passwords, convert text to PDF, extract text from PDFs, rotate PDF pages, convert text cases, check text differences, encode/decode Base64, convert HTML to Markdown and vice-versa, format and validate JSON, generate hashes, create strong passwords, convert CSV to JSON, shorten URLs, generate and scan QR codes, capture website screenshots, extract favicons, check URL redirects, convert JSON to XML, and check password strength. Simplify your daily conversions and boost productivity with our versatile and user-friendly tools." />
-        <meta name="keywords" content="utility hub, online tools, image tools, PDF tools, text tools, web tools, image converter, image compressor, image resizer, image to PDF, PNG to JPG, image cropper, image grayscaler, image flipper, image to Base64, PDF merger, PDF splitter, PDF compressor, PDF password protector, PDF to text, PDF rotator, text to PDF, text case converter, text difference checker, Base64 text converter, HTML to Markdown, Markdown to HTML, JSON formatter, JSON validator, hash generator, password generator, CSV to JSON, URL shortener, QR code generator, QR code scanner, website screenshot, favicon extractor, URL redirect checker, JSON to XML converter, password strength checker, free online tools, productivity tools, file conversion" />
+        <meta name="description" content="Utility Hub provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation. Simplify your daily conversions and boost productivity with our versatile and user-friendly tools." />
+        <meta name="keywords" content="utility hub, online tools, image tools, PDF tools, text tools, web tools, converter, compressor, resizer" />
         <meta property="og:title" content="Utility Hub - Your One-Stop Solution for Everyday Tools" />
-        <meta property="og:description" content="Utility Hub provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation. Convert image formats, compress images, resize photos, merge and split PDFs, protect PDFs with passwords, convert text to PDF, extract text from PDFs, rotate PDF pages, convert text cases, check text differences, encode/decode Base64, convert HTML to Markdown and vice-versa, format and validate JSON, generate hashes, create strong passwords, convert CSV to JSON, shorten URLs, generate and scan QR codes, capture website screenshots, extract favicons, check URL redirects, convert JSON to XML, and check password strength. Simplify your daily conversions and boost productivity with our versatile and user-friendly tools." />
+        <meta property="og:description" content="Utility Hub provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation." />
         <meta property="og:image" content="https://dkutils.vercel.app/logo.png" />
         <meta property="og:url" content="https://dkutils.vercel.app/" />
       </Helmet>
-      <main className="container mx-auto p-8">
-        <h2 className="text-5xl font-extrabold text-center text-gray-900 mb-6 md:mb-8 leading-tight">Welcome to Utility Hub!</h2>
-        <p className="text-lg md:text-xl text-center text-gray-700 mb-10 max-w-3xl mx-auto">Your one-stop solution for everyday utility conversions and tools. Simplify your tasks with our powerful and easy-to-use online utilities.</p>
 
-        <p className="text-md text-center text-gray-500 mb-8">
-          Note: For unauthenticated users, file uploads are limited to 10MB. Log in for an increased limit of 50MB.
-        </p>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pt-8 pb-12 md:pt-20 md:pb-32 lg:pt-32 lg:pb-40">
+        {/* Background Pattern */}
+        <div className="absolute inset-x-0 -top-20 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="container px-4 md:px-6 flex max-w-[64rem] flex-col items-center gap-6 md:gap-10 text-center mx-auto">
+          <div className="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium backdrop-blur-md dark:border-neutral-800">
+            <span className="mr-2 flex h-2 w-2 rounded-full animate-pulse"></span>
+            <span className="text-muted-foreground">Your all-in-one web utilities hub ⚡</span>
+          </div>
+
+          <h1 className="font-heading text-4xl font-black leading-tight tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
+            Everything you need to <br className="hidden sm:inline" />
+            <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 dark:from-blue-400 dark:via-blue-300 dark:to-cyan-300">
+              Manage Your Files
+            </span>
+          </h1>
+
+          <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
+            Convert, compress, edit, and analyze images, PDFs, text, and web resources instantly. No server uploads for most tools—secure, fast, and free.
+          </p>
+
+          <div className="flex flex-col w-full sm:flex-row justify-center gap-3 sm:gap-4 sm:w-auto mt-2">
+            <Button size="xl" className="w-full sm:w-auto h-12 px-8 text-base md:text-lg font-semibold shadow-lg shadow-blue-500/20" asChild>
+              <Link to="/images">Start converting <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+            <Button size="xl" variant="outline" className="w-full sm:w-auto h-12 px-8 text-base md:text-lg bg-background/50 backdrop-blur-sm" asChild>
+              <Link to="/pdfs">Explore Tools</Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Bottom decorative gradient */}
+        <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
+          <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem] dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
+        </div>
+      </section>
+
+      {/* Categories Grid */}
+      <section className="container space-y-6 bg-slate-50/50 py-8 dark:bg-transparent md:py-12 lg:py-24 max-w-7xl mx-auto px-4 md:px-6 rounded-3xl">
+        <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl font-bold">
+            Tools for Everyone
+          </h2>
+          <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
+            From developers to designers, students to professionals, we have the tools you need to get the job done.
+          </p>
+          <p className="text-sm text-muted-foreground border p-2 rounded-md bg-muted/50">
+            Authenticated users get increased file size limits (50MB). <Link to="/login" className="underline underline-offset-4 hover:text-primary font-medium">Log in now</Link>.
+          </p>
+        </div>
+
+        <div className="mx-auto grid justify-center gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl pt-8">
           {categories.map((category, index) => (
-            <Link to={category.link} key={index} className="block">
-              <div className="relative rounded-xl border border-gray-200 bg-white text-gray-900 shadow-md hover:shadow-xl h-full flex flex-col justify-between p-6">
+            <Link to={category.link} key={index} className="group relative overflow-hidden rounded-xl border bg-card p-6 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-primary/50">
+              <div className="flex flex-col justify-between h-full">
                 <div>
-                  <h3 className="text-2xl font-semibold leading-none tracking-tight text-gray-900 mb-3">{category.title}</h3>
-                  <p className="text-sm text-muted-foreground text-gray-700 mb-4">{category.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {category.tools.map((tool, i) => (
-                      <span key={i} className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
+                  {category.icon}
+                  <h3 className="font-bold text-xl mb-2">{category.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                    {category.description}
+                  </p>
                 </div>
-                <div className="mt-6 text-right">
-                  <span className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium">
-                    Explore <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {category.tools.slice(0, 4).map((tool, i) => (
+                    <Badge key={i} variant="secondary" className="text-[10px] px-1 py-0">{tool}</Badge>
+                  ))}
+                  {category.tools.length > 4 && <Badge variant="secondary" className="text-[10px] px-1 py-0">+{category.tools.length - 4}</Badge>}
+                </div>
+                <div className="flex items-center text-primary text-sm font-medium mt-auto">
+                  View Tools <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             </Link>
           ))}
         </div>
-      </main>
+      </section>
+
+      {/* Features / Tech Stack Section */}
+      <section className="container py-12 md:py-24 max-w-7xl mx-auto border-t px-4 md:px-6">
+        <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
+          <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">Built with Modern Tech</h2>
+          <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
+            Utility Hub is powered by the latest web technologies to ensure speed, security, and reliability.
+          </p>
+        </div>
+        <div className="mx-auto grid justify-center gap-6 sm:grid-cols-1 md:grid-cols-3 md:max-w-[64rem]">
+          <Card className="flex flex-col items-center text-center p-6 hover:shadow-md transition-shadow">
+            <CardHeader className="p-0 mb-4">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                <Layout className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <CardTitle className="mb-2">React + Vite</CardTitle>
+              <CardDescription>
+                Built on a blazing fast React frontend powered by Vite for instant load times and smooth interactions.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="flex flex-col items-center text-center p-6 hover:shadow-md transition-shadow">
+            <CardHeader className="p-0 mb-4">
+              <div className="p-3 bg-teal-100 dark:bg-teal-900/20 rounded-full">
+                <Layers className="h-8 w-8 text-teal-600 dark:text-teal-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <CardTitle className="mb-2">Tailwind + Shadcn</CardTitle>
+              <CardDescription>
+                Beautiful, accessible, and responsive UI components styled with Tailwind CSS for a modern look.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="flex flex-col items-center text-center p-6 hover:shadow-md transition-shadow">
+            <CardHeader className="p-0 mb-4">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                <Shield className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <CardTitle className="mb-2">Secure & Private</CardTitle>
+              <CardDescription>
+                We prioritize your privacy. Many tools process files locally in your browser, ensuring data security.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
     </>
   );
 };

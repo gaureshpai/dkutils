@@ -22,8 +22,9 @@ const PdfToolsPage = () => {
         <meta property="og:image" content="https://dkutils.vercel.app/logo.png" />
         <meta property="og:url" content="https://dkutils.vercel.app/pdfs" />
       </Helmet>
-      <main className="container mx-auto p-4">
-        <h2 className="text-3xl font-bold mb-6 text-gray-800">PDF Tools</h2>
+      <main className="container mx-auto py-10 px-4">
+        <h2 className="text-3xl font-bold mb-2 text-blue-500">PDF Tools</h2>
+        <p className="text-lg text-muted-foreground mb-6">Manage and convert your PDF documents with ease.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <ToolCard title="PDF Merger" description="Combine multiple PDF documents into one.">
             <PdfMerger />

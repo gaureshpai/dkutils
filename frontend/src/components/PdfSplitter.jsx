@@ -1,9 +1,9 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { PDFDocument } from 'pdf-lib'; 
+import { PDFDocument } from 'pdf-lib';
 
 const PdfSplitter = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -14,14 +14,15 @@ const PdfSplitter = () => {
   const { isAuthenticated } = useContext(AuthContext);
   // eslint-disable-next-line no-unused-vars
   const [convertedFile, setConvertedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
-  const onFileChange = async (e) => { 
+  const onFileChange = async (e) => {
     const file = e.target.files[0];
-    const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024; 
+    const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
     if (!file) {
       setSelectedFile(null);
-      setTotalPages(0); 
+      setTotalPages(0);
       setError('');
       return;
     }
@@ -29,16 +30,16 @@ const PdfSplitter = () => {
     if (file.type !== 'application/pdf') {
       toast.error(`Invalid file type: ${file.name}. Only PDF files are allowed.`);
       setSelectedFile(null);
-      setTotalPages(0); 
-      e.target.value = ''; 
+      setTotalPages(0);
+      e.target.value = '';
       setError('Invalid file type.');
       return;
     }
     if (file.size > maxFileSize) {
       toast.error(`File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`);
       setSelectedFile(null);
-      setTotalPages(0); 
-      e.target.value = ''; 
+      setTotalPages(0);
+      e.target.value = '';
       setError('File too large.');
       return;
     }
@@ -46,7 +47,7 @@ const PdfSplitter = () => {
     setError('');
     setSelectedFile(file);
 
-    
+
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -78,7 +79,7 @@ const PdfSplitter = () => {
     }
 
     setLoading(true);
-    
+
     if (totalPages > 0) {
       const parts = ranges.split(',').map(p => p.trim());
       let isValidRange = true;
@@ -124,6 +125,12 @@ const PdfSplitter = () => {
       setConvertedFile(res.data);
       toast.success('PDF split successfully! Starting download...');
       handleDownload(res.data.path, res.data.originalname);
+      setSelectedFile(null);
+      setRanges('');
+      setTotalPages(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.msg || 'Failed to split PDF. Please try again.');
@@ -148,7 +155,7 @@ const PdfSplitter = () => {
       <form onSubmit={onSubmit}>
         <div className="mb-4 py-4">
           <label className="block mb-2 text-sm font-medium text-black" htmlFor="single_file">Upload a PDF file</label>
-          <input className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="single_file" type="file" onChange={onFileChange} accept=".pdf" />
+          <input ref={fileInputRef} className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="single_file" type="file" onChange={onFileChange} accept=".pdf" />
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           {selectedFile && totalPages > 0 && (
             <p className="text-sm text-gray-600 mt-2">Total pages: {totalPages}</p>
@@ -156,7 +163,7 @@ const PdfSplitter = () => {
         </div>
         <div className="mb-4">
           <label className="block mb-2 text-sm font-medium text-black" htmlFor="ranges">Page Ranges (e.g. 1, 3-5, 8)</label>
-                    <input type="text" id="ranges" className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 1, 3-5, 8" value={ranges} onChange={onRangeChange} />
+          <input type="text" id="ranges" className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 1, 3-5, 8" value={ranges} onChange={onRangeChange} />
         </div>
         <button type="submit" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" disabled={loading}>{loading ? 'Splitting...' : 'Split PDF'}</button>
       </form>

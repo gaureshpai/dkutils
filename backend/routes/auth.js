@@ -17,14 +17,17 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { username, email, password } = req.body;
+    console.log('Register attempt:', { username, email });
 
     try {
       let user = await User.findOne({ email });
       if (user) {
+        console.log('User already exists');
         return res.status(400).json({ msg: 'User already exists' });
       }
 
@@ -37,8 +40,23 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
 
+      console.log('Saving user...');
+      await user.save();
+      console.log('User saved:', user.id);
+
+      const payload = {
+        user: {
+          id: user.id,
+          role: user.role,
+        },
+      };
+
+      console.log('Signing token...');
       const token = await new Promise((resolve, reject) => {
-        /* eslint-disable no-undef */
+        if (!process.env.JWT_SECRET) {
+          console.error('JWT_SECRET is missing!');
+          reject(new Error('JWT_SECRET is missing'));
+        }
         jwt.sign(
           payload,
           process.env.JWT_SECRET,
@@ -48,11 +66,11 @@ router.post(
             resolve(tokenValue);
           },
         );
-        /* eslint-enable no-undef */
       });
+      console.log('Token generated');
       return res.json({ token });
     } catch (err) {
-      console.error(err.message);
+      console.error('Register error:', err.message);
       return res.status(500).json({ msg: 'Server error' });
     }
   },
@@ -68,16 +86,22 @@ router.post(
     check('password', 'Password is required').exists(),
   ],
   async (req, res) => {
-    /* eslint-disable no-undef */ // Disable no-undef for the entire login route handler
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      // eslint-disable-next-line no-unused-vars
       const { email, password } = req.body;
+
+      let user = await User.findOne({ email });
+
+      if (!user) {
+        return res.status(400).json({ msg: 'Invalid Credentials' });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password);
+
       if (!isMatch) {
         return res.status(400).json({ msg: 'Invalid Credentials' });
       }
@@ -90,7 +114,6 @@ router.post(
       };
 
       const token = await new Promise((resolve, reject) => {
-        /* eslint-disable no-undef */
         jwt.sign(
           payload,
           process.env.JWT_SECRET,
@@ -100,7 +123,6 @@ router.post(
             resolve(tokenValue);
           },
         );
-        /* eslint-enable no-undef */
       });
       return res.json({ token });
     } catch (err) {

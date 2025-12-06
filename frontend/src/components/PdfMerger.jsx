@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -11,6 +11,7 @@ const PdfMerger = () => {
   const { isAuthenticated } = useContext(AuthContext);
   // eslint-disable-next-line no-unused-vars
   const [convertedFile, setConvertedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const onFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -65,6 +66,10 @@ const PdfMerger = () => {
       setConvertedFile(res.data);
       toast.success('PDFs merged successfully! Starting download...');
       handleDownload(res.data.path, res.data.originalname);
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.msg || 'Error merging PDFs. Please try again.');
@@ -89,7 +94,7 @@ const PdfMerger = () => {
       <form onSubmit={onSubmit}>
         <div className="mb-4">
           <label className="block mb-2 text-sm font-medium text-black" htmlFor="multiple_files">Upload multiple PDF files</label>
-          <input className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="multiple_files" type="file" multiple onChange={onFileChange} accept=".pdf" />
+          <input ref={fileInputRef} className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="multiple_files" type="file" multiple onChange={onFileChange} accept=".pdf" />
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
         <button type="submit" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" disabled={loading}>

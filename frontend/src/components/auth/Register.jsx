@@ -1,8 +1,14 @@
 import { useState, useContext } from 'react';
+import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import setAuthToken from '../../utils/setAuthToken';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
+import { AlertCircle } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +18,7 @@ const Register = () => {
     password2: ''
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -22,99 +29,120 @@ const Register = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
     if (password !== password2) {
       setError('Passwords do not match');
+      setLoading(false);
     } else {
       try {
         const newUser = { username, email, password };
-        const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/register`, newUser);
-        dispatch({ type: 'LOGIN', payload: res.data.token });
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+        const res = await axios.post(`${baseUrl}/api/auth/register`, newUser);
+
+        const decoded = jwtDecode(res.data.token);
+        dispatch({ type: 'LOGIN', payload: { token: res.data.token, user: decoded.user } });
+
         localStorage.setItem('token', res.data.token);
         setAuthToken(res.data.token);
         navigate('/');
       } catch (err) {
-        setError(err.response.data.msg || 'Server Error');
+        console.error(err);
+        const data = err.response?.data;
+        if (data?.errors && Array.isArray(data.errors)) {
+          setError(data.errors.map(e => e.msg).join(', '));
+        } else {
+          setError(data?.msg || 'Server Error');
+        }
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-3xl font-bold text-center text-gray-900">Register</h2>
-        <form className="space-y-6" onSubmit={onSubmit}>
-          {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">{error}</div>}
-          <div>
-            <label htmlFor="username" className="sr-only">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              autoComplete="username"
-              required
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Username"
-              value={username}
-              onChange={onChange}
-            />
+    <div className="flex items-center justify-center min-h-[calc(100vh-140px)] bg-background px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+          <CardDescription className="text-center">
+            Enter your details below to create your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-md flex items-center gap-2 text-sm" role="alert">
+                <AlertCircle className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="johndoe"
+                autoComplete="username"
+                required
+                value={username}
+                onChange={onChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="name@example.com"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={onChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={onChange}
+                minLength="6"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password2">Confirm Password</Label>
+              <Input
+                id="password2"
+                name="password2"
+                type="password"
+                placeholder="••••••"
+                autoComplete="new-password"
+                required
+                value={password2}
+                onChange={onChange}
+                minLength="6"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create account'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <div className="text-sm text-muted-foreground">
+            Already have an account? <Link to="/login" className="font-medium text-primary hover:underline">Login here</Link>
           </div>
-          <div>
-            <label htmlFor="email" className="sr-only">Email address</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Email address"
-              value={email}
-              onChange={onChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Password"
-              value={password}
-              onChange={onChange}
-              minLength="6"
-            />
-          </div>
-          <div>
-            <label htmlFor="password2" className="sr-only">Confirm Password</label>
-            <input
-              id="password2"
-              name="password2"
-              type="password"
-              autoComplete="new-password"
-              required
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Confirm Password"
-              value={password2}
-              onChange={onChange}
-              minLength="6"
-            />
-          </div>
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Register
-            </button>
-          </div>
-        </form>
-        <div className="text-sm text-center">
-          Already have an account? <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">Login here</Link>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

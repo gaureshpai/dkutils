@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { toast } from 'react-toastify';
 
@@ -7,6 +7,7 @@ const PdfPageDeleter = () => {
   const [numPages, setNumPages] = useState(0);
   const [pagesToDelete, setPagesToDelete] = useState('');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -96,6 +97,9 @@ const PdfPageDeleter = () => {
       setPdfFile(null);
       setNumPages(0);
       setPagesToDelete('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       toast.error(`Error deleting pages: ${err.message}`);
     } finally {
@@ -115,6 +119,7 @@ const PdfPageDeleter = () => {
           id="pdfUpload"
           accept=".pdf"
           onChange={handleFileChange}
+          ref={fileInputRef}
           className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
         />
       </div>

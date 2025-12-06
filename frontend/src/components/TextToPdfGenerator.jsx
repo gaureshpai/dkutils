@@ -36,6 +36,7 @@ const TextToPdfGenerator = () => {
 
 
       toast.success('PDF generated successfully!');
+      setText('');
 
     } catch (err) {
       console.error(err);

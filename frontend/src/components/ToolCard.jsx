@@ -1,17 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 
 const ToolCard = ({ title, description, children }) => {
   return (
-    <div className="relative rounded-xl border bg-card text-card-foreground shadow hover:shadow-lg transition-shadow duration-200 ease-in-out flex flex-col">
-      <div className="flex flex-col space-y-1.5 p-6">
-        <h3 className="text-2xl font-semibold leading-none tracking-tight">{title}</h3>
-        {description && <p className="text-sm text-muted-foreground mt-2">{description}</p>}
-      </div>
-      <div className="p-6 pt-0 flex-grow">
+    <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-200">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent className="flex-grow">
         {children}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

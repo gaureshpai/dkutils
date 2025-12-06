@@ -1,5 +1,5 @@
 
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -11,6 +11,7 @@ const ImageCompressor = () => {
   const [loading, setLoading] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [convertedZipFile, setConvertedZipFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const onFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -77,6 +78,10 @@ const ImageCompressor = () => {
       setConvertedZipFile(res.data);
       toast.success('Images compressed successfully! Starting download...');
       handleDownload(res.data.path, res.data.originalname);
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.msg || 'Error compressing images. Please try again.');
@@ -91,7 +96,7 @@ const ImageCompressor = () => {
       <form onSubmit={onSubmit}>
         <div className="mb-4">
           <label className="block mb-2 text-sm font-medium text-black" htmlFor="multiple_files">Upload multiple image files</label>
-          <input accept="image/*" className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="multiple_files" type="file" multiple onChange={onFileChange} />
+          <input ref={fileInputRef} accept="image/*" className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="multiple_files" type="file" multiple onChange={onFileChange} />
         </div>
         <div className="mb-4">
           <label className="block mb-2 text-sm font-medium text-black" htmlFor="quality">Quality (1-100%)</label>
