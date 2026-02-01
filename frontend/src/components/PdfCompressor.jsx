@@ -43,7 +43,6 @@ const PdfCompressor = () => {
     }
 
     setLoading(true);
-    trackToolUsage("PdfCompressor", "pdf");
     const formData = new FormData();
     formData.append("pdf", selectedFile);
     formData.append("compressionLevel", compressionLevel);
@@ -58,6 +57,7 @@ const PdfCompressor = () => {
 
       // Show compression success message
       toast.success(message);
+      trackToolUsage("PdfCompressor", "pdf");
 
       // Create download link
       const link = document.createElement("a");

@@ -9,7 +9,8 @@ const PngToJpgConverter = () => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated } = useContext(AuthContext);
+  const { state } = useContext(AuthContext);
+  const { isAuthenticated } = state;
   const [convertedZipFile, setConvertedZipFile] = useState(null);
 
   const onFileChange = (e) => {

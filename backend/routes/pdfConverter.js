@@ -368,11 +368,13 @@ router.post(
       const compressedSize = compressedPdfBytes.length;
       const compressionRatio =
         originalSize > 0
-          ? (((originalSize - compressedSize) / originalSize) * 100).toFixed(2)
+          ? ((originalSize - compressedSize) / originalSize) * 100
           : 0;
 
+      const formattedCompression = compressionRatio.toFixed(2);
+
       console.log(
-        `PDF compression: ${originalSize} bytes -> ${compressedSize} bytes (${compressionRatio}% reduction)`,
+        `PDF compression: ${originalSize} bytes -> ${compressedSize} bytes (${formattedCompression}% reduction)`,
       );
 
       // Only create ZIP if there's significant compression
@@ -416,8 +418,8 @@ router.post(
           path: publicUrlData.publicUrl,
           originalname: zipFileName,
           success: true,
-          message: `PDF compressed successfully with ${compressionLevel} compression! Reduced by ${compressionRatio}%`,
-          compressionRatio: parseFloat(compressionRatio),
+          message: `PDF compressed successfully with ${compressionLevel} compression! Reduced by ${formattedCompression}%`,
+          compressionRatio,
           compressionLevel,
         });
       } else {
@@ -442,8 +444,8 @@ router.post(
           path: publicUrlData.publicUrl,
           originalname: fileName,
           success: true,
-          message: `PDF optimized successfully with ${compressionLevel} compression! Reduced by ${compressionRatio}%`,
-          compressionRatio: parseFloat(compressionRatio),
+          message: `PDF optimized successfully with ${compressionLevel} compression! Reduced by ${formattedCompression}%`,
+          compressionRatio,
           compressionLevel,
         });
       }

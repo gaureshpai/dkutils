@@ -86,11 +86,6 @@ const ImageFormatConverter = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/convert-image-format`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
       );
       setConvertedZipFile(res.data);
 

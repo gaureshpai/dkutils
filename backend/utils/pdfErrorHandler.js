@@ -102,14 +102,30 @@ const validatePdfFile = (file) => {
     );
   }
 
-  // Check for common PDF structure indicators
+  // Check for common PDF structure indicators with relaxed validation
   const bufferStr = file.buffer.toString(
     "utf8",
     0,
     Math.min(file.buffer.length, 1024),
   );
-  if (!bufferStr.includes("obj") || !bufferStr.includes("endobj")) {
-    throw new Error("Invalid PDF structure. The file appears to be corrupted.");
+
+  // First validate PDF header
+  if (!bufferStr.includes("%PDF")) {
+    throw new Error("Invalid PDF file. Missing PDF header.");
+  }
+
+  // Check for PDF structure in a larger window, but don't throw hard error
+  const largerBufferStr = file.buffer.toString(
+    "utf8",
+    0,
+    Math.min(file.buffer.length, 65536), // 64KB window
+  );
+
+  if (!largerBufferStr.includes("obj") || !largerBufferStr.includes("endobj")) {
+    console.warn(
+      "PDF structure validation warning: obj/endobj not found in first 64KB. Proceeding with caution.",
+    );
+    // Don't throw error, allow parsing to continue
   }
 
   return true;

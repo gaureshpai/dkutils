@@ -35,8 +35,26 @@ const Base64TextConverter = () => {
     }, 500);
   };
 
-  const handleCopyToClipboard = () => {
-    copyToClipboard();
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(convertedText);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = convertedText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        toast.success("Copied to clipboard!");
+      } catch (fallbackError) {
+        console.error("Fallback copy failed:", fallbackError);
+        toast.error("Failed to copy to clipboard. Please try again.");
+      }
+    }
   };
 
   const downloadAsTxt = () => {

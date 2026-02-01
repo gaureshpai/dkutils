@@ -196,7 +196,10 @@ router.post(
 
       // In a real application, you would send an email with a reset token
       // For now, we'll just return a success message
-      console.log("Password reset requested for:", email);
+      const maskedEmail = email
+        ? email.replace(/^(.{2}).*(@.*)$/, "$1***$2")
+        : undefined;
+      console.log("Password reset requested for:", maskedEmail);
       return res.json({
         msg: "If an account with that email exists, a password reset link has been sent.",
       });

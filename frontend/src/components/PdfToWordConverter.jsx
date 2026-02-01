@@ -53,11 +53,6 @@ const PdfToWordConverter = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/pdf-to-word`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
       );
       setConvertedFile(res.data);
 

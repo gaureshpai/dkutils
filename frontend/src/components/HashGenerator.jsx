@@ -26,7 +26,6 @@ const HashGenerator = () => {
     }
 
     setLoading(true);
-    trackToolUsage("HashGenerator", "web");
     const textEncoder = new TextEncoder();
     const data = textEncoder.encode(trimmedText);
 
@@ -34,6 +33,7 @@ const HashGenerator = () => {
       let hashBuffer;
       if (algorithm === "MD5") {
         setHashMd5(md5(trimmedText));
+        trackToolUsage("HashGenerator", "web");
       } else if (algorithm === "SHA-256") {
         hashBuffer = await crypto.subtle.digest("SHA-256", data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -41,6 +41,7 @@ const HashGenerator = () => {
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
         setHashSha256(hexHash);
+        trackToolUsage("HashGenerator", "web");
       }
     } catch (error) {
       console.error("Error generating hash:", error);
