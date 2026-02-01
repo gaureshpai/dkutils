@@ -1,24 +1,26 @@
-
-import React, { useState } from 'react';
-import jsQR from 'jsqr';
-import { toast } from 'react-toastify';
+﻿import React, { useState } from "react";
+import jsQR from "jsqr";
+import { toast } from "react-toastify";
+import useAnalytics from "../utils/useAnalytics";
 
 const QrCodeScanner = () => {
-  const [qrData, setQrData] = useState('');
+  const { trackToolUsage } = useAnalytics();
+
+  const [qrData, setQrData] = useState("");
 
   const copyToClipboard = (textToCopy) => {
     navigator.clipboard.writeText(textToCopy);
-    toast.success('Copied to clipboard!');
+    toast.success("Copied to clipboard!");
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) {
-      setQrData('');
+      setQrData("");
       return;
     }
 
-    setQrData('Scanning...');
+    setQrData("Scanning...");
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -41,8 +43,8 @@ const QrCodeScanner = () => {
           }
         }
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
@@ -52,10 +54,10 @@ const QrCodeScanner = () => {
 
         if (code) {
           setQrData(code.data);
-          toast.success('QR Code detected!');
+          toast.success("QR Code detected!");
         } else {
-          setQrData('No QR code found.');
-          toast.info('No QR code found in the image.');
+          setQrData("No QR code found.");
+          toast.info("No QR code found in the image.");
         }
       };
       img.src = event.target.result;
@@ -67,21 +69,43 @@ const QrCodeScanner = () => {
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">QR Code Scanner</h2>
       <div className="mb-4 py-4">
-        <label className="block mb-2 text-sm font-medium text-black" htmlFor="qr_image">Upload QR Code Image</label>
-        <input className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" id="qr_image" type="file" accept="image/*" onChange={handleImageUpload} />
+        <label
+          className="block mb-2 text-sm font-medium text-foreground"
+          htmlFor="qr_image"
+        >
+          Upload QR Code Image
+        </label>
+        <input
+          className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
+          id="qr_image"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
       </div>
 
       {qrData && (
         <div className="mt-4">
-          <h3 className="text-xl font-bold mb-2">QR Code Data:
-            <button onClick={() => copyToClipboard(qrData)} className="ml-2 text-sm text-blue-500 hover:underline">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+          <h3 className="text-xl font-bold mb-2">
+            QR Code Data:
+            <button
+              onClick={() => copyToClipboard(qrData)}
+              className="ml-2 text-sm text-primary hover:underline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 inline-block"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>
             </button>
           </h3>
-          <p className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">{qrData}</p>
+          <p className="bg-background border border-input text-foreground text-sm rounded-lg block w-full p-2.5">
+            {qrData}
+          </p>
         </div>
       )}
     </div>

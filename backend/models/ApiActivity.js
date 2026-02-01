@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const ApiActivitySchema = new mongoose.Schema({
   endpoint: {
@@ -15,7 +15,7 @@ const ApiActivitySchema = new mongoose.Schema({
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     default: null,
   },
   ipAddress: {
@@ -24,4 +24,4 @@ const ApiActivitySchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('ApiActivity', ApiActivitySchema);
+module.exports = mongoose.model("ApiActivity", ApiActivitySchema);

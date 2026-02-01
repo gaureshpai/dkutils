@@ -4,11 +4,11 @@ This directory contains the frontend application for the Utility Hub, built with
 
 ## Technologies Used
 
-*   React.js
-*   Vite (as the build tool)
-*   TailwindCSS
-*   Axios for API requests
-*   ESLint for code quality
+- React.js
+- Vite (as the build tool)
+- TailwindCSS
+- Axios for API requests
+- ESLint for code quality
 
 For detailed setup and running instructions, refer to the [main project README.md](../../README.md).
 
@@ -18,10 +18,10 @@ Many of the tools in the Utility Hub now support file uploads up to 10MB for una
 
 ## Project Structure
 
-*   `src/components`: Reusable React components.
-*   `src/pages`: Top-level page components.
-*   `src/context`: React Context for global state management (e.g., authentication).
-*   `src/utils`: Utility functions.
+- `src/components`: Reusable React components.
+- `src/pages`: Top-level page components.
+- `src/context`: React Context for global state management (e.g., authentication).
+- `src/utils`: Utility functions.
 
 ## Build for Production
 

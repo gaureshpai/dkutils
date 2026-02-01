@@ -1161,12 +1161,7 @@
       "POST": 30,
       "GET": 5
     },
-    "statusCodes": [
-      200,
-      400,
-      404,
-      500
-    ],
+    "statusCodes": [200, 400, 404, 500],
     "pathsWithParams": 2,
     "middlewareUsage": []
   },
@@ -1174,16 +1169,12 @@
     "shorten": {
       "name": "shorten",
       "description": "Routes under /shorten",
-      "paths": [
-        "/shorten"
-      ]
+      "paths": ["/shorten"]
     },
     "l": {
       "name": "l",
       "description": "Routes under /l",
-      "paths": [
-        "/l/:code"
-      ]
+      "paths": ["/l/:code"]
     },
     "api": {
       "name": "api",
@@ -1225,16 +1216,12 @@
     "root": {
       "name": "root",
       "description": "Routes under /root",
-      "paths": [
-        "/"
-      ]
+      "paths": ["/"]
     },
     "health": {
       "name": "health",
       "description": "Routes under /health",
-      "paths": [
-        "/health"
-      ]
+      "paths": ["/health"]
     }
   }
 }

@@ -2,8 +2,8 @@ name: Trigger Supabase Cleanup API
 
 on:
   schedule:
-    # Run daily at 2 AM UTC (adjust as needed)
-    - cron: '0 2 * * *'
+    # Run bi-weekly on Mondays at 2 AM UTC (1st and 15th of each month)
+    - cron: "0 2 1,15 * *"
   workflow_dispatch: # Allows manual triggering
 
 jobs:
@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Call Supabase Cleanup Endpoint
-      env:
-        # The base URL of your deployed backend on Vercel
-        VERCEL_BACKEND_URL: ${{ secrets.VERCEL_BACKEND_URL }}
-      run: |
-        if [ -z "$VERCEL_BACKEND_URL" ]; then
-          echo "Error: VERCEL_BACKEND_URL secret is not set."
-          exit 1
-        fi
-        echo "Triggering Supabase cleanup at $VERCEL_BACKEND_URL/api/clean-supabase/trigger"
-        curl -X GET "$VERCEL_BACKEND_URL/api/clean-supabase/trigger"
+      - name: Call Supabase Cleanup Endpoint
+        env:
+          # The base URL of your deployed backend on Vercel
+          VERCEL_BACKEND_URL: ${{ secrets.VERCEL_BACKEND_URL }}
+        run: |
+          if [ -z "$VERCEL_BACKEND_URL" ]; then
+            echo "Error: VERCEL_BACKEND_URL secret is not set."
+            exit 1
+          fi
+          echo "Triggering Supabase cleanup at $VERCEL_BACKEND_URL/api/clean-supabase/trigger"
+          curl -X GET "$VERCEL_BACKEND_URL/api/clean-supabase/trigger"

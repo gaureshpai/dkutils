@@ -1,16 +1,22 @@
-const router = require('express').Router();
-const axios = require('axios');
-const cheerio = require('cheerio');
-const path = require('path');
-const archiver = require('archiver');
-const { createClient } = require('@supabase/supabase-js');
+const router = require("express").Router();
+const axios = require("axios");
+const cheerio = require("cheerio");
+const path = require("path");
+const archiver = require("archiver");
+const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
 
 const downloadFile = async (fileUrl) => {
   try {
-    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    return { buffer: Buffer.from(response.data), contentType: response.headers['content-type'] };
+    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+    return {
+      buffer: Buffer.from(response.data),
+      contentType: response.headers["content-type"],
+    };
   } catch (error) {
     console.error(`Failed to download file from ${fileUrl}:`, error.message);
     return null;
@@ -20,11 +26,11 @@ const downloadFile = async (fileUrl) => {
 // @route   POST /api/favicon
 // @desc    Extract favicons from a given URL and upload to Supabase as a ZIP
 // @access  Public
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const { url } = req.body;
 
   if (!url) {
-    return res.status(400).json({ msg: 'URL is required' });
+    return res.status(400).json({ msg: "URL is required" });
   }
 
   try {
@@ -32,17 +38,19 @@ router.post('/', async (req, res) => {
     const $ = cheerio.load(response.data);
     const faviconUrls = [];
 
-    $('link[rel~="icon"], link[rel~="shortcut icon"], link[rel~="apple-touch-icon"]').each((i, el) => {
-      let href = $(el).attr('href');
+    $(
+      'link[rel~="icon"], link[rel~="shortcut icon"], link[rel~="apple-touch-icon"]',
+    ).each((i, el) => {
+      let href = $(el).attr("href");
       if (href) {
-        if (href.startsWith('//')) {
+        if (href.startsWith("//")) {
           href = `https:${href}`;
-        } else if (href.startsWith('/')) {
+        } else if (href.startsWith("/")) {
           const urlObj = new URL(url);
           href = `${urlObj.protocol}//${urlObj.host}${href}`;
-        } else if (!href.startsWith('http')) {
+        } else if (!href.startsWith("http")) {
           const urlObj = new URL(url);
-          href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf('/') + 1)}${href}`;
+          href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf("/") + 1)}${href}`;
         }
         faviconUrls.push(href);
       }
@@ -54,20 +62,20 @@ router.post('/', async (req, res) => {
       faviconUrls.push(defaultFavicon);
     }
 
-    const archive = archiver('zip', {
+    const archive = archiver("zip", {
       zlib: { level: 9 },
     });
 
     const zipBuffer = await new Promise((resolve, reject) => {
       const buffers = [];
-      archive.on('data', (data) => buffers.push(data));
-      archive.on('end', () => resolve(Buffer.concat(buffers)));
-      archive.on('error', (err) => reject(err));
+      archive.on("data", (data) => buffers.push(data));
+      archive.on("end", () => resolve(Buffer.concat(buffers)));
+      archive.on("error", (err) => reject(err));
 
       const downloadPromises = faviconUrls.map(async (faviconUrl) => {
         const fileData = await downloadFile(faviconUrl);
         if (fileData && fileData.buffer) {
-          const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || 'default.ico')}`;
+          const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
           archive.append(fileData.buffer, { name: fileName });
         }
       });
@@ -79,25 +87,33 @@ router.post('/', async (req, res) => {
 
     const zipFileName = `favicons-${Date.now()}.zip`;
     const { error } = await supabase.storage
-      .from('utilityhub')
+      .from("utilityhub")
       .upload(`favicons/${zipFileName}`, zipBuffer, {
-        contentType: 'application/zip',
+        contentType: "application/zip",
         upsert: true,
       });
 
     if (error) {
-      console.error('Supabase upload error:', error);
-      return res.status(500).json({ msg: 'Failed to upload favicon ZIP to Supabase', error: error.message });
+      console.error("Supabase upload error:", error);
+      return res.status(500).json({
+        msg: "Failed to upload favicon ZIP to Supabase",
+        error: error.message,
+      });
     }
 
     const { data: publicUrlData } = supabase.storage
-      .from('utilityhub')
+      .from("utilityhub")
       .getPublicUrl(`favicons/${zipFileName}`);
 
-    return res.status(200).json({ path: publicUrlData.publicUrl, originalname: zipFileName });
+    return res
+      .status(200)
+      .json({ path: publicUrlData.publicUrl, originalname: zipFileName });
   } catch (err) {
-    console.error('Error extracting favicons:', err);
-    return res.status(500).json({ msg: 'Failed to extract favicons. Please check the URL.', error: err.message });
+    console.error("Error extracting favicons:", err);
+    return res.status(500).json({
+      msg: "Failed to extract favicons. Please check the URL.",
+      error: err.message,
+    });
   }
 });
 
