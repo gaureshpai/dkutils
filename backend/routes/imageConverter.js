@@ -7,9 +7,15 @@ const os = require("os");
 const fsp = require("fs").promises;
 const { createClient } = require("@supabase/supabase-js");
 
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error(
+    "SUPABASE_SERVICE_ROLE_KEY is required for server-side Supabase storage operations.",
+  );
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
 // @route   POST /api/convert/png-to-jpg
@@ -126,61 +132,47 @@ router.post(
         pdfDoc.on("error", reject);
       });
 
-      const imageProcessingPromises = files.map(
-        (file) =>
-          new Promise((resolve, reject) => {
-            (async () => {
-              let tempImagePath = "";
-              try {
-                const imageBuffer = file.buffer;
+      for (const file of files) {
+        let tempImagePath = "";
+        try {
+          const imageBuffer = file.buffer;
 
-                const image = sharp(imageBuffer);
-                const metadata = await image.metadata();
-                const pngBuffer = await image.png().toBuffer();
+          const image = sharp(imageBuffer);
+          const metadata = await image.metadata();
+          const pngBuffer = await image.png().toBuffer();
 
-                tempImagePath = path.join(
-                  os.tmpdir(),
-                  `temp_image_${Date.now()}.png`,
-                );
-                await fsp.writeFile(tempImagePath, pngBuffer);
+          tempImagePath = path.join(
+            os.tmpdir(),
+            `temp_image_${Date.now()}_${Math.random().toString(16).slice(2)}.png`,
+          );
+          await fsp.writeFile(tempImagePath, pngBuffer);
 
-                const imgWidth = metadata.width;
-                const imgHeight = metadata.height;
+          const imgWidth = metadata.width;
+          const imgHeight = metadata.height;
 
-                pdfDoc.addPage({ width: imgWidth, height: imgHeight });
-                pdfDoc.image(tempImagePath, 0, 0, {
-                  width: imgWidth,
-                  height: imgHeight,
-                });
-                resolve();
-              } catch (imageErr) {
-                console.error(
-                  `Error processing image ${file.originalname}:`,
-                  imageErr,
-                );
-                pdfDoc.end();
-                reject(
-                  new Error(
-                    `Failed to process image ${file.originalname}: ${imageErr.message}`,
-                  ),
-                );
-              } finally {
-                if (tempImagePath) {
-                  try {
-                    await fsp.unlink(tempImagePath);
-                  } catch (unlinkErr) {
-                    console.error(
-                      `Error deleting temp image file ${tempImagePath}:`,
-                      unlinkErr,
-                    );
-                  }
-                }
-              }
-            })();
-          }),
-      );
-
-      await Promise.all(imageProcessingPromises);
+          pdfDoc.addPage({ width: imgWidth, height: imgHeight });
+          pdfDoc.image(tempImagePath, 0, 0, {
+            width: imgWidth,
+            height: imgHeight,
+          });
+        } catch (imageErr) {
+          console.error(`Error processing image ${file.originalname}:`, imageErr);
+          throw new Error(
+            `Failed to process image ${file.originalname}: ${imageErr.message}`,
+          );
+        } finally {
+          if (tempImagePath) {
+            try {
+              await fsp.unlink(tempImagePath);
+            } catch (unlinkErr) {
+              console.error(
+                `Error deleting temp image file ${tempImagePath}:`,
+                unlinkErr,
+              );
+            }
+          }
+        }
+      }
 
       pdfDoc.end();
       const pdfBuffer = await pdfGenerationPromise;
@@ -271,13 +263,28 @@ router.post(
           const { originalname } = file;
           const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
 
+          let outputFormat = "jpeg";
+          let extension = "jpg";
+          try {
+            const metadata = await sharp(imageBuffer).metadata();
+            if (metadata.hasAlpha) {
+              outputFormat = "png";
+              extension = "png";
+            }
+          } catch (metadataErr) {
+            console.error(
+              `Error reading image metadata for ${originalname}:`,
+              metadataErr,
+            );
+          }
+
           const resizedBuffer = await sharp(imageBuffer)
             .resize(parsedWidth, parsedHeight)
-            .jpeg()
+            .toFormat(outputFormat)
             .toBuffer();
 
           archive.append(resizedBuffer, {
-            name: `dkutils_${nameWithoutExt}_resized.jpg`,
+            name: `dkutils_${nameWithoutExt}_resized.${extension}`,
           });
         });
 

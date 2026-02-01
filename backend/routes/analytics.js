@@ -1,6 +1,12 @@
 const router = require("express").Router();
 const ToolUsage = require("../models/ToolUsage");
 
+const isValidCategory = (category) => {
+  if (!category) return false;
+  const allowedCategories = ToolUsage.schema.path("category").enumValues;
+  return allowedCategories.includes(category);
+};
+
 // @route   POST /api/analytics/track
 // @desc    Track tool usage
 // @access  Public
@@ -14,6 +20,10 @@ router.post("/track", async (req, res) => {
         .json({ msg: "Tool name and category are required." });
     }
 
+    if (!isValidCategory(category)) {
+      return res.status(400).json({ msg: "Invalid category" });
+    }
+
     // Find and update or create new entry
     const toolUsage = await ToolUsage.findOneAndUpdate(
       { toolName, category },
@@ -21,7 +31,7 @@ router.post("/track", async (req, res) => {
         $inc: { usageCount: 1 },
         $set: { lastUsed: new Date() },
       },
-      { upsert: true, new: true },
+      { upsert: true, new: true, runValidators: true },
     );
 
     return res.json({ success: true, usageCount: toolUsage.usageCount });
@@ -37,6 +47,10 @@ router.post("/track", async (req, res) => {
 router.get("/stats", async (req, res) => {
   try {
     const { category } = req.query;
+
+    if (category && !isValidCategory(category)) {
+      return res.status(400).json({ msg: "Invalid category" });
+    }
 
     const query = category ? { category } : {};
     const stats = await ToolUsage.find(query)

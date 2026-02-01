@@ -25,7 +25,12 @@ router.post(
     }
 
     const { username, email, password } = req.body;
-    console.log("Register attempt:", { username, email });
+    const maskedEmail = email
+      ? email.replace(/^(.{2}).*(@.*)$/, "$1***$2")
+      : undefined;
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Register attempt:", { username, maskedEmail });
+    }
 
     try {
       let user = await User.findOne({ email });
