@@ -1,0 +1,101 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Detect changes and bump versions
+        run: |
+          # Get changed files
+          BASE=$(git rev-parse --verify HEAD^ 2>/dev/null || echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904)
+          CHANGED_FILES=$(git diff --name-only "$BASE" HEAD)
+
+          # Determine which workspaces need version bumps
+          if echo "$CHANGED_FILES" | grep -q "^frontend/"; then
+            echo "Frontend changes detected, bumping frontend version"
+            cd frontend
+            npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+            cd ..
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^backend/"; then
+            echo "Backend changes detected, bumping backend version"
+            cd backend
+            npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+            cd ..
+          fi
+
+          # Always bump root version
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+
+      - name: Get version
+        id: get_version
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+
+      - name: Commit version changes
+        id: commit_versions
+        run: |
+          FILES=""
+          if [ -f package.json ]; then FILES="$FILES package.json"; fi
+          if [ -f frontend/package.json ]; then FILES="$FILES frontend/package.json"; fi
+          if [ -f backend/package.json ]; then FILES="$FILES backend/package.json"; fi
+          if [ -n "$FILES" ]; then git add $FILES; fi
+
+          if git diff --cached --quiet; then
+            echo "did_commit=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} release"
+          git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
+          echo "did_commit=true" >> $GITHUB_OUTPUT
+
+      - name: Push changes and tags
+        if: steps.commit_versions.outputs.did_commit == 'true'
+        run: git push --follow-tags
+
+      - name: Create GitHub Release
+        if: steps.commit_versions.outputs.did_commit == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Release v${{ steps.get_version.outputs.version }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.event.inputs.release_type, 'pre') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

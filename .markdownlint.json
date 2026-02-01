@@ -1,0 +1,7 @@
+{
+  "default": true,
+  "MD033": {
+    "allowed_elements": ["img", "a", "br", "strong", "em", "code", "pre"]
+  },
+  "ignore": ["backend/docs/README.md"]
+}

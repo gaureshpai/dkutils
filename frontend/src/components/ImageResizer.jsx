@@ -1,14 +1,22 @@
-import React, { useState, useContext } from 'react';
-import { toast } from 'react-toastify';
-import { AuthContext } from '../context/AuthContext.jsx';
+﻿import React, { useState, useContext } from "react";
+import { toast } from "react-toastify";
+import { AuthContext } from "../context/AuthContext.jsx";
+import useAnalytics from "../utils/useAnalytics";
 
 const ImageResizer = () => {
-  const { state: { isAuthenticated } } = useContext(AuthContext);
+  const { trackToolUsage } = useAnalytics();
+
+  const {
+    state: { isAuthenticated },
+  } = useContext(AuthContext);
   const [originalImage, setOriginalImage] = useState(null);
-  const [newWidth, setNewWidth] = useState('');
-  const [newHeight, setNewHeight] = useState('');
+  const [newWidth, setNewWidth] = useState("");
+  const [newHeight, setNewHeight] = useState("");
   const [loading, setLoading] = useState(false);
-  const [originalDimensions, setOriginalDimensions] = useState({ width: 0, height: 0 });
+  const [originalDimensions, setOriginalDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
   // eslint-disable-next-line no-unused-vars
   const [resizedImageSrc, setResizedImageSrc] = useState(null);
 
@@ -22,19 +30,23 @@ const ImageResizer = () => {
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Invalid file type. Please upload an image file (e.g., JPEG, PNG, GIF).');
+    if (!file.type.startsWith("image/")) {
+      toast.error(
+        "Invalid file type. Please upload an image file (e.g., JPEG, PNG, GIF).",
+      );
       setOriginalImage(null);
       setResizedImageSrc(null);
-      e.target.value = '';
+      e.target.value = "";
       return;
     }
 
     if (file.size > maxSize) {
-      toast.error(`File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`);
+      toast.error(
+        `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
+      );
       setOriginalImage(null);
       setResizedImageSrc(null);
-      e.target.value = '';
+      e.target.value = "";
       return;
     }
     setOriginalImage(file);
@@ -54,7 +66,7 @@ const ImageResizer = () => {
 
   const handleResize = () => {
     if (!originalImage) {
-      toast.error('Please upload an image first.');
+      toast.error("Please upload an image first.");
       return;
     }
 
@@ -62,25 +74,29 @@ const ImageResizer = () => {
     const height = parseInt(newHeight);
 
     if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
-      toast.error('Please enter valid positive numbers for width and height.');
+      toast.error("Please enter valid positive numbers for width and height.");
       return;
     }
 
     setLoading(true);
+    trackToolUsage("ImageResizer", "image");
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL(originalImage.type);
         setResizedImageSrc(dataUrl);
-        toast.success('Image resized successfully! Starting download...');
-        handleDownload(dataUrl, `resized-${originalImage ? originalImage.name : 'image'}`);
+
+        handleDownload(
+          dataUrl,
+          `resized-${originalImage ? originalImage.name : "image"}`,
+        );
         setLoading(false);
       };
       img.src = event.target.result;
@@ -89,13 +105,12 @@ const ImageResizer = () => {
   };
 
   const handleDownload = (fileUrl, fileName) => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = fileUrl;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Download started!');
   };
 
   return (
@@ -103,45 +118,61 @@ const ImageResizer = () => {
       <h2 className="text-2xl font-bold mb-4">Image Resizer</h2>
 
       <div className="mb-4">
-        <label className="block mb-2 text-sm font-medium text-black" htmlFor="image_file">Upload Image</label>
+        <label
+          className="block mb-2 text-sm font-medium text-foreground"
+          htmlFor="image_file"
+        >
+          Upload Image
+        </label>
         <input
-          className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
           id="image_file"
           type="file"
           accept="image/*"
           onChange={handleFileChange}
         />
-
       </div>
 
       {originalImage && (
-        <div className="mb-4 p-4 border rounded-md bg-gray-50">
+        <div className="mb-4 p-4 border rounded-md bg-muted/30">
           <h3 className="text-xl font-semibold mb-2">Original Image</h3>
-          <p className="text-sm text-gray-700 mb-2">
-            Name: {originalImage.name} | Type: {originalImage.type} | Size: {(originalImage.size / 1024).toFixed(2)} KB
+          <p className="text-sm text-muted-foreground mb-2">
+            Name: {originalImage.name} | Type: {originalImage.type} | Size:{" "}
+            {(originalImage.size / 1024).toFixed(2)} KB
           </p>
-          <p className="text-sm text-gray-700 mb-4">
-            Dimensions: {originalDimensions.width} x {originalDimensions.height} pixels
+          <p className="text-sm text-muted-foreground mb-4">
+            Dimensions: {originalDimensions.width} x {originalDimensions.height}{" "}
+            pixels
           </p>
 
           <div className="flex space-x-4 mb-4">
             <div>
-              <label htmlFor="newWidth" className="block text-sm font-medium text-gray-700">New Width (px)</label>
+              <label
+                htmlFor="newWidth"
+                className="block text-sm font-medium text-muted-foreground"
+              >
+                New Width (px)
+              </label>
               <input
                 type="number"
                 id="newWidth"
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full p-2 border border-input rounded-md shadow-sm focus:ring-blue-500 focus:border-primary"
                 value={newWidth}
                 onChange={(e) => setNewWidth(e.target.value)}
                 placeholder="e.g., 300"
               />
             </div>
             <div>
-              <label htmlFor="newHeight" className="block text-sm font-medium text-gray-700">New Height (px)</label>
+              <label
+                htmlFor="newHeight"
+                className="block text-sm font-medium text-muted-foreground"
+              >
+                New Height (px)
+              </label>
               <input
                 type="number"
                 id="newHeight"
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full p-2 border border-input rounded-md shadow-sm focus:ring-blue-500 focus:border-primary"
                 value={newHeight}
                 onChange={(e) => setNewHeight(e.target.value)}
                 placeholder="e.g., 200"
@@ -149,11 +180,12 @@ const ImageResizer = () => {
             </div>
           </div>
           <button
+            type="button"
             onClick={handleResize}
-            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+            className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
             disabled={loading}
           >
-            {loading ? 'Resizing...' : 'Resize Image'}
+            {loading ? "Resizing..." : "Resize Image"}
           </button>
         </div>
       )}

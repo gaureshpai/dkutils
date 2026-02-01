@@ -1,6 +1,6 @@
-# Contributing to Utility Hub
+# Contributing to dkutils
 
-We welcome contributions to the Utility Hub project! To make the process smooth for everyone, please follow these simple guidelines.
+We welcome contributions to the dkutils project! To make the process smooth for everyone, please follow these simple guidelines.
 
 ## How to Contribute
 
@@ -15,7 +15,7 @@ We welcome contributions to the Utility Hub project! To make the process smooth 
 
 ## Commit Messages
 
-Please use clear and descriptive commit messages. A good commit message explains *what* was changed and *why*.
+Please use clear and descriptive commit messages. A good commit message explains _what_ was changed and _why_.
 
 ## Code Style
 

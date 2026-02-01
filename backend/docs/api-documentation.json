@@ -1134,7 +1134,7 @@
             "status": 200,
             "description": "Success",
             "contentType": "text/html",
-            "schema": "Hello from Utility Hub Backend!"
+            "schema": "Hello from dkutils Backend!"
           }
         ],
         "middleware": []
@@ -1153,20 +1153,92 @@
         ],
         "middleware": []
       }
+    },
+    "/api/analytics/track": {
+      "post": {
+        "summary": "POST /api/analytics/track",
+        "responses": [
+          {
+            "status": 400,
+            "description": "Bad Request",
+            "contentType": "application/json",
+            "schema": {
+              "msg": "Tool name and category are required."
+            }
+          },
+          {
+            "status": 200,
+            "description": "Success",
+            "contentType": "application/json",
+            "schema": {
+              "success": true,
+              "usageCount": "{number}"
+            }
+          },
+          {
+            "status": 500,
+            "description": "Internal Server Error",
+            "contentType": "application/json",
+            "schema": {
+              "msg": "Server Error"
+            }
+          }
+        ],
+        "middleware": []
+      }
+    },
+    "/api/analytics/stats": {
+      "get": {
+        "summary": "GET /api/analytics/stats",
+        "responses": [
+          {
+            "status": 200,
+            "description": "Success",
+            "contentType": "application/json",
+            "schema": "[{toolName, category, usageCount, lastUsed}]"
+          },
+          {
+            "status": 500,
+            "description": "Internal Server Error",
+            "contentType": "application/json",
+            "schema": {
+              "msg": "Server Error"
+            }
+          }
+        ],
+        "middleware": []
+      }
+    },
+    "/api/analytics/popular": {
+      "get": {
+        "summary": "GET /api/analytics/popular",
+        "responses": [
+          {
+            "status": 200,
+            "description": "Success",
+            "contentType": "application/json",
+            "schema": "{category: [{toolName, usageCount}]}"
+          },
+          {
+            "status": 500,
+            "description": "Internal Server Error",
+            "contentType": "application/json",
+            "schema": {
+              "msg": "Server Error"
+            }
+          }
+        ],
+        "middleware": []
+      }
     }
   },
   "stats": {
-    "totalEndpoints": 35,
+    "totalEndpoints": 38,
     "methodCounts": {
-      "POST": 30,
-      "GET": 5
+      "POST": 31,
+      "GET": 7
     },
-    "statusCodes": [
-      200,
-      400,
-      404,
-      500
-    ],
+    "statusCodes": [200, 400, 404, 500],
     "pathsWithParams": 2,
     "middlewareUsage": []
   },
@@ -1174,16 +1246,12 @@
     "shorten": {
       "name": "shorten",
       "description": "Routes under /shorten",
-      "paths": [
-        "/shorten"
-      ]
+      "paths": ["/shorten"]
     },
     "l": {
       "name": "l",
       "description": "Routes under /l",
-      "paths": [
-        "/l/:code"
-      ]
+      "paths": ["/l/:code"]
     },
     "api": {
       "name": "api",
@@ -1219,22 +1287,21 @@
         "/api/convert/json-to-xml",
         "/api/convert/xml-to-json",
         "/api/seo/robots-txt",
-        "/api/seo/sitemap-xml"
+        "/api/seo/sitemap-xml",
+        "/api/analytics/track",
+        "/api/analytics/stats",
+        "/api/analytics/popular"
       ]
     },
     "root": {
       "name": "root",
       "description": "Routes under /root",
-      "paths": [
-        "/"
-      ]
+      "paths": ["/"]
     },
     "health": {
       "name": "health",
       "description": "Routes under /health",
-      "paths": [
-        "/health"
-      ]
+      "paths": ["/health"]
     }
   }
 }

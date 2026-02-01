@@ -30,8 +30,8 @@
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
@@ -81,6 +81,7 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --font-sans: "Inter", sans-serif;
 }
 
 @layer base {
@@ -90,5 +91,20 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+
+  button:disabled,
+  button[disabled] {
+    @apply cursor-not-allowed;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply bg-background text-foreground placeholder:text-muted-foreground;
   }
 }

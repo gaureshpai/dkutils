@@ -1,22 +1,40 @@
+﻿import React, { useState, useMemo } from "react";
+import TurndownService from "turndown";
+import { toast } from "react-toastify";
+import useAnalytics from "../utils/useAnalytics";
 
-import React, { useState } from 'react';
-import TurndownService from 'turndown';
-import { toast } from 'react-toastify';
+// Create a single shared instance outside the component
+const turndownService = new TurndownService();
 
 const HtmlToMarkdownConverter = () => {
-  const [html, setHtml] = useState('');
-  const [markdown, setMarkdown] = useState('');
+  const { trackToolUsage } = useAnalytics();
 
-  const turndownService = new TurndownService();
+  const [html, setHtml] = useState("");
+  const [markdown, setMarkdown] = useState("");
+  const [hasTracked, setHasTracked] = useState(false);
 
   const handleHtmlChange = (e) => {
-    setHtml(e.target.value);
-    setMarkdown(turndownService.turndown(e.target.value));
+    const newHtml = e.target.value;
+    setHtml(newHtml);
+    setMarkdown(turndownService.turndown(newHtml));
+
+    // Track usage on first meaningful interaction (non-empty HTML input)
+    if (!hasTracked && newHtml.trim().length > 0) {
+      trackToolUsage("HtmlToMarkdownConverter", "web");
+      setHasTracked(true);
+    }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(markdown);
-    toast.success('Copied to clipboard!');
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(markdown);
+      toast.success("Copied to clipboard!");
+      // Track copy action for analytics consistency
+      trackToolUsage("HtmlToMarkdownConverter:copy", "web");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   return (
@@ -24,9 +42,15 @@ const HtmlToMarkdownConverter = () => {
       <h2 className="text-2xl font-bold mb-4">HTML to Markdown Converter</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block mb-2 text-sm font-medium text-gray-900 text-black">HTML Input</label>
+          <label
+            htmlFor="htmlInput"
+            className="block mb-2 text-sm font-medium text-foreground"
+          >
+            HTML Input
+          </label>
           <textarea
-            className="w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white h-max"
+            id="htmlInput"
+            className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
             rows="10"
             placeholder="Enter HTML here..."
             value={html}
@@ -34,16 +58,32 @@ const HtmlToMarkdownConverter = () => {
           ></textarea>
         </div>
         <div>
-          <label className="block mb-2 text-sm font-medium text-gray-900 text-black">Markdown Output
-            <button onClick={copyToClipboard} className="ml-2 text-sm text-blue-500 hover:underline">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+          <label
+            htmlFor="markdownOutput"
+            className="block mb-2 text-sm font-medium text-foreground"
+          >
+            Markdown Output
+            <button
+              type="button"
+              onClick={copyToClipboard}
+              className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy markdown to clipboard"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 inline-block"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>
             </button>
           </label>
           <textarea
-            className="w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white h-max"
+            id="markdownOutput"
+            className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
             rows="10"
             readOnly
             value={markdown}

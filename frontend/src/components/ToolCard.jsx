@@ -1,6 +1,12 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
+﻿import React from "react";
+import PropTypes from "prop-types";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./ui/card";
 
 const ToolCard = ({ title, description, children }) => {
   return (
@@ -9,9 +15,7 @@ const ToolCard = ({ title, description, children }) => {
         <CardTitle>{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="flex-grow">
-        {children}
-      </CardContent>
+      <CardContent className="flex-grow">{children}</CardContent>
     </Card>
   );
 };

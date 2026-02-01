@@ -1,5 +1,5 @@
-const ApiActivity = require('../models/ApiActivity');
-const { ServiceUsage, TotalUsage } = require('../models/ServiceUsage');
+const ApiActivity = require("../models/ApiActivity");
+const { ServiceUsage, TotalUsage } = require("../models/ServiceUsage");
 
 const apiActivityTracker = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ const apiActivityTracker = async (req, res, next) => {
       { upsert: true, new: true },
     );
   } catch (err) {
-    console.error('Error saving API activity:', err.message);
+    console.error("Error saving API activity:", err.message);
   }
   next();
 };

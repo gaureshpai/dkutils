@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 module.exports = function authMiddleware(req, res, next) {
-  const token = req.header('x-auth-token');
+  const token = req.header("x-auth-token");
 
   if (!token) {
     return next();
@@ -13,6 +13,6 @@ module.exports = function authMiddleware(req, res, next) {
     req.user.role = decoded.user.role;
     return next();
   } catch (err) {
-    return res.status(401).json({ msg: 'Token is not valid' });
+    return res.status(401).json({ msg: "Token is not valid" });
   }
 };
