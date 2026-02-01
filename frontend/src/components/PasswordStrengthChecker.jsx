@@ -9,6 +9,7 @@ const PasswordStrengthChecker = () => {
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(false);
   const { trackToolUsage } = useAnalytics();
+  const hasTrackedRef = useRef(false);
 
   const checkStrength = useCallback(
     async (pwd) => {
@@ -19,7 +20,6 @@ const PasswordStrengthChecker = () => {
       }
 
       setLoading(true);
-      trackToolUsage("PasswordStrengthChecker", "web");
       try {
         const res = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
@@ -60,6 +60,10 @@ const PasswordStrengthChecker = () => {
   );
 
   useEffect(() => {
+    if (!hasTrackedRef.current && password.length > 0) {
+      hasTrackedRef.current = true;
+      trackToolUsage("PasswordStrengthChecker", "web");
+    }
     debouncedCheckStrengthRef.current(password);
   }, [password]);
 

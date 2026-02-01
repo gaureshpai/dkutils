@@ -15,7 +15,8 @@ import useSortedTools from "../utils/useSortedTools";
 const IMAGE_TOOL_DEFINITIONS = [
   {
     title: "Image Format Converter",
-    description: "Convert images between various formats (JPG, PNG, WebP, TIFF).",
+    description:
+      "Convert images between various formats (JPG, PNG, WebP, TIFF).",
     component: ImageFormatConverter,
   },
   {

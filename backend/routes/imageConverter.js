@@ -620,11 +620,44 @@ router.post(
       const { originalname } = req.file;
       const { direction } = req.body;
 
+      let outputFormat;
+      let extension;
+      try {
+        const metadata = await sharp(imageBuffer).metadata();
+        if (metadata.format) {
+          outputFormat = metadata.format;
+        }
+        if (outputFormat === "jpeg") {
+          extension = "jpg";
+        } else {
+          extension = outputFormat;
+        }
+        if (!outputFormat || !extension) {
+          throw new Error("Unable to detect image format");
+        }
+      } catch (metaErr) {
+        console.error("Error detecting image format, falling back:", metaErr);
+        const fallbackMeta = await sharp(imageBuffer).metadata();
+        if (fallbackMeta.hasAlpha) {
+          outputFormat = "png";
+          extension = "png";
+        } else {
+          outputFormat = "jpeg";
+          extension = "jpg";
+        }
+      }
+
       let flippedBuffer;
       if (direction === "horizontal") {
-        flippedBuffer = await sharp(imageBuffer).flop().jpeg().toBuffer();
+        flippedBuffer = await sharp(imageBuffer)
+          .flop()
+          .toFormat(outputFormat)
+          .toBuffer();
       } else if (direction === "vertical") {
-        flippedBuffer = await sharp(imageBuffer).flip().jpeg().toBuffer();
+        flippedBuffer = await sharp(imageBuffer)
+          .flip()
+          .toFormat(outputFormat)
+          .toBuffer();
       } else {
         return res.status(400).json({
           msg: "Invalid flip direction. Must be 'horizontal' or 'vertical'.",
@@ -632,7 +665,7 @@ router.post(
       }
 
       const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-      const outputFileName = `dkutils_flipped-${nameWithoutExt}.jpg`;
+      const outputFileName = `dkutils_flipped-${nameWithoutExt}.${extension}`;
 
       const archive = archiver("zip", {
         zlib: { level: 9 },
@@ -711,13 +744,40 @@ router.post(
       const imageBuffer = req.file.buffer;
       const { originalname } = req.file;
 
+      let outputFormat;
+      let extension;
+      try {
+        const metadata = await sharp(imageBuffer).metadata();
+        if (metadata.format) {
+          outputFormat = metadata.format;
+        }
+        if (outputFormat === "jpeg") {
+          extension = "jpg";
+        } else {
+          extension = outputFormat;
+        }
+        if (!outputFormat || !extension) {
+          throw new Error("Unable to detect image format");
+        }
+      } catch (metaErr) {
+        console.error("Error detecting image format, falling back:", metaErr);
+        const fallbackMeta = await sharp(imageBuffer).metadata();
+        if (fallbackMeta.hasAlpha) {
+          outputFormat = "png";
+          extension = "png";
+        } else {
+          outputFormat = "jpeg";
+          extension = "jpg";
+        }
+      }
+
       const grayscaleBuffer = await sharp(imageBuffer)
         .grayscale()
-        .jpeg()
+        .toFormat(outputFormat)
         .toBuffer();
 
       const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-      const outputFileName = `dkutils_grayscale-${nameWithoutExt}.jpg`;
+      const outputFileName = `dkutils_grayscale-${nameWithoutExt}.${extension}`;
 
       const archive = archiver("zip", {
         zlib: { level: 9 },
