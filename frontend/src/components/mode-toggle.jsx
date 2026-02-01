@@ -3,9 +3,10 @@ import { Button } from "./ui/button";
 import { useTheme } from "./theme-provider";
 
 /**
- * Render a button that toggles the application theme between "dark" and "light".
+ * Toggle the application's theme between "dark" and "light".
  *
- * @returns {JSX.Element} The theme toggle button showing a sun or moon icon and switching the theme on click.
+ * The rendered button displays a sun or moon icon according to the current theme and switches the theme when clicked.
+ * @returns {JSX.Element} The button element that displays a sun or moon icon and switches the theme when clicked.
  */
 export function ModeToggle() {
   const { theme, setTheme } = useTheme();
