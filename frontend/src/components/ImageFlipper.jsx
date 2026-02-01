@@ -98,10 +98,11 @@ const ImageFlipper = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium text-foreground">
+          <label htmlFor="flip-direction" className="block mb-2 text-sm font-medium text-foreground">
             Flip Direction:
           </label>
           <select
+            id="flip-direction"
             className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm bg-background"
             value={flipDirection}
             onChange={(e) => setFlipDirection(e.target.value)}

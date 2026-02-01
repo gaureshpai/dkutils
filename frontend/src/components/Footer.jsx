@@ -1,6 +1,5 @@
 ﻿import React from "react";
 import { Github } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -10,15 +9,15 @@ const Footer = () => {
           &copy; {new Date().getFullYear()} dkutils. Open Source.
         </p>
         <div className="flex items-center gap-4">
-          <Link
-            to="https://github.com/gaureshpai/dkutils"
+          <a
+            href="https://github.com/gaureshpai/dkutils"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Github className="h-5 w-5" />
             <span className="font-medium text-sm">Contribute on GitHub</span>
-          </Link>
+          </a>
         </div>
       </div>
     </footer>

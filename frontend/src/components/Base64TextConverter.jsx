@@ -66,6 +66,7 @@ const Base64TextConverter = () => {
       </div>
       <div className="mb-4">
         <button
+          type="button"
           onClick={encodeBase64}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loading}
@@ -73,6 +74,7 @@ const Base64TextConverter = () => {
           {loading ? "Encoding..." : "Encode Base64"}
         </button>
         <button
+          type="button"
           onClick={decodeBase64}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loading}
@@ -85,22 +87,28 @@ const Base64TextConverter = () => {
           <h3 className="text-xl font-bold mb-2">
             Converted Text:
             <button
+              type="button"
               onClick={copyToClipboard}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy converted text to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
+                <title>Copy to clipboard</title>
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>
             </button>
             <button
+              type="button"
               onClick={downloadAsTxt}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Download converted text as TXT file"
             >
               Download TXT
             </button>

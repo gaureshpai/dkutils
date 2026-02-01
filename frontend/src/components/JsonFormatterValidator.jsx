@@ -71,6 +71,7 @@ const JsonFormatterValidator = () => {
       </div>
       <div className="mb-4">
         <button
+          type="button"
           onClick={formatJson}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loading}
@@ -78,6 +79,7 @@ const JsonFormatterValidator = () => {
           {loading ? "Formatting..." : "Format JSON"}
         </button>
         <button
+          type="button"
           onClick={validateJson}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loading}
@@ -99,29 +101,37 @@ const JsonFormatterValidator = () => {
           <h3 className="text-xl font-bold mb-2">
             Formatted JSON:
             <button
+              type="button"
               onClick={() => copyToClipboard(formattedJson)}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy formatted JSON to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
+                <title>Copy to clipboard</title>
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>
             </button>
             <button
+              type="button"
               onClick={downloadJson}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Download formatted JSON as file"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
+                <title>Download file</title>
                 <path
                   fillRule="evenodd"
                   d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"

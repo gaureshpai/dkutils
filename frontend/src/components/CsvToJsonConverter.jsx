@@ -46,7 +46,7 @@ const CsvToJsonConverter = () => {
 
   const convertJsonToCsv = () => {
     setLoading(true);
-    trackToolUsage("CsvToJsonConverter", "web");
+    trackToolUsage("JsonToCsvConverter", "web");
     try {
       const jsonData = JSON.parse(jsonInput);
       const csv = Papa.unparse(jsonData);
@@ -62,10 +62,14 @@ const CsvToJsonConverter = () => {
       <h2 className="text-2xl font-bold mb-4">CSV &lt;-&gt; JSON Converter</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block mb-2 text-sm font-medium text-foreground">
+          <label
+            htmlFor="csv-input"
+            className="block mb-2 text-sm font-medium text-foreground"
+          >
             CSV Input
           </label>
           <textarea
+            id="csv-input"
             className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
             rows="10"
             placeholder="Enter CSV here..."
@@ -73,28 +77,44 @@ const CsvToJsonConverter = () => {
             onChange={handleCsvChange}
           ></textarea>
           <button
+            type="button"
             onClick={convertCsvToJson}
             className="mt-2 text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
             disabled={loading}
+            aria-disabled={loading}
           >
             {loading ? "Converting..." : "CSV to JSON"}
           </button>
         </div>
         <div>
-          <label className="block mb-2 text-sm font-medium text-foreground">
+          <label
+            htmlFor="json-input"
+            className="block mb-2 text-sm font-medium text-foreground"
+          >
             JSON Input
           </label>
           <textarea
+            id="json-input"
             className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
             rows="10"
             placeholder="Enter JSON here..."
             value={jsonInput}
             onChange={handleJsonChange}
+            aria-describedby="json-input-help"
           ></textarea>
+          <div
+            id="json-input-help"
+            className="text-xs text-muted-foreground mt-1"
+          >
+            Enter valid JSON data to convert to CSV format
+          </div>
           <button
+            type="button"
             onClick={convertJsonToCsv}
             className="mt-2 text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
             disabled={loading}
+            aria-disabled={loading}
+            aria-label="Convert JSON to CSV"
           >
             {loading ? "Converting..." : "JSON to CSV"}
           </button>
@@ -106,15 +126,19 @@ const CsvToJsonConverter = () => {
           <h3 className="text-xl font-bold mb-2">
             Converted Output:
             <button
+              type="button"
               onClick={copyToClipboard}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy JSON to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
+                <title>Copy to clipboard</title>
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>
