@@ -1,7 +1,7 @@
 {
   "name": "dkutils-frontend",
   "description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
-  "version": "1.3.2",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "dependencies": {
