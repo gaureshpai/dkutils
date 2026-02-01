@@ -20,7 +20,7 @@ const useAnalytics = () => {
   const getToolStats = useCallback(async (category = null) => {
     try {
       const url = category
-        ? `${import.meta.env.VITE_API_BASE_URL}/api/analytics/stats?category=${category}`
+        ? `${import.meta.env.VITE_API_BASE_URL}/api/analytics/stats?category=${encodeURIComponent(category)}`
         : `${import.meta.env.VITE_API_BASE_URL}/api/analytics/stats`;
       const response = await axios.get(url);
       return response.data;

@@ -7,10 +7,8 @@ import {
   CardDescription,
   CardContent,
 } from "./ui/card";
-import useAnalytics from "../utils/useAnalytics";
 
 const ToolCard = ({ title, description, children }) => {
-  const { trackToolUsage } = useAnalytics();
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-200">
       <CardHeader>

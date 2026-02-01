@@ -23,17 +23,7 @@ const Navbar = () => {
   const location = useLocation();
 
   const handleLogout = () => {
-    dispatch({ type: "LOGOUT" }); // App.jsx normally handles the logic but here we just dispatch
-    // The App.jsx had setAuthToken(null) and localStorage removal.
-    // I should probably pass a logout handler or context should handle it.
-    // In App.jsx handleLogout did: setAuthToken(null), dispatch LOGOUT, localStorage.removeItem.
-    // The reducer does localStorage.removeItem, but setAuthToken needs to be called.
-    // For now I'll just replicate the logic or assume context handles it better (it doesn't fully).
-    // I'll restart the logic from App.jsx here to be safe.
-    localStorage.removeItem("token");
     dispatch({ type: "LOGOUT" });
-    // setAuthToken is not imported here, but reducer sets it to null on LOGOUT?
-    // Wait, reducer calls setAuthToken(null) in LOGOUT case! So dispatching LOGOUT is enough.
   };
 
   const navItems = [
@@ -67,7 +57,7 @@ const Navbar = () => {
               className={cn(
                 "transition-colors hover:text-primary flex items-center text-sm font-medium text-muted-foreground",
                 location.pathname.startsWith(item.to) &&
-                  "text-primary font-semibold",
+                "text-primary font-semibold",
               )}
             >
               {item.icon}

@@ -84,6 +84,7 @@ const QrCodeGenerator = () => {
         />
       </div>
       <button
+        type="button"
         onClick={generateQrCode}
         className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
         disabled={loading}
@@ -98,12 +99,14 @@ const QrCodeGenerator = () => {
           </div>
           <div className="flex space-x-4">
             <button
+              type="button"
               onClick={downloadPng}
               className="text-secondary-foreground bg-secondary hover:bg-secondary/80 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 dark:hover:bg-secondary focus:outline-none "
             >
               Download PNG
             </button>
             <button
+              type="button"
               onClick={downloadPdf}
               className="text-destructive-foreground bg-destructive hover:bg-destructive/90 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-destructive focus:outline-none dark:focus:ring-red-800"
             >

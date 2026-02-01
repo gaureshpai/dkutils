@@ -29,9 +29,22 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      setAuthToken(token);
-      const decoded = jwtDecode(token);
-      dispatch({ type: "LOGIN", payload: { token, user: decoded.user } });
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+
+        // Check if token is expired
+        if (decoded.exp && decoded.exp < currentTime) {
+          localStorage.removeItem("token");
+          return;
+        }
+
+        setAuthToken(token);
+        dispatch({ type: "LOGIN", payload: { token, user: decoded.user } });
+      } catch (error) {
+        // Invalid token, remove it
+        localStorage.removeItem("token");
+      }
     }
   }, []);
 

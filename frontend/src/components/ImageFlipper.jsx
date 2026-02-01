@@ -98,7 +98,10 @@ const ImageFlipper = () => {
           />
         </div>
         <div className="mb-4">
-          <label htmlFor="flip-direction" className="block mb-2 text-sm font-medium text-foreground">
+          <label
+            htmlFor="flip-direction"
+            className="block mb-2 text-sm font-medium text-foreground"
+          >
             Flip Direction:
           </label>
           <select

@@ -54,7 +54,7 @@ const PngToJpgConverter = () => {
     }
 
     setLoading(true);
-    trackToolUsage("PngToJpgConverter", "web");
+    trackToolUsage("PngToJpgConverter", "image");
     const formData = new FormData();
     for (const file of selectedFiles) {
       formData.append("images", file);
@@ -77,7 +77,7 @@ const PngToJpgConverter = () => {
       console.error(err);
       toast.error(
         err.response?.data?.msg ||
-          "Error converting PNG to JPG. Please try again.",
+        "Error converting PNG to JPG. Please try again.",
       );
     } finally {
       setLoading(false);

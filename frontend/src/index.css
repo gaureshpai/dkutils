@@ -97,6 +97,11 @@
     @apply cursor-pointer;
   }
 
+  button:disabled,
+  button[disabled] {
+    @apply cursor-not-allowed;
+  }
+
   input,
   textarea,
   select {

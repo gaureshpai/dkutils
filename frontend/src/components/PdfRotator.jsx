@@ -104,10 +104,11 @@ const PdfRotator = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium text-foreground">
+          <label htmlFor="rotationAngleSelect" className="block mb-2 text-sm font-medium text-foreground">
             Rotation Angle:
           </label>
           <select
+            id="rotationAngleSelect"
             className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm bg-background"
             value={rotationAngle}
             onChange={(e) => setRotationAngle(parseInt(e.target.value))}
