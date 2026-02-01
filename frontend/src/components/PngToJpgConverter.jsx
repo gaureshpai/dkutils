@@ -77,7 +77,7 @@ const PngToJpgConverter = () => {
       console.error(err);
       toast.error(
         err.response?.data?.msg ||
-        "Error converting PNG to JPG. Please try again.",
+          "Error converting PNG to JPG. Please try again.",
       );
     } finally {
       setLoading(false);

@@ -44,7 +44,7 @@ const TextToPdfGenerator = () => {
       console.error(err);
       toast.error(
         err.response?.data?.msg ||
-        "Error generating PDF from text. Please try again.",
+          "Error generating PDF from text. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -56,7 +56,10 @@ const TextToPdfGenerator = () => {
       <h2 className="text-2xl font-bold mb-4">Text to PDF Generator</h2>
       <form onSubmit={onSubmit}>
         <div className="mb-4">
-          <label htmlFor="text-input" className="block mb-2 text-sm font-medium text-foreground">
+          <label
+            htmlFor="text-input"
+            className="block mb-2 text-sm font-medium text-foreground"
+          >
             Text to convert to PDF
           </label>
           <textarea

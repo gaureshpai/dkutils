@@ -16,7 +16,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "format": "npx prettier --write .",
+    "format": "prettier --write .",
     "prepare": "husky install",
     "start": "turbo run start"
   },
@@ -47,6 +47,7 @@
   "devDependencies": {
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
+    "prettier": "^3.3.3",
     "turbo": "^2.8.1"
   }
 }

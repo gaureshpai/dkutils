@@ -57,7 +57,7 @@ const Navbar = () => {
               className={cn(
                 "transition-colors hover:text-primary flex items-center text-sm font-medium text-muted-foreground",
                 location.pathname.startsWith(item.to) &&
-                "text-primary font-semibold",
+                  "text-primary font-semibold",
               )}
             >
               {item.icon}

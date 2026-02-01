@@ -6,7 +6,7 @@ We take the security of dkutils seriously. If you discover a security vulnerabil
 
 **Please DO NOT open a public issue on GitHub.**
 
-Instead, please send an email to paigauresh@gmail.com with a detailed description of the vulnerability. We will acknowledge your report within 15 business days and provide a timeline for addressing the issue.
+Instead, please send an email to [paigauresh@gmail.com](mailto:paigauresh@gmail.com) with a detailed description of the vulnerability. We will acknowledge your report within 15 business days and provide a timeline for addressing the issue.
 
 ## Our Commitment
 
