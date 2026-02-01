@@ -101,7 +101,7 @@ const ImageFormatConverter = () => {
       console.error(err);
       toast.error(
         err.response?.data?.msg ||
-        "Error converting image format. Please try again.",
+          "Error converting image format. Please try again.",
       );
     } finally {
       setLoading(false);

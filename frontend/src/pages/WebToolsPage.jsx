@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React from "react";
 import { Helmet } from "react-helmet-async";
 import ToolCard from "../components/ToolCard.jsx";
 import LinkShortener from "../components/LinkShortener.jsx";
@@ -10,88 +10,59 @@ import UrlRedirectChecker from "../components/UrlRedirectChecker.jsx";
 import SeoTools from "../components/SeoTools.jsx";
 import JsonXmlConverter from "../components/JsonXmlConverter.jsx";
 import PasswordStrengthChecker from "../components/PasswordStrengthChecker.jsx";
-import useAnalytics from "../utils/useAnalytics";
+import useSortedTools from "../utils/useSortedTools";
+
+const INITIAL_TOOLS = [
+  {
+    title: "Link Shortener",
+    description: "Shorten long URLs for easier sharing.",
+    component: LinkShortener,
+  },
+  {
+    title: "QR Code Generator",
+    description: "Create QR codes from text or URLs.",
+    component: QrCodeGenerator,
+  },
+  {
+    title: "QR Code Scanner",
+    description: "Scan QR codes using your device's camera.",
+    component: QrCodeScanner,
+  },
+  {
+    title: "Website Screenshot Generator",
+    description: "Capture a full-page screenshot of any website.",
+    component: WebsiteScreenshotGenerator,
+  },
+  {
+    title: "Favicon Extractor",
+    description: "Extract favicons from any website.",
+    component: FaviconExtractor,
+  },
+  {
+    title: "URL Redirect Checker",
+    description: "Trace URL redirect chains.",
+    component: UrlRedirectChecker,
+  },
+  {
+    title: "Robots.txt / Sitemap.xml Viewer",
+    description: "View and validate robots.txt and sitemap.xml files.",
+    component: SeoTools,
+  },
+  {
+    title: "JSON <-> XML Converter",
+    description:
+      "Convert between JSON and XML data formats, essential for web service integration and API data transformation.",
+    component: JsonXmlConverter,
+  },
+  {
+    title: "Password Strength Checker",
+    description: "Analyze the strength of your password.",
+    component: PasswordStrengthChecker,
+  },
+];
 
 const WebToolsPage = () => {
-  const { getToolStats } = useAnalytics();
-  const [tools, setTools] = useState([]);
-
-  useEffect(() => {
-    const fetchAndSortTools = async () => {
-      const initialTools = [
-        {
-          title: "Link Shortener",
-          description: "Shorten long URLs for easier sharing.",
-          component: <LinkShortener />,
-        },
-        {
-          title: "QR Code Generator",
-          description: "Create QR codes from text or URLs.",
-          component: <QrCodeGenerator />,
-        },
-        {
-          title: "QR Code Scanner",
-          description: "Scan QR codes using your device's camera.",
-          component: <QrCodeScanner />,
-        },
-        {
-          title: "Website Screenshot Generator",
-          description: "Capture a full-page screenshot of any website.",
-          component: <WebsiteScreenshotGenerator />,
-        },
-        {
-          title: "Favicon Extractor",
-          description: "Extract favicons from any website.",
-          component: <FaviconExtractor />,
-        },
-        {
-          title: "URL Redirect Checker",
-          description: "Trace URL redirect chains.",
-          component: <UrlRedirectChecker />,
-        },
-        {
-          title: "Robots.txt / Sitemap.xml Viewer",
-          description: "View and validate robots.txt and sitemap.xml files.",
-          component: <SeoTools />,
-        },
-        {
-          title: "JSON <-> XML Converter",
-          description:
-            "Convert between JSON and XML data formats, essential for web service integration and API data transformation.",
-          component: <JsonXmlConverter />,
-        },
-        {
-          title: "Password Strength Checker",
-          description: "Analyze the strength of your password.",
-          component: <PasswordStrengthChecker />,
-        },
-      ];
-
-      try {
-        const stats = await getToolStats("web");
-
-        // Create a map of usage counts
-        const usageMap = {};
-        stats.forEach((stat) => {
-          usageMap[stat.toolName] = stat.usageCount;
-        });
-
-        // Sort tools based on usage count (descending)
-        const sortedTools = [...initialTools].sort((a, b) => {
-          const usageA = usageMap[a.title] || 0;
-          const usageB = usageMap[b.title] || 0;
-          return usageB - usageA;
-        });
-
-        setTools(sortedTools);
-      } catch (error) {
-        console.error("Failed to sort tools:", error);
-        setTools(initialTools);
-      }
-    };
-
-    fetchAndSortTools();
-  }, [getToolStats]);
+  const tools = useSortedTools("web", INITIAL_TOOLS);
 
   return (
     <>
@@ -124,7 +95,13 @@ const WebToolsPage = () => {
 
         {tools.length === 0 ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div
+              className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
+              role="status"
+              aria-label="Loading tools"
+            >
+              <span className="sr-only">Loading tools…</span>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -134,7 +111,10 @@ const WebToolsPage = () => {
                 title={tool.title}
                 description={tool.description}
               >
-                {tool.component}
+                {(() => {
+                  const Component = tool.component;
+                  return <Component />;
+                })()}
               </ToolCard>
             ))}
           </div>
