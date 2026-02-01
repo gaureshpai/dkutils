@@ -17,6 +17,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "format": "npx prettier --write .",
+    "prepare": "husky install",
     "start": "turbo run start"
   },
   "keywords": [
@@ -45,6 +46,7 @@
   "license": "ISC",
   "devDependencies": {
     "eslint": "^9.39.2",
+    "husky": "^9.1.7",
     "turbo": "^2.8.1"
   }
 }
