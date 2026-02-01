@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React from "react";
 import { Helmet } from "react-helmet-async";
 import ToolCard from "../components/ToolCard.jsx";
 import PdfMerger from "../components/PdfMerger.jsx";
@@ -10,87 +10,58 @@ import TextToPdfGenerator from "../components/TextToPdfGenerator.jsx";
 import PdfToTextConverter from "../components/PdfToTextConverter.jsx";
 import PdfRotator from "../components/PdfRotator.jsx";
 import PdfPageDeleter from "../components/PdfPageDeleter.jsx";
-import useAnalytics from "../utils/useAnalytics";
+import useSortedTools from "../utils/useSortedTools";
+
+const PDF_TOOL_DEFINITIONS = [
+  {
+    title: "PDF Merger",
+    description: "Combine multiple PDF documents into one.",
+    component: PdfMerger,
+  },
+  {
+    title: "PDF Splitter",
+    description: "Split a PDF document into multiple pages or ranges.",
+    component: PdfSplitter,
+  },
+  {
+    title: "PDF Compressor",
+    description: "Reduce the file size of your PDF documents.",
+    component: PdfCompressor,
+  },
+  {
+    title: "PDF to Word Converter",
+    description: "Convert PDF documents to editable Word files.",
+    component: PdfToWordConverter,
+  },
+  {
+    title: "PDF to Excel Converter",
+    description: "Convert PDF tables into Excel spreadsheets.",
+    component: PdfToExcelConverter,
+  },
+  {
+    title: "Text to PDF Generator",
+    description: "Convert plain text into a PDF document.",
+    component: TextToPdfGenerator,
+  },
+  {
+    title: "PDF to Text Converter",
+    description: "Extract text content from PDF documents.",
+    component: PdfToTextConverter,
+  },
+  {
+    title: "PDF Rotator",
+    description: "Rotate pages within a PDF document.",
+    component: PdfRotator,
+  },
+  {
+    title: "PDF Page Deleter",
+    description: "Delete specific pages from a PDF document.",
+    component: PdfPageDeleter,
+  },
+];
 
 const PdfToolsPage = () => {
-  const { getToolStats } = useAnalytics();
-  const [tools, setTools] = useState([]);
-
-  useEffect(() => {
-    const fetchAndSortTools = async () => {
-      const initialTools = [
-        {
-          title: "PDF Merger",
-          description: "Combine multiple PDF documents into one.",
-          component: <PdfMerger />,
-        },
-        {
-          title: "PDF Splitter",
-          description: "Split a PDF document into multiple pages or ranges.",
-          component: <PdfSplitter />,
-        },
-        {
-          title: "PDF Compressor",
-          description: "Reduce the file size of your PDF documents.",
-          component: <PdfCompressor />,
-        },
-        {
-          title: "PDF to Word Converter",
-          description: "Convert PDF documents to editable Word files.",
-          component: <PdfToWordConverter />,
-        },
-        {
-          title: "PDF to Excel Converter",
-          description: "Convert PDF tables into Excel spreadsheets.",
-          component: <PdfToExcelConverter />,
-        },
-        {
-          title: "Text to PDF Generator",
-          description: "Convert plain text into a PDF document.",
-          component: <TextToPdfGenerator />,
-        },
-        {
-          title: "PDF to Text Converter",
-          description: "Extract text content from PDF documents.",
-          component: <PdfToTextConverter />,
-        },
-        {
-          title: "PDF Rotator",
-          description: "Rotate pages within a PDF document.",
-          component: <PdfRotator />,
-        },
-        {
-          title: "PDF Page Deleter",
-          description: "Delete specific pages from a PDF document.",
-          component: <PdfPageDeleter />,
-        },
-      ];
-
-      try {
-        const stats = await getToolStats("pdf");
-
-        // Create a map of usage counts
-        const usageMap = {};
-        stats.forEach((stat) => {
-          usageMap[stat.toolName] = stat.usageCount;
-        });
-
-        // Sort tools based on usage count (descending)
-        const sortedTools = [...initialTools].sort((a, b) => {
-          const usageA = usageMap[a.title] || 0;
-          const usageB = usageMap[b.title] || 0;
-          return usageB - usageA;
-        });
-
-        setTools(sortedTools);
-      } catch (error) {
-        console.error("Failed to sort tools:", error);
-        setTools(initialTools);
-      }
-    };
-
-    fetchAndSortTools();
-  }, [getToolStats]);
+  const { tools, isLoading } = useSortedTools("pdf", PDF_TOOL_DEFINITIONS);
 
   return (
     <>
@@ -120,19 +91,28 @@ const PdfToolsPage = () => {
         <p className="text-lg text-muted-foreground mb-6">
           Manage and convert your PDF documents with ease.
         </p>
-        {tools.length === 0 ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div
+              className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
+              role="status"
+              aria-label="Loading PDF tools"
+            >
+              <span className="sr-only">Loading PDF tools…</span>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tools.map((tool, index) => (
+            {tools.map((tool) => (
               <ToolCard
-                key={index}
+                key={tool.title}
                 title={tool.title}
                 description={tool.description}
               >
-                {tool.component}
+                {(() => {
+                  const Component = tool.component;
+                  return <Component />;
+                })()}
               </ToolCard>
             ))}
           </div>

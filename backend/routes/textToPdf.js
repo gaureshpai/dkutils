@@ -8,6 +8,15 @@ const archiver = require("archiver");
 router.post("/text-to-pdf", async (req, res) => {
   const { text } = req.body;
 
+  // Validate input: ensure text is a non-empty string
+  if (typeof text !== "string" || text.trim().length === 0) {
+    return res.status(400).json({
+      msg: "Text is required and must be a non-empty string",
+    });
+  }
+
+  const trimmedText = text.trim();
+
   try {
     const doc = new PDFDocument();
     const pdfBufferPromise = new Promise((resolve, reject) => {
@@ -19,7 +28,7 @@ router.post("/text-to-pdf", async (req, res) => {
       doc.on("error", reject);
     });
 
-    doc.text(text);
+    doc.text(trimmedText);
     doc.end();
 
     const pdfBuffer = await pdfBufferPromise;

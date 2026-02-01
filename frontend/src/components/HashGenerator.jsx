@@ -18,15 +18,22 @@ const HashGenerator = () => {
   };
 
   const generateHash = async (algorithm) => {
+    // Validate input: check if text is empty (trimmed)
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) {
+      toast.warn("Please enter some text to generate a hash.");
+      return;
+    }
+
     setLoading(true);
     trackToolUsage("HashGenerator", "web");
     const textEncoder = new TextEncoder();
-    const data = textEncoder.encode(text);
+    const data = textEncoder.encode(trimmedText);
 
     try {
       let hashBuffer;
       if (algorithm === "MD5") {
-        setHashMd5(md5(text));
+        setHashMd5(md5(trimmedText));
       } else if (algorithm === "SHA-256") {
         hashBuffer = await crypto.subtle.digest("SHA-256", data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -43,9 +50,14 @@ const HashGenerator = () => {
     }
   };
 
-  const copyToClipboard = (textToCopy) => {
-    navigator.clipboard.writeText(textToCopy);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async (textToCopy) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   return (

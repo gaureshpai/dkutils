@@ -1,9 +1,5 @@
-const { createClient } = require("@supabase/supabase-js");
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+// Reuse shared Supabase client from backend/index.js
+const { supabase } = require("../index");
 
 const SUPABASE_BUCKET_NAME = "utilityhub";
 const DAYS_TO_KEEP = 7;
@@ -93,6 +89,8 @@ const cleanSupabaseStorage = async () => {
     }
   } catch (error) {
     console.error("Error during Supabase storage cleanup:", error.message);
+    // Re-throw error to surface failures to schedulers/callers
+    throw error;
   }
 };
 

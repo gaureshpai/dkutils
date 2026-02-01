@@ -15,20 +15,25 @@ const MarkdownToHtmlConverter = () => {
     setMarkdown(newMarkdown);
     setHtml(marked(newMarkdown));
 
-    // Track usage on copy action
+    // Track usage on first non-empty markdown input change
     if (!hasTracked && newMarkdown.trim().length > 0) {
       trackToolUsage("MarkdownToHtmlConverter", "web");
       setHasTracked(true);
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(html);
-    toast.success("Copied to clipboard!");
-    // Track usage on copy action if not already tracked
-    if (!hasTracked) {
-      trackToolUsage("MarkdownToHtmlConverter", "web");
-      setHasTracked(true);
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(html);
+      toast.success("Copied to clipboard!");
+      // Track usage on copy action if not already tracked
+      if (!hasTracked) {
+        trackToolUsage("MarkdownToHtmlConverter", "web");
+        setHasTracked(true);
+      }
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
     }
   };
 
@@ -39,7 +44,7 @@ const MarkdownToHtmlConverter = () => {
         <div>
           <label
             htmlFor="markdownInput"
-            className="block mb-2 text-sm font-medium text-foreground text-foreground"
+            className="block mb-2 text-sm font-medium text-foreground"
           >
             Markdown Input
           </label>
@@ -53,15 +58,17 @@ const MarkdownToHtmlConverter = () => {
           ></textarea>
         </div>
         <div>
-          <label
-            htmlFor="htmlOutput"
-            className="block mb-2 text-sm font-medium text-foreground text-foreground"
-          >
-            HTML Output
+          <div className="flex items-center justify-between mb-2">
+            <label
+              htmlFor="htmlOutput"
+              className="block text-sm font-medium text-foreground"
+            >
+              HTML Output
+            </label>
             <button
               type="button"
               onClick={copyToClipboard}
-              className="ml-2 text-sm text-primary hover:underline"
+              className="text-sm text-primary hover:underline"
               aria-label="Copy HTML to clipboard"
             >
               <svg
@@ -75,7 +82,7 @@ const MarkdownToHtmlConverter = () => {
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>
             </button>
-          </label>
+          </div>
           <textarea
             id="htmlOutput"
             className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"

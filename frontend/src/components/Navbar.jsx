@@ -88,6 +88,8 @@ const Navbar = () => {
               variant="ghost"
               size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? (
                 <X className="h-5 w-5" />
@@ -101,7 +103,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Content (Simple overlay for now to avoid Sheet dependency first) */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b bg-background p-4">
+        <div id="mobile-menu" className="md:hidden border-b bg-background p-4">
           <nav className="flex flex-col space-y-4">
             {navItems.map((item) => (
               <Link

@@ -8,8 +8,6 @@ const PdfToExcelConverter = () => {
   const { trackToolUsage } = useAnalytics();
 
   const [selectedFile, setSelectedFile] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [convertedFile, setConvertedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
   const fileInputRef = useRef(null);
@@ -59,12 +57,8 @@ const PdfToExcelConverter = () => {
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/pdf-to-excel`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
         },
       );
-      setConvertedFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
       setSelectedFile(null);

@@ -1,7 +1,10 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useMemo } from "react";
 import TurndownService from "turndown";
 import { toast } from "react-toastify";
 import useAnalytics from "../utils/useAnalytics";
+
+// Create a single shared instance outside the component
+const turndownService = new TurndownService();
 
 const HtmlToMarkdownConverter = () => {
   const { trackToolUsage } = useAnalytics();
@@ -9,8 +12,6 @@ const HtmlToMarkdownConverter = () => {
   const [html, setHtml] = useState("");
   const [markdown, setMarkdown] = useState("");
   const [hasTracked, setHasTracked] = useState(false);
-
-  const turndownService = new TurndownService();
 
   const handleHtmlChange = (e) => {
     const newHtml = e.target.value;
@@ -24,9 +25,16 @@ const HtmlToMarkdownConverter = () => {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(markdown);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(markdown);
+      toast.success("Copied to clipboard!");
+      // Track copy action for analytics consistency
+      trackToolUsage("HtmlToMarkdownConverter:copy", "web");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   return (
@@ -36,7 +44,7 @@ const HtmlToMarkdownConverter = () => {
         <div>
           <label
             htmlFor="htmlInput"
-            className="block mb-2 text-sm font-medium text-foreground text-foreground"
+            className="block mb-2 text-sm font-medium text-foreground"
           >
             HTML Input
           </label>
@@ -52,7 +60,7 @@ const HtmlToMarkdownConverter = () => {
         <div>
           <label
             htmlFor="markdownOutput"
-            className="block mb-2 text-sm font-medium text-foreground text-foreground"
+            className="block mb-2 text-sm font-medium text-foreground"
           >
             Markdown Output
             <button

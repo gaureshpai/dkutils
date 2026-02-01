@@ -17,12 +17,15 @@ const LinkShortener = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await trackToolUsage("Link Shortener", "web");
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/shorten`,
         { originalUrl },
       );
       setShortUrl(res.data.shortUrl);
+      // Track usage only after successful shorten (fire-and-forget)
+      trackToolUsage("Link Shortener", "web").catch((err) =>
+        console.error("Analytics tracking error:", err),
+      );
     } catch (err) {
       console.error(err);
       toast.error(
@@ -33,9 +36,14 @@ const LinkShortener = () => {
     }
   };
 
-  const copyToClipboard = (textToCopy) => {
-    navigator.clipboard.writeText(textToCopy);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async (textToCopy) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   return (

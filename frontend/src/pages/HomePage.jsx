@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -21,10 +21,10 @@ import {
   Shield,
   Layout,
   Layers,
-  Github,
 } from "lucide-react";
 
 const HomePage = () => {
+  const siteUrl = import.meta.env.VITE_SITE_URL || "https://dkutils.vercel.app";
   const categories = [
     {
       title: "Image Tools",
@@ -106,7 +106,7 @@ const HomePage = () => {
           property="og:description"
           content="dkutils provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation."
         />
-        <meta property="og:image" content="/logo.png" />
+        <meta property="og:image" content={`${siteUrl}/logo.png`} />
         <meta property="og:url" content="https://dkutils.vercel.app/" />
       </Helmet>
 

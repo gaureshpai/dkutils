@@ -5,27 +5,20 @@ const path = require("path");
 const archiver = require("archiver");
 const { createClient } = require("@supabase/supabase-js");
 const dns = require("dns");
+const { isPrivateIP } = require("../utils/ipValidation");
+
+// Validate Supabase environment variables before creating client
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error(
+    "Missing required Supabase environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY",
+  );
+  process.exit(1);
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
-
-// Function to check if IP is private/reserved
-const isPrivateIP = (ip) => {
-  const privateRanges = [
-    /^10\./,
-    /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-    /^192\.168\./,
-    /^127\./,
-    /^169\.254\./,
-    /^::1$/,
-    /^fc00:/,
-    /^fe80:/,
-  ];
-
-  return privateRanges.some((range) => range.test(ip));
-};
 
 // Function to validate URL and check for private IPs
 const validateUrl = async (url) => {
@@ -43,8 +36,12 @@ const validateUrl = async (url) => {
       dns.resolve4(hostname, (err, addresses) => {
         if (err) {
           dns.resolve6(hostname, (err6, addresses6) => {
-            if (err6) resolve([]);
-            else resolve(addresses6);
+            if (err6) {
+              // Both IPv4 and IPv6 lookups failed - reject instead of resolving to empty array
+              reject(new Error(`DNS resolution failed: ${err.message}`));
+            } else {
+              resolve(addresses6);
+            }
           });
         } else {
           resolve(addresses);
@@ -102,6 +99,7 @@ router.post("/", async (req, res) => {
     const response = await axios.get(url, {
       maxRedirects: 0, // Disable redirects to prevent SSRF chains
       timeout: 5000,
+      validateStatus: (status) => status < 400, // Match seoTools.js pattern
     });
     const $ = cheerio.load(response.data);
     const faviconUrls = [];
@@ -134,23 +132,31 @@ router.post("/", async (req, res) => {
       zlib: { level: 9 },
     });
 
+    // Collect all file data first to avoid race conditions
+    const downloadPromises = faviconUrls.map(async (faviconUrl) => {
+      const fileData = await downloadFile(faviconUrl);
+      if (fileData && fileData.buffer) {
+        const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
+        return { buffer: fileData.buffer, name: fileName };
+      }
+      return null;
+    });
+
+    const fileDataArray = await Promise.all(downloadPromises);
+    const validFiles = fileDataArray.filter((file) => file !== null);
+
     const zipBuffer = await new Promise((resolve, reject) => {
       const buffers = [];
       archive.on("data", (data) => buffers.push(data));
       archive.on("end", () => resolve(Buffer.concat(buffers)));
       archive.on("error", (err) => reject(err));
 
-      const downloadPromises = faviconUrls.map(async (faviconUrl) => {
-        const fileData = await downloadFile(faviconUrl);
-        if (fileData && fileData.buffer) {
-          const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
-          archive.append(fileData.buffer, { name: fileName });
-        }
+      // Append files sequentially after all downloads complete
+      validFiles.forEach((file) => {
+        archive.append(file.buffer, { name: file.name });
       });
 
-      Promise.all(downloadPromises)
-        .then(() => archive.finalize())
-        .catch((err) => reject(err));
+      archive.finalize();
     });
 
     const zipFileName = `favicons-${Date.now()}.zip`;

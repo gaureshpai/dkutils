@@ -1,22 +1,7 @@
 const router = require("express").Router();
 const axios = require("axios");
 const dns = require("dns");
-
-// Function to check if IP is private/reserved
-const isPrivateIP = (ip) => {
-  const privateRanges = [
-    /^10\./,
-    /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-    /^192\.168\./,
-    /^127\./,
-    /^169\.254\./,
-    /^::1$/,
-    /^fc00:/,
-    /^fe80:/,
-  ];
-
-  return privateRanges.some((range) => range.test(ip));
-};
+const { isPrivateIP } = require("../utils/ipValidation");
 
 // Function to validate domain and resolve to check for private IPs
 const validateDomain = async (domain) => {
@@ -33,8 +18,12 @@ const validateDomain = async (domain) => {
       dns.resolve4(domain, (err, addresses) => {
         if (err) {
           dns.resolve6(domain, (err6, addresses6) => {
-            if (err6) resolve([]);
-            else resolve(addresses6);
+            if (err6) {
+              // Both IPv4 and IPv6 lookups failed - reject instead of resolving to empty array
+              reject(new Error(`DNS resolution failed: ${err.message}`));
+            } else {
+              resolve(addresses6);
+            }
           });
         } else {
           resolve(addresses);
@@ -103,7 +92,14 @@ router.post("/robots-txt", async (req, res) => {
   const httpsUrl = `https://${domain}/robots.txt`;
 
   let result = await fetchContent(httpsUrl);
-  if (!result.exists && result.error === "File not found (404)") {
+  // Fallback to HTTP if HTTPS fails with 404 or redirect-related errors
+  if (
+    !result.exists &&
+    (result.error === "File not found (404)" ||
+      result.error?.includes("redirect") ||
+      result.error?.includes("302") ||
+      result.error?.includes("301"))
+  ) {
     result = await fetchContent(url);
   }
 
@@ -130,7 +126,14 @@ router.post("/sitemap-xml", async (req, res) => {
   const httpsUrl = `https://${domain}/sitemap.xml`;
 
   let result = await fetchContent(httpsUrl);
-  if (!result.exists && result.error === "File not found (404)") {
+  // Fallback to HTTP if HTTPS fails with 404 or redirect-related errors
+  if (
+    !result.exists &&
+    (result.error === "File not found (404)" ||
+      result.error?.includes("redirect") ||
+      result.error?.includes("302") ||
+      result.error?.includes("301"))
+  ) {
     result = await fetchContent(url);
   }
 

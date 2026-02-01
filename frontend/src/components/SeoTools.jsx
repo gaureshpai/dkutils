@@ -22,12 +22,22 @@ const SeoTools = () => {
     setSitemapXmlError(null);
   };
 
-  const copyToClipboard = (textToCopy) => {
-    navigator.clipboard.writeText(textToCopy);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async (textToCopy) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   const fetchRobotsTxt = async () => {
+    // Early return if domain is empty
+    if (!domain?.trim()) {
+      return;
+    }
+
     setLoadingRobots(true);
     setRobotsTxtContent("");
     setRobotsTxtError(null);
@@ -42,9 +52,10 @@ const SeoTools = () => {
         trackToolUsage(`SeoTools:robots_txt_success:${domain}`, "web");
         toast.success("robots.txt fetched successfully!");
       } else {
-        setRobotsTxtContent(
+        setRobotsTxtError(
           res.data.error || "robots.txt not found or accessible.",
         );
+        setRobotsTxtContent("");
         trackToolUsage(`SeoTools:robots_txt_not_found:${domain}`, "web");
         toast.info("robots.txt not found or accessible.");
       }
@@ -61,6 +72,11 @@ const SeoTools = () => {
   };
 
   const fetchSitemapXml = async () => {
+    // Early return if domain is empty
+    if (!domain?.trim()) {
+      return;
+    }
+
     setLoadingSitemap(true);
     setSitemapXmlContent("");
     setSitemapXmlError(null);
@@ -120,7 +136,7 @@ const SeoTools = () => {
           type="button"
           onClick={fetchRobotsTxt}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-          disabled={loadingRobots}
+          disabled={loadingRobots || !domain?.trim()}
         >
           {loadingRobots ? "Fetching..." : "Fetch robots.txt"}
         </button>
@@ -128,7 +144,7 @@ const SeoTools = () => {
           type="button"
           onClick={fetchSitemapXml}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-          disabled={loadingSitemap}
+          disabled={loadingSitemap || !domain?.trim()}
         >
           {loadingSitemap ? "Fetching..." : "Fetch sitemap.xml"}
         </button>

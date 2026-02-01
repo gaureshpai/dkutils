@@ -14,8 +14,6 @@ const PdfSplitter = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
-  // eslint-disable-next-line no-unused-vars
-  const [convertedFile, setConvertedFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const onFileChange = async (e) => {
@@ -141,7 +139,6 @@ const PdfSplitter = () => {
           },
         },
       );
-      setConvertedFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
       setSelectedFile(null);

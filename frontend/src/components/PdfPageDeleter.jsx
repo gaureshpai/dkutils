@@ -89,6 +89,13 @@ const PdfPageDeleter = () => {
         }
       }
 
+      // Validate that at least one page remains
+      if (pagesToKeep.length === 0) {
+        toast.error("Cannot delete all pages. At least one page must remain.");
+        setLoading(false);
+        return;
+      }
+
       const newPdfDoc = await PDFDocument.create();
       const copiedPages = await newPdfDoc.copyPages(pdfDoc, pagesToKeep);
       copiedPages.forEach((page) => newPdfDoc.addPage(page));

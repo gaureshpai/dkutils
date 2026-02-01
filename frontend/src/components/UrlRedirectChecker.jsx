@@ -1,6 +1,7 @@
 ﻿import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { Copy } from "lucide-react";
 import useAnalytics from "../utils/useAnalytics";
 
 const UrlRedirectChecker = () => {
@@ -11,9 +12,14 @@ const UrlRedirectChecker = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const copyToClipboard = (textToCopy) => {
-    navigator.clipboard.writeText(textToCopy);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async (textToCopy) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -99,16 +105,7 @@ const UrlRedirectChecker = () => {
                   className="text-sm text-primary hover:underline"
                   aria-label="Copy URL to clipboard"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 inline-block"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                  </svg>
+                  <Copy className="h-5 w-5 inline-block" aria-hidden="true" />
                 </button>
               </li>
             ))}

@@ -9,7 +9,6 @@ const PasswordStrengthChecker = () => {
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(false);
   const { trackToolUsage } = useAnalytics();
-  const hasTrackedRef = useRef(false);
 
   const checkStrength = useCallback(
     async (pwd) => {
@@ -36,7 +35,7 @@ const PasswordStrengthChecker = () => {
         setLoading(false);
       }
     },
-    [trackToolUsage],
+    [],
   );
 
   const checkStrengthRef = useRef(checkStrength);
@@ -59,11 +58,12 @@ const PasswordStrengthChecker = () => {
     })(500),
   );
 
+  // Track usage once on component mount
   useEffect(() => {
-    if (!hasTrackedRef.current && password.length > 0) {
-      hasTrackedRef.current = true;
-      trackToolUsage("PasswordStrengthChecker", "web");
-    }
+    trackToolUsage("PasswordStrengthChecker", "web");
+  }, []);
+
+  useEffect(() => {
     debouncedCheckStrengthRef.current(password);
   }, [password]);
 

@@ -28,7 +28,7 @@ Many of the tools in the dkutils now support file uploads up to 10MB for unauthe
 To create a production-ready build of the frontend application, run:
 
 ```bash
-npm run build
+pnpm build
 ```
 
 The build artifacts will be placed in the `dist` directory.

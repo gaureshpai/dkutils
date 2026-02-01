@@ -15,7 +15,6 @@ const PasswordGenerator = () => {
 
   const generatePassword = () => {
     setLoading(true);
-    trackToolUsage("PasswordGenerator", "web");
     setTimeout(() => {
       let charset = "";
       let newPassword = "";
@@ -31,19 +30,28 @@ const PasswordGenerator = () => {
         return;
       }
 
+      // Use Web Crypto API for cryptographically secure random generation
+      const randomValues = new Uint32Array(length);
+      crypto.getRandomValues(randomValues);
+
       for (let i = 0; i < length; i++) {
-        newPassword += charset.charAt(
-          Math.floor(Math.random() * charset.length),
-        );
+        newPassword += charset.charAt(randomValues[i] % charset.length);
       }
       setPassword(newPassword);
       setLoading(false);
+      // Track usage only after successful generation
+      trackToolUsage("PasswordGenerator", "web");
     }, 500);
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(password);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(password);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error(`Unable to copy: ${error.message}`);
+    }
   };
 
   return (
@@ -52,7 +60,7 @@ const PasswordGenerator = () => {
       <div className="mb-4">
         <label
           htmlFor="lengthInput"
-          className="block mb-2 text-sm font-medium text-foreground text-foreground"
+          className="block mb-2 text-sm font-medium text-foreground"
         >
           Password Length:
         </label>
@@ -61,7 +69,7 @@ const PasswordGenerator = () => {
           type="number"
           className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           value={length}
-          onChange={(e) => setLength(parseInt(e.target.value))}
+          onChange={(e) => setLength(parseInt(e.target.value, 10))}
           min="4"
           max="32"
         />
@@ -74,7 +82,7 @@ const PasswordGenerator = () => {
             checked={includeUppercase}
             onChange={() => setIncludeUppercase(!includeUppercase)}
           />
-          <span className="ml-2 text-foreground text-foreground">
+          <span className="ml-2 text-foreground">
             Include Uppercase Letters
           </span>
         </label>
@@ -87,7 +95,7 @@ const PasswordGenerator = () => {
             checked={includeLowercase}
             onChange={() => setIncludeLowercase(!includeLowercase)}
           />
-          <span className="ml-2 text-foreground text-foreground">
+          <span className="ml-2 text-foreground">
             Include Lowercase Letters
           </span>
         </label>
@@ -100,7 +108,7 @@ const PasswordGenerator = () => {
             checked={includeNumbers}
             onChange={() => setIncludeNumbers(!includeNumbers)}
           />
-          <span className="ml-2 text-foreground text-foreground">
+          <span className="ml-2 text-foreground">
             Include Numbers
           </span>
         </label>
@@ -113,7 +121,7 @@ const PasswordGenerator = () => {
             checked={includeSymbols}
             onChange={() => setIncludeSymbols(!includeSymbols)}
           />
-          <span className="ml-2 text-foreground text-foreground">
+          <span className="ml-2 text-foreground">
             Include Symbols
           </span>
         </label>
