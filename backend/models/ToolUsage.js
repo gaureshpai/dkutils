@@ -5,7 +5,6 @@ const ToolUsageSchema = new mongoose.Schema(
     toolName: {
       type: String,
       required: true,
-      index: true,
     },
     category: {
       type: String,
@@ -26,7 +25,8 @@ const ToolUsageSchema = new mongoose.Schema(
   },
 );
 
-// Create a compound index for efficient queries
+// Create indexes for efficient queries and uniqueness
 ToolUsageSchema.index({ category: 1, usageCount: -1 });
+ToolUsageSchema.index({ toolName: 1, category: 1 }, { unique: true });
 
 module.exports = mongoose.model("ToolUsage", ToolUsageSchema);

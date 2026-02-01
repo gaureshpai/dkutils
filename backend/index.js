@@ -89,7 +89,7 @@ app.use("/api/auth", auth);
 
 const keepAlive = require("./routes/keepAlive");
 
-app.use("/api/keep-alive", keepAlive);
+app.use("/api/keep-alive", authMiddleware, keepAlive);
 
 const cleanSupabase = require("./routes/cleanSupabase");
 
