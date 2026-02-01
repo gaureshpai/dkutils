@@ -10,33 +10,30 @@ const PasswordStrengthChecker = () => {
   const [loading, setLoading] = useState(false);
   const { trackToolUsage } = useAnalytics();
 
-  const checkStrength = useCallback(
-    async (pwd) => {
-      if (pwd.length === 0) {
-        setStrengthScore(0);
-        setFeedback([]);
-        return;
-      }
+  const checkStrength = useCallback(async (pwd) => {
+    if (pwd.length === 0) {
+      setStrengthScore(0);
+      setFeedback([]);
+      return;
+    }
 
-      setLoading(true);
-      try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
-          { password: pwd },
-        );
-        setStrengthScore(res.data.score);
-        setFeedback(res.data.feedback);
-      } catch (err) {
-        console.error("Error checking password strength:", err);
-        setStrengthScore(0);
-        setFeedback(["Error checking strength."]);
-        toast.error("Failed to check password strength.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
+        { password: pwd },
+      );
+      setStrengthScore(res.data.score);
+      setFeedback(res.data.feedback);
+    } catch (err) {
+      console.error("Error checking password strength:", err);
+      setStrengthScore(0);
+      setFeedback(["Error checking strength."]);
+      toast.error("Failed to check password strength.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const checkStrengthRef = useRef(checkStrength);
 

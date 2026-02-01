@@ -56,8 +56,7 @@ const PdfToExcelConverter = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/pdf-to-excel`,
         formData,
-        {
-        },
+        {},
       );
 
       handleDownload(res.data.path, res.data.originalname);

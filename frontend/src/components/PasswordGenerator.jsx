@@ -108,9 +108,7 @@ const PasswordGenerator = () => {
             checked={includeNumbers}
             onChange={() => setIncludeNumbers(!includeNumbers)}
           />
-          <span className="ml-2 text-foreground">
-            Include Numbers
-          </span>
+          <span className="ml-2 text-foreground">Include Numbers</span>
         </label>
       </div>
       <div className="mb-4">
@@ -121,9 +119,7 @@ const PasswordGenerator = () => {
             checked={includeSymbols}
             onChange={() => setIncludeSymbols(!includeSymbols)}
           />
-          <span className="ml-2 text-foreground">
-            Include Symbols
-          </span>
+          <span className="ml-2 text-foreground">Include Symbols</span>
         </label>
       </div>
       <button
