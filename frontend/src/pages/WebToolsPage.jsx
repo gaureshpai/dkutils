@@ -62,7 +62,7 @@ const INITIAL_TOOLS = [
 ];
 
 const WebToolsPage = () => {
-  const tools = useSortedTools("web", INITIAL_TOOLS);
+  const { tools, isLoading } = useSortedTools("web", INITIAL_TOOLS);
 
   return (
     <>
@@ -93,7 +93,7 @@ const WebToolsPage = () => {
           A collection of tools for web developers and users.
         </p>
 
-        {tools.length === 0 ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div
               className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"

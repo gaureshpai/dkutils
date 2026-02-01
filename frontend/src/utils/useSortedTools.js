@@ -4,9 +4,11 @@ import useAnalytics from "./useAnalytics";
 const useSortedTools = (category, initialTools) => {
   const { getToolStats } = useAnalytics();
   const [tools, setTools] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAndSortTools = async () => {
+      setIsLoading(true);
       try {
         const stats = await getToolStats(category);
 
@@ -25,13 +27,15 @@ const useSortedTools = (category, initialTools) => {
       } catch (error) {
         console.error("Failed to sort tools:", error);
         setTools(initialTools);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchAndSortTools();
   }, [category, getToolStats, initialTools]);
 
-  return tools;
+  return { tools, isLoading };
 };
 
 export default useSortedTools;

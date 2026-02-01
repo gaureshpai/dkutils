@@ -39,20 +39,29 @@ const PasswordStrengthChecker = () => {
     [trackToolUsage],
   );
 
+  const checkStrengthRef = useRef(checkStrength);
+
+  useEffect(() => {
+    checkStrengthRef.current = checkStrength;
+  }, [checkStrength]);
+
   const debouncedCheckStrengthRef = useRef(
-    ((func, delay) => {
+    ((delay) => {
       let timeout;
       return function (...args) {
         const context = this;
         clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), delay);
+        timeout = setTimeout(
+          () => checkStrengthRef.current.apply(context, args),
+          delay,
+        );
       };
-    })(checkStrength, 500),
+    })(500),
   );
 
   useEffect(() => {
     debouncedCheckStrengthRef.current(password);
-  }, [password, checkStrength]);
+  }, [password]);
 
   const getStrengthColor = (score) => {
     if (score === 0) return "text-muted-foreground";

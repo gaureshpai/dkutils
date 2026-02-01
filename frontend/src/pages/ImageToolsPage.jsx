@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React from "react";
 import { Helmet } from "react-helmet-async";
 import ToolCard from "../components/ToolCard.jsx";
 import PngToJpgConverter from "../components/PngToJpgConverter.jsx";
@@ -10,88 +10,58 @@ import ImageCropper from "../components/ImageCropper.jsx";
 import ImageGrayscaler from "../components/ImageGrayscaler.jsx";
 import ImageFlipper from "../components/ImageFlipper.jsx";
 import ImageToBase64Converter from "../components/ImageToBase64Converter.jsx";
-import useAnalytics from "../utils/useAnalytics";
+import useSortedTools from "../utils/useSortedTools";
+
+const IMAGE_TOOL_DEFINITIONS = [
+  {
+    title: "Image Format Converter",
+    description: "Convert images between various formats (JPG, PNG, WebP, TIFF).",
+    component: ImageFormatConverter,
+  },
+  {
+    title: "Image Compressor",
+    description: "Reduce the file size of your images.",
+    component: ImageCompressor,
+  },
+  {
+    title: "Image Resizer",
+    description: "Change the dimensions of your images.",
+    component: ImageResizer,
+  },
+  {
+    title: "Image to PDF Converter",
+    description: "Combine multiple images into a single PDF document.",
+    component: ImageToPdfConverter,
+  },
+  {
+    title: "PNG to JPG Converter",
+    description: "Quickly convert PNG images to JPG format.",
+    component: PngToJpgConverter,
+  },
+  {
+    title: "Image Cropper",
+    description: "Crop images to a specific area.",
+    component: ImageCropper,
+  },
+  {
+    title: "Image Grayscaler",
+    description: "Convert your images to grayscale.",
+    component: ImageGrayscaler,
+  },
+  {
+    title: "Image Flipper",
+    description: "Flip images horizontally or vertically.",
+    component: ImageFlipper,
+  },
+  {
+    title: "Image to Base64 Converter",
+    description: "Convert images to Base64 strings.",
+    component: ImageToBase64Converter,
+  },
+];
 
 const ImageToolsPage = () => {
-  const { getToolStats } = useAnalytics();
-  const [tools, setTools] = useState([]);
-
-  useEffect(() => {
-    const fetchAndSortTools = async () => {
-      const initialTools = [
-        {
-          title: "Image Format Converter",
-          description:
-            "Convert images between various formats (JPG, PNG, WebP, TIFF).",
-          component: <ImageFormatConverter />,
-        },
-        {
-          title: "Image Compressor",
-          description: "Reduce the file size of your images.",
-          component: <ImageCompressor />,
-        },
-        {
-          title: "Image Resizer",
-          description: "Change the dimensions of your images.",
-          component: <ImageResizer />,
-        },
-        {
-          title: "Image to PDF Converter",
-          description: "Combine multiple images into a single PDF document.",
-          component: <ImageToPdfConverter />,
-        },
-        {
-          title: "PNG to JPG Converter",
-          description: "Quickly convert PNG images to JPG format.",
-          component: <PngToJpgConverter />,
-        },
-        {
-          title: "Image Cropper",
-          description: "Crop images to a specific area.",
-          component: <ImageCropper />,
-        },
-        {
-          title: "Image Grayscaler",
-          description: "Convert your images to grayscale.",
-          component: <ImageGrayscaler />,
-        },
-        {
-          title: "Image Flipper",
-          description: "Flip images horizontally or vertically.",
-          component: <ImageFlipper />,
-        },
-        {
-          title: "Image to Base64 Converter",
-          description: "Convert images to Base64 strings.",
-          component: <ImageToBase64Converter />,
-        },
-      ];
-
-      try {
-        const stats = await getToolStats("image");
-
-        // Create a map of usage counts
-        const usageMap = {};
-        stats.forEach((stat) => {
-          usageMap[stat.toolName] = stat.usageCount;
-        });
-
-        // Sort tools based on usage count (descending)
-        const sortedTools = [...initialTools].sort((a, b) => {
-          const usageA = usageMap[a.title] || 0;
-          const usageB = usageMap[b.title] || 0;
-          return usageB - usageA;
-        });
-
-        setTools(sortedTools);
-      } catch (error) {
-        console.error("Failed to sort tools:", error);
-        setTools(initialTools);
-      }
-    };
-
-    fetchAndSortTools();
-  }, [getToolStats]);
+  const { tools, isLoading } = useSortedTools("image", IMAGE_TOOL_DEFINITIONS);
 
   return (
     <>
@@ -122,7 +92,7 @@ const ImageToolsPage = () => {
           A suite of tools for image manipulation and conversion.
         </p>
 
-        {tools.length === 0 ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div
               className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
@@ -140,7 +110,10 @@ const ImageToolsPage = () => {
                 title={tool.title}
                 description={tool.description}
               >
-                {tool.component}
+                {(() => {
+                  const Component = tool.component;
+                  return <Component />;
+                })()}
               </ToolCard>
             ))}
           </div>

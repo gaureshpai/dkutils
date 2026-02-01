@@ -64,7 +64,7 @@ const INITIAL_TOOLS = [
 ];
 
 const TextToolsPage = () => {
-  const tools = useSortedTools("text", INITIAL_TOOLS);
+  const { tools, isLoading } = useSortedTools("text", INITIAL_TOOLS);
 
   return (
     <>
@@ -95,7 +95,7 @@ const TextToolsPage = () => {
           A set of utilities for text processing and manipulation.
         </p>
 
-        {tools.length === 0 ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div
               className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"

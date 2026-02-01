@@ -1,9 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeProviderContext = createContext({
-  theme: "system",
-  setTheme: () => null,
-});
+const ThemeProviderContext = createContext(undefined);
 
 /**
  * Provides theme context to descendants and synchronizes the current theme with the document root and localStorage.
