@@ -1,5 +1,16 @@
 const router = require("express").Router();
+const rateLimit = require("express-rate-limit");
 const ToolUsage = require("../models/ToolUsage");
+
+// Rate limiting for /track endpoint
+const trackLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: { msg: "Too many tracking requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipFailedRequests: true,
+});
 
 const isValidCategory = (category) => {
   if (!category) return false;
@@ -10,7 +21,7 @@ const isValidCategory = (category) => {
 // @route   POST /api/analytics/track
 // @desc    Track tool usage
 // @access  Public
-router.post("/track", async (req, res) => {
+router.post("/track", trackLimiter, async (req, res) => {
   try {
     const { toolName, category } = req.body;
 
@@ -46,18 +57,39 @@ router.post("/track", async (req, res) => {
 // @access  Public
 router.get("/stats", async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, page = 1, limit = 50 } = req.query;
+
+    // Validate and parse pagination parameters
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 50)); // Max 100 per page
 
     if (category && !isValidCategory(category)) {
       return res.status(400).json({ msg: "Invalid category" });
     }
 
     const query = category ? { category } : {};
+
+    // Get total count for pagination metadata
+    const total = await ToolUsage.countDocuments(query);
+
+    // Get paginated results
     const stats = await ToolUsage.find(query)
       .sort({ usageCount: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
       .select("toolName category usageCount lastUsed");
 
-    return res.json(stats);
+    return res.json({
+      data: stats,
+      pagination: {
+        currentPage: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
+      },
+    });
   } catch (err) {
     console.error("Error fetching tool usage stats:", err);
     return res.status(500).json({ msg: "Server Error" });
@@ -69,16 +101,24 @@ router.get("/stats", async (req, res) => {
 // @access  Public
 router.get("/popular", async (req, res) => {
   try {
-    const categories = ["image", "pdf", "text", "web"];
+    const categories = ToolUsage.schema.path("category").enumValues;
     const popularTools = {};
 
-    for (const category of categories) {
+    // Run all queries in parallel
+    const categoryPromises = categories.map(async (category) => {
       const tools = await ToolUsage.find({ category })
         .sort({ usageCount: -1 })
         .limit(10)
         .select("toolName usageCount");
+      return { category, tools };
+    });
+
+    const results = await Promise.all(categoryPromises);
+
+    // Populate the popularTools object
+    results.forEach(({ category, tools }) => {
       popularTools[category] = tools;
-    }
+    });
 
     return res.json(popularTools);
   } catch (err) {

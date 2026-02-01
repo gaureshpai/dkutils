@@ -30,23 +30,34 @@ const validateUrl = async (url) => {
       throw new Error("Only HTTP and HTTPS protocols are allowed");
     }
 
-    // Extract hostname and resolve to check IP addresses
+    // Extract hostname and resolve to check IP addresses (dual-stack support)
     const hostname = urlObj.hostname;
     const addresses = await new Promise((resolve, reject) => {
-      dns.resolve4(hostname, (err, addresses) => {
-        if (err) {
-          dns.resolve6(hostname, (err6, addresses6) => {
-            if (err6) {
-              // Both IPv4 and IPv6 lookups failed - reject instead of resolving to empty array
-              reject(new Error(`DNS resolution failed: ${err.message}`));
-            } else {
-              resolve(addresses6);
-            }
-          });
-        } else {
-          resolve(addresses);
-        }
+      // Run both IPv4 and IPv6 lookups in parallel for dual-stack support
+      const ipv4Promise = new Promise((res) => {
+        dns.resolve4(hostname, (err, addresses) => {
+          res(err ? [] : addresses);
+        });
       });
+
+      const ipv6Promise = new Promise((res) => {
+        dns.resolve6(hostname, (err, addresses) => {
+          res(err ? [] : addresses);
+        });
+      });
+
+      Promise.all([ipv4Promise, ipv6Promise])
+        .then(([ipv4Addresses, ipv6Addresses]) => {
+          const allAddresses = [...ipv4Addresses, ...ipv6Addresses];
+          if (allAddresses.length === 0) {
+            reject(new Error("DNS resolution failed for both IPv4 and IPv6"));
+          } else {
+            resolve(allAddresses);
+          }
+        })
+        .catch((err) =>
+          reject(new Error(`DNS resolution failed: ${err.message}`)),
+        );
     });
 
     // Check if any resolved IP is private
@@ -99,7 +110,7 @@ router.post("/", async (req, res) => {
     const response = await axios.get(url, {
       maxRedirects: 0, // Disable redirects to prevent SSRF chains
       timeout: 5000,
-      validateStatus: (status) => status < 400, // Match seoTools.js pattern
+      validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
     });
     const $ = cheerio.load(response.data);
     const faviconUrls = [];

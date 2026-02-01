@@ -130,6 +130,14 @@ app.get("/health", (req, res) => {
   res.status(200).send("Backend is healthy!");
 });
 
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    msg: err.message || "Server error",
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });

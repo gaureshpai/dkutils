@@ -63,7 +63,7 @@ router.post(
       const token = await new Promise((resolve, reject) => {
         if (!process.env.JWT_SECRET) {
           console.error("JWT_SECRET is missing!");
-          reject(new Error("JWT_SECRET is missing"));
+          return reject(new Error("JWT_SECRET is missing"));
         }
         jwt.sign(
           payload,
@@ -122,6 +122,10 @@ router.post(
       };
 
       const token = await new Promise((resolve, reject) => {
+        if (!process.env.JWT_SECRET) {
+          console.error("JWT_SECRET is missing!");
+          return reject(new Error("JWT_SECRET is missing"));
+        }
         jwt.sign(
           payload,
           process.env.JWT_SECRET,

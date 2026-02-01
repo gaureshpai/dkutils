@@ -40,8 +40,16 @@ jobs:
 
       - name: Detect changes and bump versions
         run: |
-          # Get changed files
-          BASE=$(git rev-parse --verify HEAD^ 2>/dev/null || echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904)
+          # Fetch tags and get the last release tag
+          git fetch --tags
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            BASE=$(git rev-list -n1 "$LAST_TAG")
+            echo "Using base commit $BASE from last tag $LAST_TAG"
+          else
+            BASE=$(git rev-parse --verify 4b825dc642cb6eb9a060e54bf8d69288fbee4904)
+            echo "No tags found, using empty-tree SHA $BASE"
+          fi
           CHANGED_FILES=$(git diff --name-only "$BASE" HEAD)
 
           # Determine which workspaces need version bumps
@@ -81,7 +89,14 @@ jobs:
           fi
 
           git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} release"
-          git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
+          # Check if tag already exists
+          TAG_NAME="v${{ steps.get_version.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$TAG_NAME"; then
+            echo "Tag $TAG_NAME already exists, force-updating"
+            git tag -a -f "$TAG_NAME" -m "Release $TAG_NAME"
+          else
+            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          fi
           echo "did_commit=true" >> $GITHUB_OUTPUT
 
       - name: Push changes and tags
