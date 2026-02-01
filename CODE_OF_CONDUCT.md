@@ -36,8 +36,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders via GitHub Issues.
-All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported privately to paigauresh@gmail.com. All reports will be handled with strict confidentiality and reviewed promptly and fairly. Public disclosure will only occur with the reporter's consent or as required by law.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

@@ -25,6 +25,7 @@ router.post("/", async (req, res) => {
 
     const response = await axios.get(screenshotUrl, {
       responseType: "arraybuffer",
+      timeout: 5000,
     });
     const imageBuffer = Buffer.from(response.data);
 
@@ -67,6 +68,15 @@ router.post("/", async (req, res) => {
       .json({ path: publicUrlData.publicUrl, originalname: zipFileName });
   } catch (err) {
     console.error("Error generating screenshot:", err);
+
+    // Handle timeout errors specifically
+    if (err.code === "ECONNABORTED") {
+      return res.status(408).json({
+        msg: "Request timeout. The screenshot API took too long to respond.",
+        error: err.message,
+      });
+    }
+
     return res.status(500).json({
       msg: "Failed to generate screenshot. Please check the URL and API key.",
       error: err.message,

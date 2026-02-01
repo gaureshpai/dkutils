@@ -6,6 +6,13 @@ router.post("/shorten", async (req, res) => {
   const { originalUrl } = req.body;
   let baseUrl = process.env.BASE_URL;
 
+  // Validate BASE_URL is set
+  if (!baseUrl) {
+    return res.status(500).json({
+      msg: "Server configuration error: BASE_URL environment variable is not set.",
+    });
+  }
+
   if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
     baseUrl = `https://${baseUrl}`;
   }
