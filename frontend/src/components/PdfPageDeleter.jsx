@@ -100,7 +100,7 @@ const PdfPageDeleter = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `utilityhub_${pdfFile.name}`;
+      a.download = `dkutils_${pdfFile.name}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

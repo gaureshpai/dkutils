@@ -1,8 +1,8 @@
-![Utility Hub Logo](frontend/public/logo.png)
-
-# Utility Hub
+# dkutils
 
 This is a web-based utility platform that provides users with multiple everyday tools in one place. It is built using the MERN stack (MongoDB, Express.js, React.js, Node.js) with TailwindCSS for styling.
+
+![dkutils Logo](frontend/public/logo.png)
 
 ## Environment Variables
 
@@ -14,7 +14,7 @@ Create a file named `.env` in the `backend` directory with the following content
 
 ```
 PORT=YOUR_BACKEND_PORT
-MONGO_URI=mongodb://localhost:27017/utilityhub
+MONGO_URI=mongodb://localhost:27017/dkutils
 JWT_SECRET=your_jwt_secret_key
 BASE_URL=http://localhost:5000
 SUPABASE_URL=your_supabase_url
@@ -104,8 +104,8 @@ This application includes JWT-based authentication. Some premium/bulk features a
 Navigate to the root directory of the project in your terminal:
 
 ```bash
-npm install
-npm start
+pnpm install
+pnpm start
 ```
 
 This will install all root dependencies (including `concurrently`) and then start both the backend and frontend servers. The backend server will run on the port specified in your `backend/.env` file (default: 5000) and the frontend application will open in your browser, usually at `http://localhost:3000`.
@@ -122,13 +122,13 @@ cd backend
 Install dependencies (if you haven't already):
 
 ```bash
-npm install
+pnpm install
 ```
 
 Start the server:
 
 ```bash
-npm start
+pnpm start
 ```
 
 The backend server will run on the port specified in your `backend/.env` file (default: 5000).
@@ -143,16 +143,16 @@ cd frontend
 Install dependencies (if you haven't already):
 
 ```bash
-npm install
+pnpm install
 ```
 
 Start the development server:
 
 ```bash
-npm start
+pnpm dev
 ```
 
 The frontend application will open in your browser, usually at `http://localhost:3000`.
 
 **4. MongoDB:**
-Ensure you have a MongoDB instance running. The application is configured to connect to `mongodb://localhost:27017/utilityhub`. If your MongoDB is running on a different port or location, update the `MONGO_URI` in `backend/.env` accordingly.
+Ensure you have a MongoDB instance running. The application is configured to connect to `mongodb://localhost:27017/dkutils`. If your MongoDB is running on a different port or location, update the `MONGO_URI` in `backend/.env` accordingly.

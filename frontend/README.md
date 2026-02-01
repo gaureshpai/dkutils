@@ -1,6 +1,6 @@
-# Frontend for Utility Hub
+# Frontend for dkutils
 
-This directory contains the frontend application for the Utility Hub, built with React and Vite.
+This directory contains the frontend application for the dkutils, built with React and Vite.
 
 ## Technologies Used
 
@@ -14,7 +14,7 @@ For detailed setup and running instructions, refer to the [main project README.m
 
 ## File Upload Limits
 
-Many of the tools in the Utility Hub now support file uploads up to 10MB for unauthenticated users, and up to 50MB for authenticated users, providing greater flexibility for larger files.
+Many of the tools in the dkutils now support file uploads up to 10MB for unauthenticated users, and up to 50MB for authenticated users, providing greater flexibility for larger files.
 
 ## Project Structure
 

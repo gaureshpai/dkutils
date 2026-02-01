@@ -1,56 +1,58 @@
-﻿import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import useAnalytics from "../utils/useAnalytics";
-
-const debounce = (func, delay) => {
-  const { trackToolUsage } = useAnalytics();
-
-  let timeout;
-  return function (...args) {
-    const context = this;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), delay);
-  };
-};
 
 const PasswordStrengthChecker = () => {
   const [password, setPassword] = useState("");
   const [strengthScore, setStrengthScore] = useState(0);
   const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { trackToolUsage } = useAnalytics();
 
-  const checkStrength = async (pwd) => {
-    if (pwd.length === 0) {
-      setStrengthScore(0);
-      setFeedback([]);
-      return;
-    }
+  const checkStrength = useCallback(
+    async (pwd) => {
+      if (pwd.length === 0) {
+        setStrengthScore(0);
+        setFeedback([]);
+        return;
+      }
 
-    setLoading(true);
-    trackToolUsage("PasswordStrengthChecker", "web");
-    try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
-        { password: pwd },
-      );
-      setStrengthScore(res.data.score);
-      setFeedback(res.data.feedback);
-    } catch (err) {
-      console.error("Error checking password strength:", err);
-      setStrengthScore(0);
-      setFeedback(["Error checking strength."]);
-      toast.error("Failed to check password strength.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(true);
+      trackToolUsage("PasswordStrengthChecker", "web");
+      try {
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
+          { password: pwd },
+        );
+        setStrengthScore(res.data.score);
+        setFeedback(res.data.feedback);
+      } catch (err) {
+        console.error("Error checking password strength:", err);
+        setStrengthScore(0);
+        setFeedback(["Error checking strength."]);
+        toast.error("Failed to check password strength.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [trackToolUsage],
+  );
 
-  const debouncedCheckStrengthRef = useRef(debounce(checkStrength, 500));
+  const debouncedCheckStrengthRef = useRef(
+    ((func, delay) => {
+      let timeout;
+      return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+      };
+    })(checkStrength, 500),
+  );
 
   useEffect(() => {
     debouncedCheckStrengthRef.current(password);
-  }, [password]);
+  }, [password, checkStrength]);
 
   const getStrengthColor = (score) => {
     if (score === 0) return "text-muted-foreground";

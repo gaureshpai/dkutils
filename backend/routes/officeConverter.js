@@ -52,7 +52,7 @@ router.post(
 
       const docxBuffer = await Packer.toBuffer(doc);
 
-      const fileName = `utilityhub_converted-${Date.now()}.docx`;
+      const fileName = `dkutils_converted-${Date.now()}.docx`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
         .upload(fileName, docxBuffer, {
@@ -112,7 +112,7 @@ router.post(
 
       const excelBuffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-      const fileName = `utilityhub_converted-${Date.now()}.xlsx`;
+      const fileName = `dkutils_converted-${Date.now()}.xlsx`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
         .upload(fileName, excelBuffer, {

@@ -85,9 +85,6 @@ const PdfSplitter = () => {
       return;
     }
 
-    setLoading(true);
-    trackToolUsage("PdfSplitter", "pdf");
-
     if (totalPages > 0) {
       const parts = ranges.split(",").map((p) => p.trim());
       let isValidRange = true;
@@ -126,6 +123,9 @@ const PdfSplitter = () => {
         return;
       }
     }
+
+    setLoading(true);
+    trackToolUsage("PdfSplitter", "pdf");
 
     const formData = new FormData();
     formData.append("pdf", selectedFile);

@@ -7,6 +7,7 @@ const LinkShortener = () => {
   const [originalUrl, setOriginalUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const { trackToolUsage } = useAnalytics();
 
   const onChange = (e) => {
     setOriginalUrl(e.target.value);

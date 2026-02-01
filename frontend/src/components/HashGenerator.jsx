@@ -52,7 +52,14 @@ const HashGenerator = () => {
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">Hash Generator</h2>
       <div className="mb-4">
+        <label
+          htmlFor="textInput"
+          className="block mb-2 text-sm font-medium text-foreground"
+        >
+          Enter Text
+        </label>
         <textarea
+          id="textInput"
           className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           rows="5"
           placeholder="Enter text here..."
@@ -62,6 +69,7 @@ const HashGenerator = () => {
       </div>
       <div className="mb-4">
         <button
+          type="button"
           onClick={() => generateHash("MD5")}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loading}
@@ -69,6 +77,7 @@ const HashGenerator = () => {
           {loading ? "Generating..." : "Generate MD5"}
         </button>
         <button
+          type="button"
           onClick={() => generateHash("SHA-256")}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loading}
@@ -82,14 +91,17 @@ const HashGenerator = () => {
           <h3 className="text-xl font-bold mb-2">
             MD5 Hash:
             <button
+              type="button"
               onClick={() => copyToClipboard(hashMd5)}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy MD5 hash to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
@@ -110,14 +122,17 @@ const HashGenerator = () => {
           <h3 className="text-xl font-bold mb-2">
             SHA256 Hash:
             <button
+              type="button"
               onClick={() => copyToClipboard(hashSha256)}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy SHA256 hash to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />

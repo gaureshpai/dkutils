@@ -109,6 +109,7 @@ const SeoTools = () => {
       </div>
       <div className="mb-4">
         <button
+          type="button"
           onClick={fetchRobotsTxt}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loadingRobots}
@@ -116,6 +117,7 @@ const SeoTools = () => {
           {loadingRobots ? "Fetching..." : "Fetch robots.txt"}
         </button>
         <button
+          type="button"
           onClick={fetchSitemapXml}
           className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
           disabled={loadingSitemap}
@@ -135,14 +137,17 @@ const SeoTools = () => {
           <h3 className="text-xl font-bold mb-2">
             robots.txt Content:
             <button
+              type="button"
               onClick={() => copyToClipboard(robotsTxtContent)}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy robots.txt content to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
@@ -169,14 +174,17 @@ const SeoTools = () => {
           <h3 className="text-xl font-bold mb-2">
             sitemap.xml Content:
             <button
+              type="button"
               onClick={() => copyToClipboard(sitemapXmlContent)}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy sitemap.xml content to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />

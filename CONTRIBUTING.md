@@ -1,6 +1,6 @@
-# Contributing to Utility Hub
+# Contributing to dkutils
 
-We welcome contributions to the Utility Hub project! To make the process smooth for everyone, please follow these simple guidelines.
+We welcome contributions to the dkutils project! To make the process smooth for everyone, please follow these simple guidelines.
 
 ## How to Contribute
 

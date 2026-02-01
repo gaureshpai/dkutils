@@ -54,7 +54,7 @@ const Navbar = () => {
         <div className="flex items-center">
           <Link to="/" className="flex items-center space-x-2">
             <Package2 className="h-6 w-6" />
-            <span className="font-bold sm:inline-block">Utility Hub</span>
+            <span className="font-bold sm:inline-block">dkutils</span>
           </Link>
         </div>
 

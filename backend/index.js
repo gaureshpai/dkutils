@@ -120,7 +120,7 @@ const analytics = require("./routes/analytics");
 app.use("/api/analytics", analytics);
 
 app.get("/", (req, res) => {
-  res.send("Hello from Utility Hub Backend!");
+  res.send("Hello from dkutils Backend!");
 });
 
 app.get("/health", (req, res) => {

@@ -71,12 +71,12 @@ router.post(
         archive.on("error", (err) => reject(err));
 
         archive.append(mergedPdfBuffer, {
-          name: `utilityhub_merged-${Date.now()}.pdf`,
+          name: `dkutils_merged-${Date.now()}.pdf`,
         });
         archive.finalize();
       });
 
-      const zipFileName = `utilityhub_merged_pdf_${Date.now()}.zip`;
+      const zipFileName = `dkutils_merged_pdf_${Date.now()}.zip`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
         .upload(zipFileName, archiveBuffer, {
@@ -159,12 +159,12 @@ router.post(
         archive.on("error", (err) => reject(err));
 
         archive.append(Buffer.from(newPdfBytes), {
-          name: `utilityhub_split-${Date.now()}.pdf`,
+          name: `dkutils_split-${Date.now()}.pdf`,
         });
         archive.finalize();
       });
 
-      const zipFileName = `utilityhub_split_pdf_${Date.now()}.zip`;
+      const zipFileName = `dkutils_split_pdf_${Date.now()}.zip`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
         .upload(zipFileName, archiveBuffer, {
@@ -279,12 +279,12 @@ router.post(
         archive.on("error", (err) => reject(err));
 
         archive.append(Buffer.from(modifiedPdfBytes), {
-          name: `utilityhub_rotated-${Date.now()}.pdf`,
+          name: `dkutils_rotated-${Date.now()}.pdf`,
         });
         archive.finalize();
       });
 
-      const zipFileName = `utilityhub_rotated_pdf_${Date.now()}.zip`;
+      const zipFileName = `dkutils_rotated_pdf_${Date.now()}.zip`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
         .upload(zipFileName, archiveBuffer, {
@@ -351,12 +351,12 @@ router.post(
         archive.on("error", (err) => reject(err));
 
         archive.append(Buffer.from(compressedPdfBytes), {
-          name: `utilityhub_compressed-${Date.now()}.pdf`,
+          name: `dkutils_compressed-${Date.now()}.pdf`,
         });
         archive.finalize();
       });
 
-      const zipFileName = `utilityhub_compressed_pdf_${Date.now()}.zip`;
+      const zipFileName = `dkutils_compressed_pdf_${Date.now()}.zip`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
         .upload(zipFileName, archiveBuffer, {

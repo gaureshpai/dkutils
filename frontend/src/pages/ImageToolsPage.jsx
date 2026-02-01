@@ -96,7 +96,7 @@ const ImageToolsPage = () => {
   return (
     <>
       <Helmet>
-        <title>Image Tools - Utility Hub</title>
+        <title>Image Tools - dkutils</title>
         <meta
           name="description"
           content="Explore our comprehensive suite of online image manipulation tools: Image Format Converter (JPG, PNG, WebP, TIFF, AVIF), Image Compressor, Image Resizer, Image to PDF Converter, PNG to JPG Converter, Image Cropper, Image Grayscaler, Image Flipper, and Image to Base64 Converter. Optimize, transform, and enhance your images with ease."
@@ -105,19 +105,16 @@ const ImageToolsPage = () => {
           name="keywords"
           content="image tools, image converter, image compressor, image resizer, image to PDF, PNG to JPG, image cropper, image grayscaler, image flipper, image to Base64, online image editor, photo editor, image optimization, convert image format, compress photos, resize images, crop images, grayscale image, flip image, Base64 image converter, free image tools"
         />
-        <meta property="og:title" content="Image Tools - Utility Hub" />
+        <meta property="og:title" content="Image Tools - dkutils" />
         <meta
           property="og:description"
           content="Explore our comprehensive suite of online image manipulation tools: Image Format Converter (JPG, PNG, WebP, TIFF, AVIF), Image Compressor, Image Resizer, Image to PDF Converter, PNG to JPG Converter, Image Cropper, Image Grayscaler, Image Flipper, and Image to Base64 Converter. Optimize, transform, and enhance your images with ease."
         />
         <meta
           property="og:image"
-          content="https://utilityhub.vercel.app/logo.png"
+          content="https://dkutils.vercel.app/logo.png"
         />
-        <meta
-          property="og:url"
-          content="https://utilityhub.vercel.app/images"
-        />
+        <meta property="og:url" content="https://dkutils.vercel.app/images" />
       </Helmet>
       <main className="container mx-auto py-10 px-4">
         <h2 className="text-3xl font-bold mb-2 text-primary">Image Tools</h2>

@@ -89,25 +89,25 @@ const HomePage = () => {
   return (
     <>
       <Helmet>
-        <title>Utility Hub - Your One-Stop Solution for Everyday Tools</title>
+        <title>dkutils - Your One-Stop Solution for Everyday Tools</title>
         <meta
           name="description"
-          content="Utility Hub provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation. Simplify your daily conversions and boost productivity with our versatile and user-friendly tools."
+          content="dkutils provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation. Simplify your daily conversions and boost productivity with our versatile and user-friendly tools."
         />
         <meta
           name="keywords"
-          content="utility hub, online tools, image tools, PDF tools, text tools, web tools, converter, compressor, resizer"
+          content="dkutils, online tools, image tools, PDF tools, text tools, web tools, converter, compressor, resizer"
         />
         <meta
           property="og:title"
-          content="Utility Hub - Your One-Stop Solution for Everyday Tools"
+          content="dkutils - Your One-Stop Solution for Everyday Tools"
         />
         <meta
           property="og:description"
-          content="Utility Hub provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation."
+          content="dkutils provides a comprehensive suite of free online tools for image, PDF, text, and web manipulation."
         />
         <meta property="og:image" content="/logo.png" />
-        <meta property="og:url" content="https://utilityhub.vercel.app/" />
+        <meta property="og:url" content="https://dkutils.vercel.app/" />
       </Helmet>
 
       {/* Hero Section */}
@@ -236,8 +236,8 @@ const HomePage = () => {
             Built with Modern Tech
           </h2>
           <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-            Utility Hub is powered by the latest web technologies to ensure
-            speed, security, and reliability.
+            dkutils is powered by the latest web technologies to ensure speed,
+            security, and reliability.
           </p>
         </div>
         <div className="mx-auto grid justify-center gap-6 sm:grid-cols-1 md:grid-cols-3 md:max-w-[64rem]">

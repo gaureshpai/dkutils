@@ -34,7 +34,7 @@ const cleanSupabaseStorage = async () => {
           throw error;
         }
 
-        if (data && data.length > 0) {
+        if (data && Array.isArray(data) && data.length > 0) {
           for (const item of data) {
             if (item.id !== null) {
               allFiles.push({
@@ -50,7 +50,7 @@ const cleanSupabaseStorage = async () => {
           }
         }
 
-        if (data.length < limit) {
+        if (!data || data.length < limit) {
           hasMore = false;
         } else {
           offset += limit;

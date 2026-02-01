@@ -96,7 +96,7 @@ const WebToolsPage = () => {
   return (
     <>
       <Helmet>
-        <title>Web Tools - Utility Hub</title>
+        <title>Web Tools - dkutils</title>
         <meta
           name="description"
           content="Discover essential online tools for web-related tasks: Link Shortener, QR Code Generator, QR Code Scanner, Website Screenshot Generator, Favicon Extractor, URL Redirect Checker, Robots.txt / Sitemap.xml Viewer, JSON <-> XML Converter, and Password Strength Checker. Optimize your web presence and streamline development workflows."
@@ -105,16 +105,16 @@ const WebToolsPage = () => {
           name="keywords"
           content="web tools, URL shortener, QR code generator, QR code scanner, website screenshot, favicon extractor, URL redirect checker, robots.txt viewer, sitemap.xml viewer, JSON XML converter, password strength checker, online web tools, free web tools, SEO tools, web development tools, API tools"
         />
-        <meta property="og:title" content="Web Tools - Utility Hub" />
+        <meta property="og:title" content="Web Tools - dkutils" />
         <meta
           property="og:description"
           content="Discover essential online tools for web-related tasks: Link Shortener, QR Code Generator, QR Code Scanner, Website Screenshot Generator, Favicon Extractor, URL Redirect Checker, Robots.txt / Sitemap.xml Viewer, JSON <-> XML Converter, and Password Strength Checker. Optimize your web presence and streamline development workflows."
         />
         <meta
           property="og:image"
-          content="https://utilityhub.vercel.app/logo.png"
+          content="https://dkutils.vercel.app/logo.png"
         />
-        <meta property="og:url" content="https://utilityhub.vercel.app/web" />
+        <meta property="og:url" content="https://dkutils.vercel.app/web" />
       </Helmet>
       <main className="container mx-auto py-10 px-4">
         <h2 className="text-3xl font-bold mb-2 text-primary">Web Tools</h2>

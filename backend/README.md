@@ -1,6 +1,6 @@
-# Backend for Utility Hub
+# Backend for dkutils
 
-This directory contains the backend services for the Utility Hub application.
+This directory contains the backend services for the dkutils application.
 
 ## Technologies Used
 

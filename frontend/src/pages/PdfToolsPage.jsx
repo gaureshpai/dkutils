@@ -95,7 +95,7 @@ const PdfToolsPage = () => {
   return (
     <>
       <Helmet>
-        <title>PDF Tools - Utility Hub</title>
+        <title>PDF Tools - dkutils</title>
         <meta
           name="description"
           content="Comprehensive tools for managing your PDF documents: merge multiple PDFs, split PDFs by pages, compress PDF file size, protect PDFs with passwords, remove PDF passwords, convert PDF to text, rotate PDF pages, and generate PDFs from plain text. Simplify your PDF workflows with our free online tools."
@@ -104,16 +104,16 @@ const PdfToolsPage = () => {
           name="keywords"
           content="PDF tools, PDF merger, PDF splitter, PDF compressor, PDF password protector, PDF password remover, PDF to text converter, PDF rotator, text to PDF generator, online PDF tools, free PDF tools, merge PDF, split PDF, compress PDF, protect PDF, remove PDF password, rotate PDF, convert text to PDF"
         />
-        <meta property="og:title" content="PDF Tools - Utility Hub" />
+        <meta property="og:title" content="PDF Tools - dkutils" />
         <meta
           property="og:description"
           content="Comprehensive tools for managing your PDF documents: merge multiple PDFs, split PDFs by pages, compress PDF file size, protect PDFs with passwords, remove PDF passwords, convert PDF to text, rotate PDF pages, and generate PDFs from plain text. Simplify your PDF workflows with our free online tools."
         />
         <meta
           property="og:image"
-          content="https://utilityhub.vercel.app/logo.png"
+          content="https://dkutils.vercel.app/logo.png"
         />
-        <meta property="og:url" content="https://utilityhub.vercel.app/pdfs" />
+        <meta property="og:url" content="https://dkutils.vercel.app/pdfs" />
       </Helmet>
       <main className="container mx-auto py-10 px-4">
         <h2 className="text-3xl font-bold mb-2 text-primary">PDF Tools</h2>
