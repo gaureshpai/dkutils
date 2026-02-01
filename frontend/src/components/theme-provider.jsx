@@ -1,10 +1,19 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeProviderContext = createContext({
   theme: "system",
   setTheme: () => null,
 });
 
+/**
+ * Provides theme context to descendants and synchronizes the current theme with the document root and localStorage.
+ *
+ * @param {Object} props - Component props.
+ * @param {import('react').ReactNode} props.children - React nodes to render inside the provider.
+ * @param {'light'|'dark'|'system'} [props.defaultTheme="system"] - Theme to use when no persisted value exists.
+ * @param {string} [props.storageKey="vite-ui-theme"] - localStorage key used to persist the selected theme.
+ * @returns {JSX.Element} A Context Provider that supplies `{ theme, setTheme }` to its children.
+ */
 export function ThemeProvider({
   children,
   defaultTheme = "system",

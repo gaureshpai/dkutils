@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
@@ -22,6 +22,13 @@ const badgeVariants = cva(
   },
 );
 
+/**
+ * Render a styled badge container whose visual appearance is chosen by `variant`.
+ * @param {string} [className] - Additional class names to apply to the badge root.
+ * @param {'default'|'secondary'|'destructive'|'outline'} [variant] - Visual variant to apply.
+ * @param {Object} [props] - Additional props forwarded to the root div (e.g., children, event handlers, ARIA attributes).
+ * @returns {JSX.Element} The rendered badge div element.
+ */
 function Badge({ className, variant, ...props }) {
   return (
     <div className={cn(badgeVariants({ variant }), className)} {...props} />

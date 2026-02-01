@@ -1,7 +1,12 @@
-﻿import { Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTheme } from "./theme-provider";
 
+/**
+ * Render a button that toggles the application theme between "dark" and "light".
+ *
+ * @returns {JSX.Element} The theme toggle button showing a sun or moon icon and switching the theme on click.
+ */
 export function ModeToggle() {
   const { theme, setTheme } = useTheme();
 
