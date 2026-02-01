@@ -1,15 +1,14 @@
-# Backend for Utility Hub
+# Backend for dkutils
 
-This directory contains the backend services for the Utility Hub application.
+This directory contains the backend services for the dkutils application.
 
 ## Technologies Used
 
-*   Node.js
-*   Express.js
-*   MongoDB (via Mongoose)
-*   JWT for authentication
-*   Supabase for file storage
-*   ESLint for code quality
+- Node.js
+- Express.js
+- MongoDB (via Mongoose)
+- JWT for authentication
+- Supabase for file storage
 
 For detailed setup and running instructions, refer to the [main project README.md](../../README.md).
 

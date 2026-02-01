@@ -1,4 +1,4 @@
-const multer = require('multer');
+const multer = require("multer");
 
 const storage = multer.memoryStorage();
 
@@ -13,10 +13,18 @@ const uploadLimiter = (req, res, next) => {
     storage,
     limits: { fileSize: fileSizeLimit },
     fileFilter: (filterReq, file, cb) => {
-      if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.mimetype === 'text/csv') {
+      if (
+        file.mimetype.startsWith("image/") ||
+        file.mimetype === "application/pdf" ||
+        file.mimetype ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.mimetype ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        file.mimetype === "text/csv"
+      ) {
         cb(null, true);
       } else {
-        cb(new Error('Invalid file type.'), false);
+        cb(new Error("Invalid file type."), false);
       }
     },
   });

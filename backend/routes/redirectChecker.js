@@ -1,14 +1,14 @@
-const router = require('express').Router();
-const axios = require('axios');
+const router = require("express").Router();
+const axios = require("axios");
 
 // @route   POST /api/redirect-checker
 // @desc    Check URL redirects and return the redirect chain
 // @access  Public
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const { url } = req.body;
 
   if (!url) {
-    return res.status(400).json({ msg: 'URL is required' });
+    return res.status(400).json({ msg: "URL is required" });
   }
 
   const redirectChain = [];
@@ -17,7 +17,6 @@ router.post('/', async (req, res) => {
   try {
     for (let i = 0; i < 10; i += 1) {
       try {
-        // eslint-disable-next-line no-await-in-loop
         const response = await axios.head(currentUrl, {
           maxRedirects: 0,
           validateStatus: (status) => status >= 200 && status < 400,
@@ -25,9 +24,13 @@ router.post('/', async (req, res) => {
 
         redirectChain.push({ url: currentUrl, status: response.status });
 
-        if (response.status >= 300 && response.status < 400 && response.headers.location) {
+        if (
+          response.status >= 300 &&
+          response.status < 400 &&
+          response.headers.location
+        ) {
           currentUrl = response.headers.location;
-          if (!currentUrl.startsWith('http')) {
+          if (!currentUrl.startsWith("http")) {
             const urlObj = new URL(response.request.res.responseUrl);
             currentUrl = new URL(currentUrl, urlObj).href;
           }
@@ -39,8 +42,10 @@ router.post('/', async (req, res) => {
       }
     }
 
-    if (redirectChain.length === 0
-      || redirectChain[redirectChain.length - 1].url !== currentUrl) {
+    if (
+      redirectChain.length === 0 ||
+      redirectChain[redirectChain.length - 1].url !== currentUrl
+    ) {
       const finalResponse = await axios.get(currentUrl);
       redirectChain.push({
         url: finalResponse.request.res.responseUrl,
@@ -50,15 +55,15 @@ router.post('/', async (req, res) => {
 
     return res.status(200).json({ chain: redirectChain });
   } catch (err) {
-    console.error('Error checking redirects:', err);
-    let errorMessage = 'Failed to check redirects.';
+    console.error("Error checking redirects:", err);
+    let errorMessage = "Failed to check redirects.";
     if (err.response) {
       errorMessage = `Request failed with status code ${err.response.status}.`;
       if (err.response.headers.location) {
         errorMessage += ` Redirected to: ${err.response.headers.location}`;
       }
     } else if (err.request) {
-      errorMessage = 'No response received from the server.';
+      errorMessage = "No response received from the server.";
     } else {
       errorMessage = err.message;
     }

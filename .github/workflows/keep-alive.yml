@@ -1,27 +1,24 @@
 name: Supabase Keep-Alive
-on: 
+on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    # Run weekly on Sundays at midnight UTC
+    - cron: "0 0 * * 0"
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-    - name: Generate random sleep duration
-      id: random_sleep
-      run: |
-        # Generate a random number of seconds between 0 and 1799 (less than 30 minutes)
-        RANDOM_SECONDS=$(( RANDOM % 1800 ))
-        echo "Random sleep duration: ${RANDOM_SECONDS} seconds"
-        echo "random_seconds=${RANDOM_SECONDS}" >> $GITHUB_OUTPUT
-    - name: Sleep for random duration
-      run: sleep ${{ steps.random_sleep.outputs.random_seconds }}
-      shell: bash
-    - name: Call keep-alive API on Vercel backend
-      run: curl -X POST ${{ secrets.VERCEL_BACKEND_URL }}/api/keep-alive
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Generate random sleep duration
+        id: random_sleep
+        run: |
+          # Generate a random number of seconds between 0 and 1799 (less than 30 minutes)
+          RANDOM_SECONDS=$(( RANDOM % 1800 ))
+          echo "Random sleep duration: ${RANDOM_SECONDS} seconds"
+          echo "random_seconds=${RANDOM_SECONDS}" >> $GITHUB_OUTPUT
+      - name: Sleep for random duration
+        run: sleep ${{ steps.random_sleep.outputs.random_seconds }}
+        shell: bash
+      - name: Call keep-alive API on Vercel backend
+        run: curl -X POST ${{ secrets.VERCEL_BACKEND_URL }}/api/keep-alive

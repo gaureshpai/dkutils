@@ -1,16 +1,79 @@
-const router = require('express').Router();
-const axios = require('axios');
-const cheerio = require('cheerio');
-const path = require('path');
-const archiver = require('archiver');
-const { createClient } = require('@supabase/supabase-js');
+const router = require("express").Router();
+const axios = require("axios");
+const cheerio = require("cheerio");
+const path = require("path");
+const archiver = require("archiver");
+const { supabase } = require("../utils/supabaseClient");
+const dns = require("dns");
+const { isPrivateIP } = require("../utils/ipValidation");
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+// Function to validate URL and check for private IPs
+const validateUrl = async (url) => {
+  try {
+    const urlObj = new URL(url);
+
+    // Only allow http and https protocols
+    if (!["http:", "https:"].includes(urlObj.protocol)) {
+      throw new Error("Only HTTP and HTTPS protocols are allowed");
+    }
+
+    // Extract hostname and resolve to check IP addresses (dual-stack support)
+    const hostname = urlObj.hostname;
+    const addresses = await new Promise((resolve, reject) => {
+      // Run both IPv4 and IPv6 lookups in parallel for dual-stack support
+      const ipv4Promise = new Promise((res) => {
+        dns.resolve4(hostname, (err, addresses) => {
+          res(err ? [] : addresses);
+        });
+      });
+
+      const ipv6Promise = new Promise((res) => {
+        dns.resolve6(hostname, (err, addresses) => {
+          res(err ? [] : addresses);
+        });
+      });
+
+      Promise.all([ipv4Promise, ipv6Promise])
+        .then(([ipv4Addresses, ipv6Addresses]) => {
+          const allAddresses = [...ipv4Addresses, ...ipv6Addresses];
+          if (allAddresses.length === 0) {
+            reject(new Error("DNS resolution failed for both IPv4 and IPv6"));
+          } else {
+            resolve(allAddresses);
+          }
+        })
+        .catch((err) =>
+          reject(new Error(`DNS resolution failed: ${err.message}`)),
+        );
+    });
+
+    // Check if any resolved IP is private
+    for (const ip of addresses) {
+      if (isPrivateIP(ip)) {
+        throw new Error("Private IP ranges not allowed");
+      }
+    }
+
+    return true;
+  } catch (error) {
+    throw new Error(`URL validation failed: ${error.message}`);
+  }
+};
 
 const downloadFile = async (fileUrl) => {
   try {
-    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    return { buffer: Buffer.from(response.data), contentType: response.headers['content-type'] };
+    // Validate the URL before making the request
+    await validateUrl(fileUrl);
+
+    const response = await axios.get(fileUrl, {
+      responseType: "arraybuffer",
+      maxRedirects: 0, // Disable redirects to prevent SSRF chains
+      timeout: 5000,
+    });
+    return {
+      buffer: Buffer.from(response.data),
+      contentType: response.headers["content-type"],
+    };
   } catch (error) {
     console.error(`Failed to download file from ${fileUrl}:`, error.message);
     return null;
@@ -20,29 +83,38 @@ const downloadFile = async (fileUrl) => {
 // @route   POST /api/favicon
 // @desc    Extract favicons from a given URL and upload to Supabase as a ZIP
 // @access  Public
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const { url } = req.body;
 
   if (!url) {
-    return res.status(400).json({ msg: 'URL is required' });
+    return res.status(400).json({ msg: "URL is required" });
   }
 
   try {
-    const response = await axios.get(url);
+    // Validate the main URL before processing
+    await validateUrl(url);
+
+    const response = await axios.get(url, {
+      maxRedirects: 0, // Disable redirects to prevent SSRF chains
+      timeout: 5000,
+      validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
+    });
     const $ = cheerio.load(response.data);
     const faviconUrls = [];
 
-    $('link[rel~="icon"], link[rel~="shortcut icon"], link[rel~="apple-touch-icon"]').each((i, el) => {
-      let href = $(el).attr('href');
+    $(
+      'link[rel~="icon"], link[rel~="shortcut icon"], link[rel~="apple-touch-icon"]',
+    ).each((i, el) => {
+      let href = $(el).attr("href");
       if (href) {
-        if (href.startsWith('//')) {
+        if (href.startsWith("//")) {
           href = `https:${href}`;
-        } else if (href.startsWith('/')) {
+        } else if (href.startsWith("/")) {
           const urlObj = new URL(url);
           href = `${urlObj.protocol}//${urlObj.host}${href}`;
-        } else if (!href.startsWith('http')) {
+        } else if (!href.startsWith("http")) {
           const urlObj = new URL(url);
-          href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf('/') + 1)}${href}`;
+          href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf("/") + 1)}${href}`;
         }
         faviconUrls.push(href);
       }
@@ -54,50 +126,66 @@ router.post('/', async (req, res) => {
       faviconUrls.push(defaultFavicon);
     }
 
-    const archive = archiver('zip', {
+    const archive = archiver("zip", {
       zlib: { level: 9 },
     });
 
+    // Collect all file data first to avoid race conditions
+    const downloadPromises = faviconUrls.map(async (faviconUrl) => {
+      const fileData = await downloadFile(faviconUrl);
+      if (fileData && fileData.buffer) {
+        const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
+        return { buffer: fileData.buffer, name: fileName };
+      }
+      return null;
+    });
+
+    const fileDataArray = await Promise.all(downloadPromises);
+    const validFiles = fileDataArray.filter((file) => file !== null);
+
     const zipBuffer = await new Promise((resolve, reject) => {
       const buffers = [];
-      archive.on('data', (data) => buffers.push(data));
-      archive.on('end', () => resolve(Buffer.concat(buffers)));
-      archive.on('error', (err) => reject(err));
+      archive.on("data", (data) => buffers.push(data));
+      archive.on("end", () => resolve(Buffer.concat(buffers)));
+      archive.on("error", (err) => reject(err));
 
-      const downloadPromises = faviconUrls.map(async (faviconUrl) => {
-        const fileData = await downloadFile(faviconUrl);
-        if (fileData && fileData.buffer) {
-          const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || 'default.ico')}`;
-          archive.append(fileData.buffer, { name: fileName });
-        }
+      // Append files sequentially after all downloads complete
+      validFiles.forEach((file) => {
+        archive.append(file.buffer, { name: file.name });
       });
 
-      Promise.all(downloadPromises)
-        .then(() => archive.finalize())
-        .catch((err) => reject(err));
+      archive.finalize();
     });
 
     const zipFileName = `favicons-${Date.now()}.zip`;
     const { error } = await supabase.storage
-      .from('utilityhub')
+      .from("utilityhub")
       .upload(`favicons/${zipFileName}`, zipBuffer, {
-        contentType: 'application/zip',
+        contentType: "application/zip",
         upsert: true,
       });
 
     if (error) {
-      console.error('Supabase upload error:', error);
-      return res.status(500).json({ msg: 'Failed to upload favicon ZIP to Supabase', error: error.message });
+      console.error("Supabase upload error:", error);
+      return res.status(500).json({
+        msg: "Failed to upload favicon ZIP to Supabase",
+        error: error.message,
+      });
     }
 
     const { data: publicUrlData } = supabase.storage
-      .from('utilityhub')
+      .from("utilityhub")
       .getPublicUrl(`favicons/${zipFileName}`);
 
-    return res.status(200).json({ path: publicUrlData.publicUrl, originalname: zipFileName });
+    return res
+      .status(200)
+      .json({ path: publicUrlData.publicUrl, originalname: zipFileName });
   } catch (err) {
-    console.error('Error extracting favicons:', err);
-    return res.status(500).json({ msg: 'Failed to extract favicons. Please check the URL.', error: err.message });
+    console.error("Error extracting favicons:", err);
+    return res.status(500).json({
+      msg: "Failed to extract favicons. Please check the URL.",
+      error: err.message,
+    });
   }
 });
 

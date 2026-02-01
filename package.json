@@ -1,10 +1,23 @@
 {
-  "name": "UtilityHub",
-  "version": "1.3.1",
+  "name": "dkutils",
+  "version": "1.3.2",
   "description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+      }
+    }
+  },
   "scripts": {
-    "start": "concurrently \"npm start --prefix backend\" \"npm run dev --prefix frontend\"",
-    "dev": "npm start"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "format": "prettier --write .",
+    "prepare": "husky",
+    "start": "turbo run start"
   },
   "keywords": [
     "utility",
@@ -31,6 +44,12 @@
   "author": "gaureshpai",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.3.3",
+    "turbo": "^2.8.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": "prettier --write"
   }
 }

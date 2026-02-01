@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const ServiceUsageSchema = new mongoose.Schema({
   endpoint: {
@@ -19,7 +19,7 @@ const TotalUsageSchema = new mongoose.Schema({
   },
 });
 
-const ServiceUsage = mongoose.model('ServiceUsage', ServiceUsageSchema);
-const TotalUsage = mongoose.model('TotalUsage', TotalUsageSchema);
+const ServiceUsage = mongoose.model("ServiceUsage", ServiceUsageSchema);
+const TotalUsage = mongoose.model("TotalUsage", TotalUsageSchema);
 
 module.exports = { ServiceUsage, TotalUsage };

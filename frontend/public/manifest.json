@@ -1,6 +1,6 @@
 {
-  "short_name": "UtilityHub",
-  "name": "UtilityHub - Centralized Utility Management",
+  "short_name": "dkutils",
+  "name": "dkutils - Centralized Utility Management",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
