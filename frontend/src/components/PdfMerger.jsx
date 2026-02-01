@@ -62,7 +62,6 @@ const PdfMerger = () => {
     }
 
     setLoading(true);
-    trackToolUsage("PdfMerger", "pdf");
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/merge-pdfs`,
@@ -76,7 +75,7 @@ const PdfMerger = () => {
       setConvertedFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
-      trackToolUsage("PDF Merger", "pdf");
+      trackToolUsage("PdfMerger", "pdf");
       setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

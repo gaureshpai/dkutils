@@ -50,7 +50,7 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token && token !== "") {
+    if (token) {
       try {
         const decoded = jwtDecode(token);
         const currentTime = Date.now() / 1000;

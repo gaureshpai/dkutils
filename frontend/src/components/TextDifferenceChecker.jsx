@@ -6,6 +6,15 @@ import useAnalytics from "../utils/useAnalytics";
 const TextDifferenceChecker = () => {
   const { trackToolUsage } = useAnalytics();
 
+  const escapeHtml = (value) =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/`/g, "&#96;");
+
   const [text1, setText1] = useState("");
   const [text2, setText2] = useState("");
   const [diffResult, setDiffResult] = useState("");
@@ -30,12 +39,13 @@ const TextDifferenceChecker = () => {
       const html = diff
         .map((part) => {
           const [type, text] = part;
+          const safeText = escapeHtml(text);
           if (type === 0) {
-            return text;
+            return safeText;
           } else if (type === 1) {
-            return `<span class="bg-chart-2/20">${text}</span>`;
+            return `<span class="bg-chart-2/20">${safeText}</span>`;
           } else if (type === -1) {
-            return `<span class="bg-destructive/20">${text}</span>`;
+            return `<span class="bg-destructive/20">${safeText}</span>`;
           }
           return "";
         })

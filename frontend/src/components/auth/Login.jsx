@@ -37,12 +37,13 @@ const Login = () => {
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    trackToolUsage("Login", "web");
     setError(null);
     try {
       const user = { email, password };
       const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
       const res = await axios.post(`${baseUrl}/api/auth/login`, user);
+
+      trackToolUsage("Login", "web");
 
       const decoded = jwtDecode(res.data.token);
       dispatch({
@@ -107,7 +108,7 @@ const Login = () => {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••"
                 autoComplete="current-password"
                 required
                 value={password}

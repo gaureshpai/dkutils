@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useRef, useState } from "react";
 import jsQR from "jsqr";
 import { toast } from "react-toastify";
 import useAnalytics from "../utils/useAnalytics";
@@ -7,6 +7,7 @@ const QrCodeScanner = () => {
   const { trackToolUsage } = useAnalytics();
 
   const [qrData, setQrData] = useState("");
+  const lastTrackedQrDataRef = useRef("");
 
   const copyToClipboard = (textToCopy) => {
     navigator.clipboard.writeText(textToCopy);
@@ -52,8 +53,13 @@ const QrCodeScanner = () => {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-        if (code) {
-          setQrData(code.data);
+        if (code && code.data) {
+          const decodedValue = String(code.data);
+          setQrData(decodedValue);
+          if (decodedValue && decodedValue !== lastTrackedQrDataRef.current) {
+            lastTrackedQrDataRef.current = decodedValue;
+            trackToolUsage("QrCodeScanner", "web");
+          }
           toast.success("QR Code detected!");
         } else {
           setQrData("No QR code found.");
@@ -89,15 +95,20 @@ const QrCodeScanner = () => {
           <h3 className="text-xl font-bold mb-2">
             QR Code Data:
             <button
+              type="button"
               onClick={() => copyToClipboard(qrData)}
               className="ml-2 text-sm text-primary hover:underline"
+              aria-label="Copy QR code"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 inline-block"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                role="img"
+                aria-labelledby="copy-qr-code-title"
               >
+                <title id="copy-qr-code-title">Copy QR code</title>
                 <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
               </svg>

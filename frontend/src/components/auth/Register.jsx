@@ -128,7 +128,7 @@ const Register = () => {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••"
                 autoComplete="new-password"
                 required
                 value={password}
@@ -142,7 +142,7 @@ const Register = () => {
                 id="password2"
                 name="password2"
                 type="password"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••"
                 autoComplete="new-password"
                 required
                 value={password2}
