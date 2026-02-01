@@ -5,18 +5,7 @@ const sharp = require("sharp");
 const path = require("path");
 const os = require("os");
 const fsp = require("fs").promises;
-const { createClient } = require("@supabase/supabase-js");
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error(
-    "SUPABASE_SERVICE_ROLE_KEY is required for server-side Supabase storage operations.",
-  );
-}
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const { supabase } = require("../utils/supabaseClient");
 
 // @route   POST /api/convert/png-to-jpg
 // @desc    Convert PNG images to JPG
@@ -467,7 +456,9 @@ router.post(
 
       const { format } = req.body;
       const allowedFormats = ["jpeg", "png", "webp", "tiff", "gif", "avif"];
-      if (!format || !allowedFormats.includes(format.toLowerCase())) {
+      const normalizedFormat = format ? format.toLowerCase().trim() : "";
+
+      if (!normalizedFormat || !allowedFormats.includes(normalizedFormat)) {
         return res.status(400).json({
           msg: `Invalid format provided. Allowed formats are: ${allowedFormats.join(", ")}`,
         });
@@ -489,11 +480,11 @@ router.post(
           const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
 
           const convertedBuffer = await sharp(imageBuffer)
-            .toFormat(format)
+            .toFormat(normalizedFormat)
             .toBuffer();
 
           archive.append(convertedBuffer, {
-            name: `dkutils_${nameWithoutExt}_converted.${format}`,
+            name: `dkutils_${nameWithoutExt}_converted.${normalizedFormat}`,
           });
         });
 

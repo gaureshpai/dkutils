@@ -121,8 +121,8 @@ const HashGenerator = () => {
             </button>
           </h3>
           <textarea
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm h-max"
-            rows="1"
+            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm font-mono resize-none overflow-x-auto"
+            rows="2"
             readOnly
             value={hashMd5}
           ></textarea>
@@ -152,8 +152,8 @@ const HashGenerator = () => {
             </button>
           </h3>
           <textarea
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm h-max"
-            rows="1"
+            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm font-mono resize-none overflow-x-auto"
+            rows="2"
             readOnly
             value={hashSha256}
           ></textarea>

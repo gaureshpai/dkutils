@@ -50,11 +50,17 @@ const JsonFormatterValidator = () => {
   const downloadJson = () => {
     const element = document.createElement("a");
     const file = new Blob([formattedJson], { type: "application/json" });
-    element.href = URL.createObjectURL(file);
+    const url = URL.createObjectURL(file);
+    element.href = url;
     element.download = "formatted.json";
     document.body.appendChild(element);
     element.click();
-    document.body.removeChild(element);
+
+    // Clean up: remove element and revoke URL to prevent memory leak
+    setTimeout(() => {
+      document.body.removeChild(element);
+      URL.revokeObjectURL(url);
+    }, 100);
   };
 
   return (

@@ -41,7 +41,7 @@ const SeoTools = () => {
     setLoadingRobots(true);
     setRobotsTxtContent("");
     setRobotsTxtError(null);
-    trackToolUsage(`SeoTools:robots_txt:${domain}`, "web");
+    trackToolUsage("SeoTools:robots_txt", "web");
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/seo/robots-txt`,
@@ -49,14 +49,14 @@ const SeoTools = () => {
       );
       if (res.data.exists) {
         setRobotsTxtContent(res.data.content);
-        trackToolUsage(`SeoTools:robots_txt_success:${domain}`, "web");
+        trackToolUsage("SeoTools:robots_txt_success", "web");
         toast.success("robots.txt fetched successfully!");
       } else {
         setRobotsTxtError(
           res.data.error || "robots.txt not found or accessible.",
         );
         setRobotsTxtContent("");
-        trackToolUsage(`SeoTools:robots_txt_not_found:${domain}`, "web");
+        trackToolUsage("SeoTools:robots_txt_not_found", "web");
         toast.info("robots.txt not found or accessible.");
       }
     } catch (err) {
@@ -64,7 +64,7 @@ const SeoTools = () => {
       setRobotsTxtError(
         err.response?.data?.msg || "Failed to fetch robots.txt.",
       );
-      trackToolUsage(`SeoTools:robots_txt_error:${domain}`, "web");
+      trackToolUsage("SeoTools:robots_txt_error", "web");
       toast.error(err.response?.data?.msg || "Failed to fetch robots.txt.");
     } finally {
       setLoadingRobots(false);
@@ -80,7 +80,7 @@ const SeoTools = () => {
     setLoadingSitemap(true);
     setSitemapXmlContent("");
     setSitemapXmlError(null);
-    trackToolUsage(`SeoTools:sitemap_xml:${domain}`, "web");
+    trackToolUsage("SeoTools:sitemap_xml", "web");
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/seo/sitemap-xml`,
@@ -88,13 +88,13 @@ const SeoTools = () => {
       );
       if (res.data.exists) {
         setSitemapXmlContent(res.data.content);
-        trackToolUsage(`SeoTools:sitemap_xml_success:${domain}`, "web");
+        trackToolUsage("SeoTools:sitemap_xml_success", "web");
         toast.success("sitemap.xml fetched successfully!");
       } else {
         setSitemapXmlContent(
           res.data.error || "sitemap.xml not found or accessible.",
         );
-        trackToolUsage(`SeoTools:sitemap_xml_not_found:${domain}`, "web");
+        trackToolUsage("SeoTools:sitemap_xml_not_found", "web");
         toast.info("sitemap.xml not found or accessible.");
       }
     } catch (err) {
@@ -102,7 +102,7 @@ const SeoTools = () => {
       setSitemapXmlError(
         err.response?.data?.msg || "Failed to fetch sitemap.xml.",
       );
-      trackToolUsage(`SeoTools:sitemap_xml_error:${domain}`, "web");
+      trackToolUsage("SeoTools:sitemap_xml_error", "web");
       toast.error(err.response?.data?.msg || "Failed to fetch sitemap.xml.");
     } finally {
       setLoadingSitemap(false);

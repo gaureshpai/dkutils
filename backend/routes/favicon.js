@@ -3,22 +3,9 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const path = require("path");
 const archiver = require("archiver");
-const { createClient } = require("@supabase/supabase-js");
+const { supabase } = require("../utils/supabaseClient");
 const dns = require("dns");
 const { isPrivateIP } = require("../utils/ipValidation");
-
-// Validate Supabase environment variables before creating client
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error(
-    "Missing required Supabase environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY",
-  );
-  process.exit(1);
-}
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
 
 // Function to validate URL and check for private IPs
 const validateUrl = async (url) => {

@@ -23,9 +23,14 @@ const CsvToJsonConverter = () => {
     setConvertedOutput("");
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(convertedOutput);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(convertedOutput);
+      toast.success("Copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   const convertCsvToJson = () => {
@@ -76,6 +81,12 @@ const CsvToJsonConverter = () => {
             value={csvInput}
             onChange={handleCsvChange}
           ></textarea>
+          <div
+            id="csv-input-help"
+            className="text-xs text-muted-foreground mt-1"
+          >
+            Enter valid CSV data to convert to JSON format
+          </div>
           <button
             type="button"
             onClick={convertCsvToJson}

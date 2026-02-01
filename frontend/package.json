@@ -14,7 +14,6 @@
     "clsx": "^2.1.1",
     "diff-match-patch": "^1.0.5",
     "dom-to-image": "^2.6.0",
-    "eslint": "^8.57.0",
     "js-md5": "^0.8.3",
     "jspdf": "^4.0.0",
     "jsqr": "^1.4.0",
@@ -39,13 +38,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx",
     "preview": "vite preview"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
   },
   "browserslist": {
     "production": [
@@ -63,9 +56,6 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.24",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "vite": "^6.4.1"

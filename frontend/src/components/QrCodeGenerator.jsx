@@ -2,6 +2,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import jsPDF from "jspdf";
 import * as domToImage from "dom-to-image";
+import { toast } from "react-toastify";
 import useAnalytics from "../utils/useAnalytics";
 
 const QrCodeGenerator = () => {
@@ -17,11 +18,17 @@ const QrCodeGenerator = () => {
   };
 
   const generateQrCode = () => {
+    if (!text.trim()) {
+      toast.error("Please enter some text to generate a QR code.");
+      return;
+    }
+
     setLoading(true);
     trackToolUsage("QrCodeGenerator", "web");
     setTimeout(() => {
       setQrValue(text);
       setLoading(false);
+      toast.success("QR code generated successfully!");
     }, 500);
   };
 
@@ -36,10 +43,14 @@ const QrCodeGenerator = () => {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+          toast.success("QR code downloaded as PNG!");
         })
         .catch(function (error) {
-          console.error("oops, something went wrong!", error);
+          console.error("Error downloading PNG:", error);
+          toast.error("Failed to download QR code as PNG.");
         });
+    } else {
+      toast.error("Please generate a QR code first.");
     }
   };
 
@@ -64,10 +75,14 @@ const QrCodeGenerator = () => {
 
           pdf.addImage(imgData, "PNG", x, y, imgDisplayWidth, imgDisplayHeight);
           pdf.save("qrcode.pdf");
+          toast.success("QR code downloaded as PDF!");
         })
         .catch(function (error) {
-          console.error("oops, something went wrong!", error);
+          console.error("Error downloading PDF:", error);
+          toast.error("Failed to download QR code as PDF.");
         });
+    } else {
+      toast.error("Please generate a QR code first.");
     }
   };
 

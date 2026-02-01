@@ -67,6 +67,7 @@ const PdfRotator = () => {
       link.click();
 
       document.body.removeChild(link);
+      toast.success("PDF rotated successfully!");
 
       setSelectedFile(null);
       setRotationAngle(90);

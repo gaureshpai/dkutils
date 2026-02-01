@@ -1,5 +1,5 @@
-// Reuse shared Supabase client from backend/index.js
-const { supabase } = require("../index");
+// Use shared Supabase client module
+const { supabase } = require("./supabaseClient");
 
 const SUPABASE_BUCKET_NAME = "utilityhub";
 const DAYS_TO_KEEP = 7;
@@ -7,11 +7,12 @@ const DAYS_TO_KEEP = 7;
 const cleanSupabaseStorage = async () => {
   console.log("Starting Supabase storage cleanup...");
   const now = new Date();
-  const sevenDaysAgo = new Date(now.setDate(now.getDate() - DAYS_TO_KEEP));
+  const sevenDaysAgo = new Date(
+    now.getTime() - DAYS_TO_KEEP * 24 * 60 * 60 * 1000,
+  );
 
   try {
     const listAllFilesRecursive = async (currentPath = "") => {
-      /* eslint-disable no-await-in-loop, no-restricted-syntax */
       let allFiles = [];
       let hasMore = true;
       let offset = 0;
@@ -53,7 +54,6 @@ const cleanSupabaseStorage = async () => {
         }
       }
       return allFiles;
-      /* eslint-enable no-await-in-loop, no-restricted-syntax */
     };
 
     const files = await listAllFilesRecursive();

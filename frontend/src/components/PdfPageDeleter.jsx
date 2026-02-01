@@ -113,6 +113,7 @@ const PdfPageDeleter = () => {
       URL.revokeObjectURL(url);
 
       trackToolUsage("PdfPageDeleter", "pdf");
+      toast.success("Pages deleted successfully!");
 
       setPdfFile(null);
       setNumPages(0);

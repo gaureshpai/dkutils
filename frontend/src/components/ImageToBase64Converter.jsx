@@ -11,7 +11,6 @@ const ImageToBase64Converter = () => {
     state: { isAuthenticated },
   } = useContext(AuthContext);
   const [selectedFile, setSelectedFile] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [base64String, setBase64String] = useState("");
   const [loading, setLoading] = useState(false);
 

@@ -8,7 +8,6 @@ const PdfToTextConverter = () => {
   const { trackToolUsage } = useAnalytics();
 
   const [selectedFile, setSelectedFile] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [extractedText, setExtractedText] = useState("");
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);

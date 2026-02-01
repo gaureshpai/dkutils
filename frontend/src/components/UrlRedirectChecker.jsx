@@ -88,8 +88,8 @@ const UrlRedirectChecker = () => {
         <div className="mt-4 p-4 border rounded-md bg-background shadow">
           <h3 className="text-xl font-bold mb-2">Redirect Chain:</h3>
           <ol className="list-decimal list-inside">
-            {redirectChain.map((step, index) => (
-              <li key={index} className="mb-1 flex items-center">
+            {redirectChain.map((step) => (
+              <li key={step.url} className="mb-1 flex items-center">
                 <span className="font-semibold">{step.status}</span>:{" "}
                 <a
                   href={step.url}

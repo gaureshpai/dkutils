@@ -35,10 +35,8 @@ router.post("/shorten", async (req, res) => {
     let isUnique = false;
 
     while (!isUnique) {
-      // eslint-disable-next-line no-await-in-loop
       urlCode = shortid.generate();
       shortUrl = `${baseUrl}/l/${urlCode}`;
-      // eslint-disable-next-line no-await-in-loop
       const existingUrl = await Url.findOne({ urlCode });
       if (!existingUrl) {
         isUnique = true;

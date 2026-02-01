@@ -19,7 +19,7 @@ Please use clear and descriptive commit messages. A good commit message explains
 
 ## Code Style
 
-Try to match the existing code style of the project. We use ESLint for code quality checks.
+Try to match the existing code style of the project.
 
 ## Reporting Bugs
 

@@ -1,18 +1,13 @@
 const router = require("express").Router();
 const { PDFDocument, degrees } = require("pdf-lib");
 const archiver = require("archiver");
-const { createClient } = require("@supabase/supabase-js");
+const { supabase } = require("../utils/supabaseClient");
 const pdfParse = require("pdf-parse");
 const {
   handlePdfError,
   validatePdfFile,
   validatePageRange,
 } = require("../utils/pdfErrorHandler");
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-);
 
 // @route   POST /api/convert/merge-pdfs
 // @desc    Merge multiple PDFs into one
@@ -327,6 +322,7 @@ router.post(
   async (req, res) => {
     try {
       const { file } = req;
+      const { compressionLevel = "medium" } = req.body;
       validatePdfFile(file);
 
       const pdfBuffer = file.buffer;
@@ -337,49 +333,120 @@ router.post(
         throw new Error("Failed to load PDF.");
       }
 
-      // In pdf-lib, saving is where some "compression" (reorganization) happens
-      // For specialized compression, we might need a different library,
-      // but this aligns with the original implementation's intent.
-      const compressedPdfBytes = await pdfDoc.save();
+      // Get original file size for comparison
+      const originalSize = pdfBuffer.length;
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
+      // Configure compression based on level
+      const compressionOptions = {
+        useObjectStreams: true,
+        updateFieldAppearances: false,
+      };
 
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(Buffer.from(compressedPdfBytes), {
-          name: `dkutils_compressed-${Date.now()}.pdf`,
-        });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_compressed_pdf_${Date.now()}.zip`;
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
-        });
-
-      if (uploadError) {
-        console.error("Supabase upload error:", uploadError);
-        throw new Error("Failed to upload compressed PDF.");
+      switch (compressionLevel) {
+        case "low":
+          compressionOptions.compress = false;
+          compressionOptions.useObjectStreams = false;
+          break;
+        case "medium":
+          compressionOptions.compress = true;
+          compressionOptions.useObjectStreams = true;
+          break;
+        case "high":
+          compressionOptions.compress = true;
+          compressionOptions.useObjectStreams = true;
+          // Additional high compression options
+          compressionOptions.objectsPerTick = 50;
+          break;
+        default:
+          compressionOptions.compress = true;
+          compressionOptions.useObjectStreams = true;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      // Save with compression options that preserve content
+      const compressedPdfBytes = await pdfDoc.save(compressionOptions);
 
-      return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
-        success: true,
-        message: "PDF compressed successfully!",
-      });
+      const compressedSize = compressedPdfBytes.length;
+      const compressionRatio =
+        originalSize > 0
+          ? (((originalSize - compressedSize) / originalSize) * 100).toFixed(2)
+          : 0;
+
+      console.log(
+        `PDF compression: ${originalSize} bytes -> ${compressedSize} bytes (${compressionRatio}% reduction)`,
+      );
+
+      // Only create ZIP if there's significant compression
+      if (compressionRatio > 5) {
+        const archive = archiver("zip", {
+          zlib: { level: 9 },
+        });
+
+        const archiveBuffer = await new Promise((resolve, reject) => {
+          const buffers = [];
+          archive.on("data", (data) => buffers.push(data));
+          archive.on("end", () => resolve(Buffer.concat(buffers)));
+          archive.on("error", (err) => reject(err));
+
+          archive.append(Buffer.from(compressedPdfBytes), {
+            name: `dkutils_compressed-${Date.now()}.pdf`,
+          });
+          archive.finalize();
+        }).catch((err) => {
+          console.error("Archive creation error:", err);
+          throw new Error("Failed to create archive.");
+        });
+
+        const zipFileName = `dkutils_compressed_pdf_${Date.now()}.zip`;
+        const { error: uploadError } = await supabase.storage
+          .from("utilityhub")
+          .upload(zipFileName, archiveBuffer, {
+            contentType: "application/zip",
+          });
+
+        if (uploadError) {
+          console.error("Supabase upload error:", uploadError);
+          throw new Error("Failed to upload compressed PDF.");
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("utilityhub")
+          .getPublicUrl(zipFileName);
+
+        res.status(200).json({
+          path: publicUrlData.publicUrl,
+          originalname: zipFileName,
+          success: true,
+          message: `PDF compressed successfully with ${compressionLevel} compression! Reduced by ${compressionRatio}%`,
+          compressionRatio: parseFloat(compressionRatio),
+          compressionLevel,
+        });
+      } else {
+        // If compression is minimal, just return the optimized PDF directly
+        const fileName = `dkutils_optimized_${Date.now()}.pdf`;
+        const { error: uploadError } = await supabase.storage
+          .from("utilityhub")
+          .upload(fileName, Buffer.from(compressedPdfBytes), {
+            contentType: "application/pdf",
+          });
+
+        if (uploadError) {
+          console.error("Supabase upload error:", uploadError);
+          throw new Error("Failed to upload optimized PDF.");
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("utilityhub")
+          .getPublicUrl(fileName);
+
+        res.status(200).json({
+          path: publicUrlData.publicUrl,
+          originalname: fileName,
+          success: true,
+          message: `PDF optimized successfully with ${compressionLevel} compression! Reduced by ${compressionRatio}%`,
+          compressionRatio: parseFloat(compressionRatio),
+          compressionLevel,
+        });
+      }
     } catch (err) {
       const errorInfo = handlePdfError(err, "PDF Compression");
       return res.status(errorInfo.statusCode).json({

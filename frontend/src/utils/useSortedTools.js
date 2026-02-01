@@ -14,13 +14,15 @@ const useSortedTools = (category, initialTools) => {
         const stats = await getToolStats(category);
 
         const usageMap = {};
-        stats.forEach((stat) => {
-          usageMap[stat.toolName] = stat.usageCount;
-        });
+        if (Array.isArray(stats)) {
+          stats.forEach((stat) => {
+            usageMap[stat.toolName] = stat.usageCount;
+          });
+        }
 
         const sortedTools = [...initialTools].sort((a, b) => {
-          const usageA = usageMap[a.title] || 0;
-          const usageB = usageMap[b.title] || 0;
+          const usageA = usageMap[a.title] || usageMap[a.name] || 0;
+          const usageB = usageMap[b.title] || usageMap[b.name] || 0;
           return usageB - usageA;
         });
 

@@ -23,9 +23,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-// Export supabase client for reuse in other modules
-module.exports.supabase = supabase;
-
 const testSupabaseConnection = async () => {
   try {
     const { data: bucket, error: getBucketError } =
@@ -121,6 +118,10 @@ app.use("/api/seo", seoTools);
 const analytics = require("./routes/analytics");
 
 app.use("/api/analytics", analytics);
+
+const passwordStrength = require("./routes/passwordStrength");
+
+app.use("/api/password-strength", passwordStrength);
 
 app.get("/", (req, res) => {
   res.send("Hello from dkutils Backend!");

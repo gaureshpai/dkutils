@@ -35,9 +35,8 @@ const Base64TextConverter = () => {
     }, 500);
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(convertedText);
-    toast.success("Copied to clipboard!");
+  const handleCopyToClipboard = () => {
+    copyToClipboard();
   };
 
   const downloadAsTxt = () => {
@@ -88,7 +87,7 @@ const Base64TextConverter = () => {
             Converted Text:
             <button
               type="button"
-              onClick={copyToClipboard}
+              onClick={handleCopyToClipboard}
               className="ml-2 text-sm text-primary hover:underline"
               aria-label="Copy converted text to clipboard"
             >

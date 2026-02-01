@@ -44,9 +44,14 @@ const TextCaseConverter = () => {
     }, 500);
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(convertedText);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(convertedText);
+      toast.success("Copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   return (

@@ -9,6 +9,7 @@ const PdfCompressor = () => {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [compressionLevel, setCompressionLevel] = useState("medium");
   const { isAuthenticated } = useContext(AuthContext);
   const fileInputRef = useRef(null);
 
@@ -45,21 +46,20 @@ const PdfCompressor = () => {
     trackToolUsage("PdfCompressor", "pdf");
     const formData = new FormData();
     formData.append("pdf", selectedFile);
+    formData.append("compressionLevel", compressionLevel);
 
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/compress-pdf`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          responseType: "json",
-        },
       );
 
-      const { path, originalname } = res.data;
+      const { path, originalname, compressionRatio, message } = res.data;
 
+      // Show compression success message
+      toast.success(message);
+
+      // Create download link
       const link = document.createElement("a");
       link.href = path;
       link.setAttribute("download", originalname);
@@ -101,6 +101,28 @@ const PdfCompressor = () => {
             onChange={onFileChange}
             accept=".pdf"
           />
+        </div>
+        <div className="mb-4">
+          <label
+            className="block mb-2 text-sm font-medium text-foreground"
+            htmlFor="compressionLevel"
+          >
+            Compression Level
+          </label>
+          <select
+            id="compressionLevel"
+            value={compressionLevel}
+            onChange={(e) => setCompressionLevel(e.target.value)}
+            className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
+          >
+            <option value="low">Low (Minimal compression, best quality)</option>
+            <option value="medium">
+              Medium (Balanced compression and quality)
+            </option>
+            <option value="high">
+              High (Maximum compression, lower quality)
+            </option>
+          </select>
         </div>
         <button
           type="submit"

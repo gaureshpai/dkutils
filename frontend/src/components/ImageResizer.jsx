@@ -17,7 +17,6 @@ const ImageResizer = () => {
     width: 0,
     height: 0,
   });
-  // eslint-disable-next-line no-unused-vars
   const [resizedImageSrc, setResizedImageSrc] = useState(null);
 
   const handleFileChange = (e) => {

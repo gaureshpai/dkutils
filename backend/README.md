@@ -9,7 +9,6 @@ This directory contains the backend services for the dkutils application.
 - MongoDB (via Mongoose)
 - JWT for authentication
 - Supabase for file storage
-- ESLint for code quality
 
 For detailed setup and running instructions, refer to the [main project README.md](../../README.md).
 

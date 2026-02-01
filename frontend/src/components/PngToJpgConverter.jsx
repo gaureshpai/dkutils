@@ -10,7 +10,6 @@ const PngToJpgConverter = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
-  // eslint-disable-next-line no-unused-vars
   const [convertedZipFile, setConvertedZipFile] = useState(null);
 
   const onFileChange = (e) => {
@@ -64,11 +63,6 @@ const PngToJpgConverter = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/png-to-jpg`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
       );
       setConvertedZipFile(res.data);
 

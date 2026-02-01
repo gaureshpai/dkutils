@@ -10,7 +10,6 @@ const PdfMerger = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useContext(AuthContext);
-  // eslint-disable-next-line no-unused-vars
   const [convertedFile, setConvertedFile] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -75,6 +74,7 @@ const PdfMerger = () => {
       setConvertedFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
+      toast.success("PDFs merged successfully!");
       trackToolUsage("PdfMerger", "pdf");
       setSelectedFiles([]);
       if (fileInputRef.current) {

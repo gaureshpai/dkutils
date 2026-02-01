@@ -1,12 +1,7 @@
 const router = require("express").Router();
 const archiver = require("archiver");
 const axios = require("axios");
-const { createClient } = require("@supabase/supabase-js");
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const { supabase } = require("../utils/supabaseClient");
 
 // @route   POST /api/screenshot
 // @desc    Generate screenshots of a given URL and its internal links.

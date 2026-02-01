@@ -9,9 +9,18 @@ const QrCodeScanner = () => {
   const [qrData, setQrData] = useState("");
   const lastTrackedQrDataRef = useRef("");
 
-  const copyToClipboard = (textToCopy) => {
-    navigator.clipboard.writeText(textToCopy);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async (textToCopy) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success("Copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
+  };
+
+  const handleCopyToClipboard = () => {
+    copyToClipboard(qrData);
   };
 
   const handleImageUpload = async (e) => {
@@ -96,7 +105,7 @@ const QrCodeScanner = () => {
             QR Code Data:
             <button
               type="button"
-              onClick={() => copyToClipboard(qrData)}
+              onClick={handleCopyToClipboard}
               className="ml-2 text-sm text-primary hover:underline"
               aria-label="Copy QR code"
             >

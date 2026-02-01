@@ -18,7 +18,6 @@ MONGO_URI=mongodb://localhost:27017/dkutils
 JWT_SECRET=your_jwt_secret_key
 BASE_URL=http://localhost:5000
 SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
@@ -26,7 +25,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 - `MONGO_URI`: Your MongoDB connection string.
 - `JWT_SECRET`: A secret key for JWT authentication.
 - `BASE_URL`: The base URL of your backend server (e.g., `http://localhost:5000` for local development).
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase credentials.
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase credentials.
 
 ### Frontend (`frontend/.env`)
 

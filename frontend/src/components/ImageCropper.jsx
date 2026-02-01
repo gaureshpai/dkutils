@@ -10,7 +10,6 @@ const ImageCropper = () => {
     state: { isAuthenticated },
   } = useContext(AuthContext);
   const [imageSrc, setImageSrc] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [croppedImageSrc, setCroppedImageSrc] = useState(null);
   const [loading, setLoading] = useState(false);
   const imageRef = useRef(null);

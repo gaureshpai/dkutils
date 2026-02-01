@@ -17,7 +17,6 @@ router.post("/", async (req, res) => {
   try {
     for (let i = 0; i < 10; i += 1) {
       try {
-        // eslint-disable-next-line no-await-in-loop
         const response = await axios.head(currentUrl, {
           maxRedirects: 0,
           validateStatus: (status) => status >= 200 && status < 400,

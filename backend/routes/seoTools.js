@@ -13,22 +13,33 @@ const validateDomain = async (domain) => {
       throw new Error("Invalid domain format");
     }
 
-    // Resolve DNS to check IP addresses
+    // Resolve DNS to check IP addresses (dual-stack support)
     const addresses = await new Promise((resolve, reject) => {
-      dns.resolve4(domain, (err, addresses) => {
-        if (err) {
-          dns.resolve6(domain, (err6, addresses6) => {
-            if (err6) {
-              // Both IPv4 and IPv6 lookups failed - reject instead of resolving to empty array
-              reject(new Error(`DNS resolution failed: ${err.message}`));
-            } else {
-              resolve(addresses6);
-            }
-          });
-        } else {
-          resolve(addresses);
-        }
+      // Run both IPv4 and IPv6 lookups in parallel for dual-stack support
+      const ipv4Promise = new Promise((res) => {
+        dns.resolve4(domain, (err, addresses) => {
+          res(err ? [] : addresses);
+        });
       });
+
+      const ipv6Promise = new Promise((res) => {
+        dns.resolve6(domain, (err, addresses) => {
+          res(err ? [] : addresses);
+        });
+      });
+
+      Promise.all([ipv4Promise, ipv6Promise])
+        .then(([ipv4Addresses, ipv6Addresses]) => {
+          const allAddresses = [...ipv4Addresses, ...ipv6Addresses];
+          if (allAddresses.length === 0) {
+            reject(new Error("DNS resolution failed for both IPv4 and IPv6"));
+          } else {
+            resolve(allAddresses);
+          }
+        })
+        .catch((err) =>
+          reject(new Error(`DNS resolution failed: ${err.message}`)),
+        );
     });
 
     // Check if any resolved IP is private
@@ -49,7 +60,7 @@ const fetchContent = async (url) => {
     const response = await axios.get(url, {
       timeout: 5000,
       maxRedirects: 0, // Disable redirects to prevent SSRF chains
-      validateStatus: (status) => status < 400,
+      validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
     });
     return { content: response.data, exists: true };
   } catch (error) {

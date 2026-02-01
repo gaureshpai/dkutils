@@ -91,13 +91,18 @@ jobs:
           git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} release"
           # Check if tag already exists
           TAG_NAME="v${{ steps.get_version.outputs.version }}"
+          did_commit=false
           if git rev-parse -q --verify "refs/tags/$TAG_NAME"; then
-            echo "Tag $TAG_NAME already exists, force-updating"
-            git tag -a -f "$TAG_NAME" -m "Release $TAG_NAME"
+            echo "Tag $TAG_NAME already exists, skipping tag creation"
+            # Only set did_commit=true if we actually made a new commit
+            if [ "$(git rev-parse HEAD)" != "$(git rev-parse HEAD~1)" ]; then
+              echo "did_commit=true" >> $GITHUB_OUTPUT
+            fi
           else
+            echo "Creating new tag $TAG_NAME"
             git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            echo "did_commit=true" >> $GITHUB_OUTPUT
           fi
-          echo "did_commit=true" >> $GITHUB_OUTPUT
 
       - name: Push changes and tags
         if: steps.commit_versions.outputs.did_commit == 'true'

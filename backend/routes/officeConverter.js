@@ -2,12 +2,7 @@ const router = require("express").Router();
 const pdf = require("pdf-parse");
 const { Document, Packer, Paragraph, TextRun } = require("docx");
 const XLSX = require("xlsx");
-const { createClient } = require("@supabase/supabase-js");
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const { supabase } = require("../utils/supabaseClient");
 
 // @route   POST /api/convert/pdf-to-word
 // @desc    Convert PDF to Word (Text Extraction)
@@ -148,8 +143,12 @@ router.post(
       const data = await pdf(pdfBuffer);
       const extractedText = data.text;
 
+      // Split text into lines and create proper Excel structure
+      const lines = extractedText.split("\n").filter((line) => line.trim());
+      const rows = lines.map((line) => [line.trim()]);
+
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([[extractedText]]);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
 
       XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 

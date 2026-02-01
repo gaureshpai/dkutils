@@ -186,10 +186,10 @@ const HomePage = () => {
         </div>
 
         <div className="mx-auto grid justify-center gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl pt-8">
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <Link
               to={category.link}
-              key={index}
+              key={category.title}
               className="group relative overflow-hidden rounded-xl border bg-card p-6 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-primary/50"
             >
               <div className="flex flex-col justify-between h-full">
@@ -201,9 +201,9 @@ const HomePage = () => {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-4">
-                  {category.tools.slice(0, 4).map((tool, i) => (
+                  {category.tools.slice(0, 4).map((tool) => (
                     <Badge
-                      key={i}
+                      key={tool}
                       variant="secondary"
                       className="text-[10px] px-1 py-0"
                     >

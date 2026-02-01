@@ -8,7 +8,6 @@ This directory contains the frontend application for the dkutils, built with Rea
 - Vite (as the build tool)
 - TailwindCSS
 - Axios for API requests
-- ESLint for code quality
 
 For detailed setup and running instructions, refer to the [main project README.md](../../README.md).
 

@@ -56,11 +56,16 @@ const TextDifferenceChecker = () => {
     }, 500);
   };
 
-  const copyToClipboard = () => {
-    const tempElement = document.createElement("div");
-    tempElement.innerHTML = diffResult;
-    navigator.clipboard.writeText(tempElement.innerText);
-    toast.success("Copied to clipboard!");
+  const copyToClipboard = async () => {
+    try {
+      const tempElement = document.createElement("div");
+      tempElement.innerHTML = diffResult;
+      await navigator.clipboard.writeText(tempElement.innerText);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard. Please try again.");
+    }
   };
 
   return (

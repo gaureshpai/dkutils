@@ -12,7 +12,6 @@ const ImageFormatConverter = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [format, setFormat] = useState("jpeg");
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [convertedZipFile, setConvertedZipFile] = useState(null);
 
   const handleDownload = (fileUrl, fileName) => {
@@ -96,6 +95,7 @@ const ImageFormatConverter = () => {
       setConvertedZipFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
+      toast.success("Image format converted successfully!");
       trackToolUsage("Image Format Converter", "image");
     } catch (err) {
       console.error(err);

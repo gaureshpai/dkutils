@@ -15,7 +15,6 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
     "format": "prettier --write .",
     "prepare": "husky",
     "start": "turbo run start"
@@ -45,7 +44,6 @@
   "author": "gaureshpai",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.3.3",

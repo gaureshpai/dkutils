@@ -141,6 +141,7 @@ const PdfSplitter = () => {
       );
 
       handleDownload(res.data.path, res.data.originalname);
+      toast.success("PDF split successfully!");
       setSelectedFile(null);
       setRanges("");
       setTotalPages(0);

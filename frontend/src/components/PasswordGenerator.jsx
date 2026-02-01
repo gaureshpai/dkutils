@@ -30,11 +30,15 @@ const PasswordGenerator = () => {
         return;
       }
 
+      // Validate length to prevent NaN or invalid values
+      const validLength =
+        isNaN(length) || length < 4 ? 4 : Math.min(length, 32);
+
       // Use Web Crypto API for cryptographically secure random generation
-      const randomValues = new Uint32Array(length);
+      const randomValues = new Uint32Array(validLength);
       crypto.getRandomValues(randomValues);
 
-      for (let i = 0; i < length; i++) {
+      for (let i = 0; i < validLength; i++) {
         newPassword += charset.charAt(randomValues[i] % charset.length);
       }
       setPassword(newPassword);
@@ -69,7 +73,10 @@ const PasswordGenerator = () => {
           type="number"
           className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
           value={length}
-          onChange={(e) => setLength(parseInt(e.target.value, 10))}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            setLength(isNaN(value) || value < 4 ? 4 : Math.min(value, 32));
+          }}
           min="4"
           max="32"
         />

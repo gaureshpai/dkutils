@@ -59,6 +59,7 @@ const validatePdfFile = (file) => {
     throw new Error("No PDF file uploaded.");
   }
 
+  // Check MIME type
   if (file.mimetype !== "application/pdf") {
     throw new Error("Invalid file type. Only PDF files are allowed.");
   }
@@ -66,6 +67,49 @@ const validatePdfFile = (file) => {
   // Check if buffer exists and has content
   if (!file.buffer || file.buffer.length === 0) {
     throw new Error("The uploaded file is empty or corrupted.");
+  }
+
+  // Check minimum file size (PDF files should be at least a few hundred bytes)
+  if (file.buffer.length < 100) {
+    throw new Error("The uploaded file is too small to be a valid PDF.");
+  }
+
+  // Magic bytes validation for PDF files
+  const pdfSignature = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
+  const fileSignature = file.buffer.slice(0, 5);
+
+  if (!pdfSignature.equals(fileSignature)) {
+    throw new Error("Invalid PDF file signature. The file is not a valid PDF.");
+  }
+
+  // Additional validation: check for PDF version
+  const pdfVersion = file.buffer.slice(5, 8).toString();
+  const validVersions = [
+    "1.0",
+    "1.1",
+    "1.2",
+    "1.3",
+    "1.4",
+    "1.5",
+    "1.6",
+    "1.7",
+    "2.0",
+  ];
+
+  if (!validVersions.includes(pdfVersion)) {
+    throw new Error(
+      `Unsupported PDF version: ${pdfVersion}. Please use a PDF with version 1.0-2.0.`,
+    );
+  }
+
+  // Check for common PDF structure indicators
+  const bufferStr = file.buffer.toString(
+    "utf8",
+    0,
+    Math.min(file.buffer.length, 1024),
+  );
+  if (!bufferStr.includes("obj") || !bufferStr.includes("endobj")) {
+    throw new Error("Invalid PDF structure. The file appears to be corrupted.");
   }
 
   return true;
@@ -119,7 +163,10 @@ const validatePageRange = (ranges, totalPages) => {
     }
   });
 
-  return pageNumbers;
+  // Deduplicate page numbers and sort them
+  const uniquePageNumbers = [...new Set(pageNumbers)].sort((a, b) => a - b);
+
+  return uniquePageNumbers;
 };
 
 /**

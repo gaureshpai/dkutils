@@ -12,7 +12,6 @@ const ImageToPdfConverter = () => {
   } = useContext(AuthContext);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [convertedFile, setConvertedFile] = useState(null);
 
   const onFileChange = (e) => {
@@ -82,6 +81,7 @@ const ImageToPdfConverter = () => {
       setConvertedFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
+      toast.success("Images converted to PDF successfully!");
     } catch (err) {
       console.error(err);
       toast.error(

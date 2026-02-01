@@ -8,10 +8,11 @@ const PdfToWordConverter = () => {
   const { trackToolUsage } = useAnalytics();
 
   const [selectedFile, setSelectedFile] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [convertedFile, setConvertedFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated } = useContext(AuthContext);
+  const {
+    state: { isAuthenticated },
+  } = useContext(AuthContext);
   const fileInputRef = useRef(null);
 
   const onFileChange = (e) => {

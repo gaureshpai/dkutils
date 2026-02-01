@@ -50,11 +50,6 @@ const ImageGrayscaler = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/convert/image-grayscale`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
       );
 
       const { path, originalname } = res.data;

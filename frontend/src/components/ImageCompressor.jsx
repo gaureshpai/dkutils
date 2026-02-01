@@ -13,7 +13,6 @@ const ImageCompressor = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [quality, setQuality] = useState(80);
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [convertedZipFile, setConvertedZipFile] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -98,6 +97,7 @@ const ImageCompressor = () => {
       setConvertedZipFile(res.data);
 
       handleDownload(res.data.path, res.data.originalname);
+      toast.success("Images compressed successfully!");
       setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

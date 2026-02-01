@@ -1,10 +1,20 @@
-﻿import React, { useState, useMemo } from "react";
+﻿import React, { useState } from "react";
 import TurndownService from "turndown";
 import { toast } from "react-toastify";
 import useAnalytics from "../utils/useAnalytics";
 
-// Create a single shared instance outside the component
-const turndownService = new TurndownService();
+// Create a single shared instance outside the component with better configuration
+const turndownService = new TurndownService({
+  headingStyle: "atx",
+  bulletListMarker: "-",
+  codeBlockStyle: "fenced",
+  fence: "```",
+  emDelimiter: "*",
+  strongDelimiter: "**",
+  linkStyle: "inlined",
+  linkReferenceStyle: "full",
+  preformattedCode: false,
+});
 
 const HtmlToMarkdownConverter = () => {
   const { trackToolUsage } = useAnalytics();
@@ -16,7 +26,24 @@ const HtmlToMarkdownConverter = () => {
   const handleHtmlChange = (e) => {
     const newHtml = e.target.value;
     setHtml(newHtml);
-    setMarkdown(turndownService.turndown(newHtml));
+
+    // Convert HTML to Markdown with better error handling
+    try {
+      if (newHtml.trim()) {
+        const convertedMarkdown = turndownService.turndown(newHtml);
+        setMarkdown(convertedMarkdown);
+      } else {
+        setMarkdown("");
+      }
+    } catch (error) {
+      console.error("Error converting HTML to Markdown:", error);
+      setMarkdown(
+        "// Error converting HTML to Markdown\n// Please check your HTML input",
+      );
+      toast.error(
+        "Error converting HTML to Markdown. Please check your input.",
+      );
+    }
 
     // Track usage on first meaningful interaction (non-empty HTML input)
     if (!hasTracked && newHtml.trim().length > 0) {
@@ -37,9 +64,25 @@ const HtmlToMarkdownConverter = () => {
     }
   };
 
+  const clearAll = () => {
+    setHtml("");
+    setMarkdown("");
+    setHasTracked(false);
+    toast.info("Cleared all content");
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">HTML to Markdown Converter</h2>
+      <div className="mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={clearAll}
+          className="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
+        >
+          Clear All
+        </button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label
