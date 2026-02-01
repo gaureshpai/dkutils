@@ -18,23 +18,66 @@ router.post(
   async (req, res) => {
     try {
       const { file } = req;
+      if (!file) {
+        return res.status(400).json({ msg: "No PDF file uploaded." });
+      }
+
       console.log(
         "PDF to Word (text extraction) conversion requested for:",
         file.originalname,
       );
-
-      if (!file) {
-        return res.status(400).json({ msg: "No PDF file uploaded." });
-      }
 
       const pdfBuffer = file.buffer;
 
       const data = await pdf(pdfBuffer);
       let extractedText = data.text;
 
-      extractedText = extractedText.replace(/\./g, ".\n");
-      extractedText = extractedText.replace(/\n\s*\n/g, "\n");
-      extractedText = extractedText.replace(/\. \n/g, ".\n");
+      const splitTextIntoSentences = (text) => {
+        if (!text || typeof text !== "string") return [];
+
+        let normalized = text.replace(/\r\n/g, "\n");
+        normalized = normalized.replace(/\n\s*\n+/g, "\n");
+
+        const urlTokens = [];
+        normalized = normalized.replace(/https?:\/\/\S+/g, (match) => {
+          urlTokens.push(match);
+          return `__URL_${urlTokens.length - 1}__`;
+        });
+
+        const abbreviations = [
+          "Mr.",
+          "Mrs.",
+          "Ms.",
+          "Dr.",
+          "Prof.",
+          "Sr.",
+          "Jr.",
+          "St.",
+          "vs.",
+          "etc.",
+          "e.g.",
+          "i.e.",
+        ];
+
+        for (const abbr of abbreviations) {
+          const safe = abbr.replace(/\./g, "∯");
+          normalized = normalized.replaceAll(abbr, safe);
+        }
+
+        const parts = normalized
+          .replace(/\s+/g, " ")
+          .trim()
+          .split(/(?<=[.!?])\s+(?=[A-Z0-9])/);
+
+        return parts
+          .map((p) => p.replace(/∯/g, "."))
+          .map((p) =>
+            p.replace(/__URL_(\d+)__/g, (_, idx) => urlTokens[Number(idx)]),
+          )
+          .filter((p) => p.trim().length > 0);
+      };
+
+      extractedText = splitTextIntoSentences(extractedText).join("\n");
 
       const doc = new Document({
         sections: [
@@ -91,14 +134,14 @@ router.post(
   async (req, res) => {
     try {
       const { file } = req;
+      if (!file) {
+        return res.status(400).json({ msg: "No PDF file uploaded." });
+      }
+
       console.log(
         "PDF to Excel (text extraction) conversion requested for:",
         file.originalname,
       );
-
-      if (!file) {
-        return res.status(400).json({ msg: "No PDF file uploaded." });
-      }
 
       const pdfBuffer = file.buffer;
 

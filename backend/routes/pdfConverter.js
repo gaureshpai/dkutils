@@ -144,7 +144,9 @@ router.post(
       const pageNumbers = validatePageRange(ranges, totalPages);
 
       const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageNumbers);
-      copiedPages.forEach((page) => newPdfDoc.addPage(page));
+      for (const page of copiedPages) {
+        newPdfDoc.addPage(page);
+      }
 
       const newPdfBytes = await newPdfDoc.save();
 

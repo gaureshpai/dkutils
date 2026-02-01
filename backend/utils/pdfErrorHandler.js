@@ -5,50 +5,40 @@
 
 const handlePdfError = (err, operation = "PDF operation") => {
   console.error(`Error during ${operation}:`, err);
-  console.error("Error message:", err.message);
-  console.error("Error stack:", err.stack);
+  const msg =
+    typeof err?.message === "string" ? err.message : String(err || "");
+  console.error("Error message:", msg);
+  console.error("Error stack:", err?.stack);
 
   // Categorize errors and provide user-friendly messages
   let userMessage =
     "An error occurred while processing your PDF. Please try again.";
   let statusCode = 500;
 
-  if (err.message.includes("Invalid PDF")) {
+  if (msg.includes("Invalid PDF")) {
     userMessage =
       "The uploaded file is not a valid PDF. Please upload a valid PDF file.";
     statusCode = 400;
-  } else if (
-    err.message.includes("encrypted") ||
-    err.message.includes("password")
-  ) {
+  } else if (msg.includes("encrypted") || msg.includes("password")) {
     userMessage =
       "This PDF is password-protected. Please remove the password and try again.";
     statusCode = 400;
-  } else if (
-    err.message.includes("corrupted") ||
-    err.message.includes("damaged")
-  ) {
+  } else if (msg.includes("corrupted") || msg.includes("damaged")) {
     userMessage =
       "The PDF file appears to be corrupted. Please try a different file.";
     statusCode = 400;
-  } else if (
-    err.message.includes("page range") ||
-    err.message.includes("page number")
-  ) {
-    userMessage = err.message; // Use the specific error message for page range errors
+  } else if (msg.includes("page range") || msg.includes("page number")) {
+    userMessage = msg; // Use the specific error message for page range errors
     statusCode = 400;
-  } else if (
-    err.message.includes("file size") ||
-    err.message.includes("too large")
-  ) {
+  } else if (msg.includes("file size") || msg.includes("too large")) {
     userMessage =
       "The file is too large. Please try a smaller file or login for higher limits.";
     statusCode = 413;
-  } else if (err.message.includes("memory") || err.message.includes("heap")) {
+  } else if (msg.includes("memory") || msg.includes("heap")) {
     userMessage =
       "The file is too complex to process. Please try a simpler PDF or split it into smaller parts.";
     statusCode = 413;
-  } else if (err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT") {
+  } else if (err?.code === "ECONNREFUSED" || err?.code === "ETIMEDOUT") {
     userMessage =
       "Unable to connect to storage service. Please try again later.";
     statusCode = 503;
@@ -57,8 +47,7 @@ const handlePdfError = (err, operation = "PDF operation") => {
   return {
     message: userMessage,
     statusCode,
-    originalError:
-      process.env.NODE_ENV === "development" ? err.message : undefined,
+    originalError: process.env.NODE_ENV === "development" ? msg : undefined,
   };
 };
 

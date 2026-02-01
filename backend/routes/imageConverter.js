@@ -156,7 +156,10 @@ router.post(
             height: imgHeight,
           });
         } catch (imageErr) {
-          console.error(`Error processing image ${file.originalname}:`, imageErr);
+          console.error(
+            `Error processing image ${file.originalname}:`,
+            imageErr,
+          );
           throw new Error(
             `Failed to process image ${file.originalname}: ${imageErr.message}`,
           );
