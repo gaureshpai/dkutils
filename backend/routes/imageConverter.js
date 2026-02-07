@@ -817,6 +817,7 @@ router.post(
       }
 
       const timestamp = Date.now();
+      const nameWithoutExt = path.parse(originalname).name;
       const outputFileName = `dkutils_flipped-${nameWithoutExt}-${timestamp}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
@@ -912,6 +913,7 @@ router.post(
         .toBuffer();
 
       const timestamp = Date.now();
+      const nameWithoutExt = path.parse(originalname).name;
       const outputFileName = `dkutils_grayscale-${nameWithoutExt}-${timestamp}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
