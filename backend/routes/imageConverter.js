@@ -133,8 +133,17 @@ router.get("/download", async (req, res) => {
     const arrayBuffer = await data.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // Sanitize filename to prevent header injection
+    const sanitizedBaseName = baseName
+      .replace(/["\\]/g, "_")
+      .replace(/[\x00-\x1f\x7f]/g, "");
+    const encodedFilename = encodeURIComponent(baseName);
+
     res.set("Content-Type", data.type || "application/octet-stream");
-    res.set("Content-Disposition", `attachment; filename="${baseName}"`);
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="${sanitizedBaseName}"; filename*=UTF-8''${encodedFilename}`,
+    );
     return res.send(buffer);
   } catch (err) {
     console.error(err);
