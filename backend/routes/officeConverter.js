@@ -102,12 +102,10 @@ router.post(
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(fileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(fileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
+        path: downloadUrl,
         originalname: fileName,
       });
     } catch (err) {
@@ -166,12 +164,10 @@ router.post(
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(fileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(fileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
+        path: downloadUrl,
         originalname: fileName,
       });
     } catch (err) {

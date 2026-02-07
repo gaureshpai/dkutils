@@ -1,5 +1,4 @@
 const router = require("express").Router();
-const archiver = require("archiver");
 const axios = require("axios");
 const { supabase } = require("../utils/supabaseClient");
 
@@ -20,47 +19,31 @@ router.post("/", async (req, res) => {
 
     const response = await axios.get(screenshotUrl, {
       responseType: "arraybuffer",
-      timeout: 5000,
+      timeout: 30000,
     });
     const imageBuffer = Buffer.from(response.data);
 
-    const archive = archiver("zip", {
-      zlib: { level: 9 },
-    });
-
-    const zipBuffer = await new Promise((resolve, reject) => {
-      const buffers = [];
-      archive.on("data", (data) => buffers.push(data));
-      archive.on("end", () => resolve(Buffer.concat(buffers)));
-      archive.on("error", (err) => reject(err));
-
-      archive.append(imageBuffer, { name: `screenshot-${Date.now()}.png` });
-      archive.finalize();
-    });
-
-    const zipFileName = `screenshots-${Date.now()}.zip`;
+    const outputFileName = `screenshot-${Date.now()}.png`;
     const { error } = await supabase.storage
       .from("utilityhub")
-      .upload(`screenshots/${zipFileName}`, zipBuffer, {
-        contentType: "application/zip",
+      .upload(`screenshots/${outputFileName}`, imageBuffer, {
+        contentType: "image/png",
         upsert: true,
       });
 
     if (error) {
       console.error("Supabase upload error:", error);
       return res.status(500).json({
-        msg: "Failed to upload screenshot ZIP to Supabase",
+        msg: "Failed to upload screenshot to Supabase",
         error: error.message,
       });
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from("utilityhub")
-      .getPublicUrl(`screenshots/${zipFileName}`);
+    const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`screenshots/${outputFileName}`)}`;
 
     return res
       .status(200)
-      .json({ path: publicUrlData.publicUrl, originalname: zipFileName });
+      .json({ path: downloadUrl, originalname: outputFileName });
   } catch (err) {
     console.error("Error generating screenshot:", err);
 

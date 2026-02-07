@@ -38,7 +38,7 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
       <div className="container flex h-14 max-w-7xl items-center justify-between mx-auto md:px-8 px-4">
         {/* Left: Logo */}
         <div className="flex items-center">

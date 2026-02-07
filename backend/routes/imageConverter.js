@@ -20,6 +20,32 @@ router.post(
         return res.status(400).json({ msg: "No image files uploaded." });
       }
 
+      if (files.length === 1) {
+        const file = files[0];
+        const imageBuffer = file.buffer;
+        const { originalname } = file;
+        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+        const jpgBuffer = await sharp(imageBuffer).jpeg().toBuffer();
+        const outputFileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.jpg`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("utilityhub")
+          .upload(outputFileName, jpgBuffer, {
+            contentType: "image/jpeg",
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+        return res.json({
+          path: downloadUrl,
+          originalname: outputFileName,
+        });
+      }
+
       const archive = archiver("zip", {
         zlib: { level: 9 },
       });
@@ -58,12 +84,10 @@ router.post(
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
+        path: downloadUrl,
         originalname: zipFileName,
       });
     } catch (err) {
@@ -74,12 +98,29 @@ router.post(
   },
 );
 
-// @route   GET /api/convert/download-image/:filename
-// @desc    Download a converted image
+// @route   GET /api/convert/download
+// @desc    Download a converted file with forced attachment
 // @access  Public
-router.get("/download-image/:filename", async (req, res) => {
+router.get("/download", async (req, res) => {
   try {
-    const { filename } = req.params;
+    const { filename } = req.query;
+    if (!filename) {
+      return res.status(400).json({ msg: "Filename is required." });
+    }
+
+    const allowedPrefixes = [
+      "dkutils_",
+      "screenshot-",
+      "screenshots/screenshot-",
+      "favicons/",
+    ];
+    if (
+      filename.includes("..") ||
+      !allowedPrefixes.some((prefix) => filename.startsWith(prefix))
+    ) {
+      return res.status(403).json({ msg: "Invalid filename." });
+    }
+
     const { data, error } = await supabase.storage
       .from("utilityhub")
       .download(filename);
@@ -88,9 +129,22 @@ router.get("/download-image/:filename", async (req, res) => {
       throw error;
     }
 
-    res.set("Content-Type", data.type);
-    res.set("Content-Disposition", `attachment; filename="${filename}"`);
-    return res.send(data);
+    const baseName = path.basename(filename);
+    const arrayBuffer = await data.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Sanitize filename to prevent header injection
+    const sanitizedBaseName = baseName
+      .replace(/["\\]/g, "_")
+      .replace(/[\x00-\x1f\x7f]/g, "");
+    const encodedFilename = encodeURIComponent(baseName);
+
+    res.set("Content-Type", data.type || "application/octet-stream");
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="${sanitizedBaseName}"; filename*=UTF-8''${encodedFilename}`,
+    );
+    return res.send(buffer);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ msg: "Server Error" });
@@ -169,40 +223,22 @@ router.post(
       pdfDoc.end();
       const pdfBuffer = await pdfGenerationPromise;
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
-
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const archiveBuffers = [];
-        archive.on("data", (data) => archiveBuffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(archiveBuffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(pdfBuffer, {
-          name: `dkutils_converted_images_${Date.now()}.pdf`,
-        });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_converted_images_${Date.now()}.zip`;
+      const outputFileName = `dkutils_converted_images_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
+        .upload(outputFileName, pdfBuffer, {
+          contentType: "application/pdf",
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
+        path: downloadUrl,
+        originalname: outputFileName,
       });
     } catch (err) {
       console.error(err);
@@ -237,6 +273,51 @@ router.post(
       ) {
         return res.status(400).json({
           msg: "Invalid width or height provided. Must be positive numbers.",
+        });
+      }
+
+      if (files.length === 1) {
+        const file = files[0];
+        const imageBuffer = file.buffer;
+        const { originalname } = file;
+        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+
+        let outputFormat = "jpeg";
+        let extension = "jpg";
+        try {
+          const metadata = await sharp(imageBuffer).metadata();
+          if (metadata.hasAlpha) {
+            outputFormat = "png";
+            extension = "png";
+          }
+        } catch (metadataErr) {
+          console.error(
+            `Error reading image metadata for ${originalname}:`,
+            metadataErr,
+          );
+        }
+
+        const resizedBuffer = await sharp(imageBuffer)
+          .resize(parsedWidth, parsedHeight)
+          .toFormat(outputFormat)
+          .toBuffer();
+
+        const outputFileName = `dkutils_${nameWithoutExt}_resized_${Date.now()}.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from("utilityhub")
+          .upload(outputFileName, resizedBuffer, {
+            contentType: `image/${outputFormat}`,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+        return res.json({
+          path: downloadUrl,
+          originalname: outputFileName,
         });
       }
 
@@ -296,12 +377,10 @@ router.post(
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
+        path: downloadUrl,
         originalname: zipFileName,
       });
     } catch (err) {
@@ -337,6 +416,89 @@ router.post(
       ) {
         return res.status(400).json({
           msg: "Invalid quality provided. Must be a number between 0 and 100.",
+        });
+      }
+
+      if (files.length === 1) {
+        const file = files[0];
+        const imageBuffer = file.buffer;
+        const { originalname } = file;
+        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+
+        let compressedBuffer;
+        let extension;
+        let contentType;
+
+        try {
+          const metadata = await sharp(imageBuffer).metadata();
+          const format = metadata.format;
+          extension = format;
+          contentType = `image/${format}`;
+
+          let pipeline = sharp(imageBuffer, { animated: true });
+
+          switch (format) {
+            case "jpeg":
+            case "jpg":
+              pipeline = pipeline.jpeg({ quality: parsedQuality });
+              extension = "jpg";
+              contentType = "image/jpeg";
+              break;
+            case "png":
+              pipeline = pipeline.png({ quality: parsedQuality });
+              extension = "png";
+              contentType = "image/png";
+              break;
+            case "webp":
+              pipeline = pipeline.webp({ quality: parsedQuality });
+              extension = "webp";
+              contentType = "image/webp";
+              break;
+            case "tiff":
+              pipeline = pipeline.tiff({ quality: parsedQuality });
+              extension = "tiff";
+              contentType = "image/tiff";
+              break;
+            case "avif":
+              pipeline = pipeline.avif({ quality: parsedQuality });
+              extension = "avif";
+              contentType = "image/avif";
+              break;
+            case "gif":
+              pipeline = pipeline.gif();
+              extension = "gif";
+              contentType = "image/gif";
+              break;
+            default:
+              pipeline = pipeline.jpeg({ quality: parsedQuality });
+              extension = "jpg";
+              contentType = "image/jpeg";
+          }
+          compressedBuffer = await pipeline.toBuffer();
+        } catch (error) {
+          compressedBuffer = await sharp(imageBuffer)
+            .jpeg({ quality: parsedQuality })
+            .toBuffer();
+          extension = "jpg";
+          contentType = "image/jpeg";
+        }
+
+        const outputFileName = `dkutils_${nameWithoutExt}_compressed_${Date.now()}.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from("utilityhub")
+          .upload(outputFileName, compressedBuffer, {
+            contentType,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+        return res.json({
+          path: downloadUrl,
+          originalname: outputFileName,
         });
       }
 
@@ -425,12 +587,10 @@ router.post(
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
+        path: downloadUrl,
         originalname: zipFileName,
       });
     } catch (err) {
@@ -461,6 +621,35 @@ router.post(
       if (!normalizedFormat || !allowedFormats.includes(normalizedFormat)) {
         return res.status(400).json({
           msg: `Invalid format provided. Allowed formats are: ${allowedFormats.join(", ")}`,
+        });
+      }
+
+      if (files.length === 1) {
+        const file = files[0];
+        const imageBuffer = file.buffer;
+        const { originalname } = file;
+        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+
+        const convertedBuffer = await sharp(imageBuffer)
+          .toFormat(normalizedFormat)
+          .toBuffer();
+
+        const outputFileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.${normalizedFormat}`;
+        const { error: uploadError } = await supabase.storage
+          .from("utilityhub")
+          .upload(outputFileName, convertedBuffer, {
+            contentType: `image/${normalizedFormat}`,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+        return res.json({
+          path: downloadUrl,
+          originalname: outputFileName,
         });
       }
 
@@ -504,12 +693,10 @@ router.post(
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
+        path: downloadUrl,
         originalname: zipFileName,
       });
     } catch (err) {
@@ -550,38 +737,21 @@ router.post(
         const buffer = Buffer.from(base64String, "base64");
         const outputFileName = `dkutils_decoded-${Date.now()}.png`;
 
-        const archive = archiver("zip", {
-          zlib: { level: 9 },
-        });
-
-        const archiveBuffer = await new Promise((resolve, reject) => {
-          const buffers = [];
-          archive.on("data", (data) => buffers.push(data));
-          archive.on("end", () => resolve(Buffer.concat(buffers)));
-          archive.on("error", (err) => reject(err));
-
-          archive.append(buffer, { name: outputFileName });
-          archive.finalize();
-        });
-
-        const zipFileName = `dkutils_decoded_image_${Date.now()}.zip`;
         const { error: uploadError } = await supabase.storage
           .from("utilityhub")
-          .upload(zipFileName, archiveBuffer, {
-            contentType: "application/zip",
+          .upload(outputFileName, buffer, {
+            contentType: "image/png",
           });
 
         if (uploadError) {
           throw uploadError;
         }
 
-        const { data: publicUrlData } = supabase.storage
-          .from("utilityhub")
-          .getPublicUrl(zipFileName);
+        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
         return res.json({
-          path: publicUrlData.publicUrl,
-          originalname: zipFileName,
+          path: downloadUrl,
+          originalname: outputFileName,
         });
       }
       return res
@@ -655,41 +825,25 @@ router.post(
         });
       }
 
-      const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-      const outputFileName = `dkutils_flipped-${nameWithoutExt}.${extension}`;
+      const timestamp = Date.now();
+      const nameWithoutExt = path.parse(originalname).name;
+      const outputFileName = `dkutils_flipped-${nameWithoutExt}-${timestamp}.${extension}`;
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
-
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(flippedBuffer, { name: outputFileName });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_flipped_image_${Date.now()}.zip`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
+        .upload(outputFileName, flippedBuffer, {
+          contentType: `image/${outputFormat}`,
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
+        path: downloadUrl,
+        originalname: outputFileName,
       });
     } catch (err) {
       console.error(err);
@@ -767,41 +921,25 @@ router.post(
         .toFormat(outputFormat)
         .toBuffer();
 
-      const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-      const outputFileName = `dkutils_grayscale-${nameWithoutExt}.${extension}`;
+      const timestamp = Date.now();
+      const nameWithoutExt = path.parse(originalname).name;
+      const outputFileName = `dkutils_grayscale-${nameWithoutExt}-${timestamp}.${extension}`;
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
-
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(grayscaleBuffer, { name: outputFileName });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_grayscale_image_${Date.now()}.zip`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
+        .upload(outputFileName, grayscaleBuffer, {
+          contentType: `image/${outputFormat}`,
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
+        path: downloadUrl,
+        originalname: outputFileName,
       });
     } catch (err) {
       console.error(err);
