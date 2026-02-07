@@ -1,6 +1,6 @@
 {
   "name": "dkutils",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
   "private": true,
   "packageManager": "pnpm@10.28.2",
