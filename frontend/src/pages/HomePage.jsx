@@ -165,7 +165,7 @@ const HomePage = () => {
 
       {/* Categories Grid */}
       <section className="container space-y-6 bg-muted/30 py-8 dark:bg-transparent md:py-12 lg:py-24 max-w-7xl mx-auto px-4 md:px-6 rounded-3xl">
-        <div className="mx-auto flex max-w-[288.75rem] flex-col items-center space-y-4 text-center">
+        <div className="mx-auto flex max-w-4xl flex-col items-center space-y-4 text-center">
           <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl font-bold">
             Tools for Everyone
           </h2>
@@ -231,7 +231,7 @@ const HomePage = () => {
 
       {/* Features / Tech Stack Section */}
       <section className="container py-12 md:py-24 max-w-7xl mx-auto border-t px-4 md:px-6">
-        <div className="mx-auto flex max-w-[232rem] flex-col items-center justify-center gap-4 text-center mb-12">
+        <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-4 text-center mb-12">
           <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
             Built with Modern Tech
           </h2>

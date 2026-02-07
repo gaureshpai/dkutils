@@ -112,6 +112,7 @@ router.get("/download", async (req, res) => {
       "dkutils_",
       "screenshot-",
       "screenshots/screenshot-",
+      "favicons/",
     ];
     if (
       filename.includes("..") ||
@@ -815,8 +816,8 @@ router.post(
         });
       }
 
-      const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-      const outputFileName = `dkutils_flipped-${nameWithoutExt}.${extension}`;
+      const timestamp = Date.now();
+      const outputFileName = `dkutils_flipped-${nameWithoutExt}-${timestamp}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
@@ -910,8 +911,8 @@ router.post(
         .toFormat(outputFormat)
         .toBuffer();
 
-      const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-      const outputFileName = `dkutils_grayscale-${nameWithoutExt}.${extension}`;
+      const timestamp = Date.now();
+      const outputFileName = `dkutils_grayscale-${nameWithoutExt}-${timestamp}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
