@@ -322,7 +322,7 @@ router.post(
         `PDF compression: ${originalSize} bytes -> ${compressedSize} bytes (${formattedCompression}% reduction)`,
       );
 
-      // Only create ZIP if there's significant compression
+      // Compress PDF
       const outputFileName = `dkutils_compressed_${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")

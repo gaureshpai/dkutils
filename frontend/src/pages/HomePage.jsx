@@ -114,7 +114,7 @@ const HomePage = () => {
       <section className="relative overflow-hidden pt-8 pb-12 md:pt-20 md:pb-32 lg:pt-32 lg:pb-40">
         {/* Background Pattern */}
         <div className="absolute inset-x-0 -top-20 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-          <div className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-288.75 dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
+          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[144.5rem] -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[288.75rem] dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
         </div>
 
         <div className="container px-4 md:px-6 flex max-w-5xl flex-col items-center gap-6 md:gap-10 text-center mx-auto">
@@ -159,13 +159,13 @@ const HomePage = () => {
 
         {/* Bottom decorative gradient */}
         <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
-          <div className="relative left-[calc(50%+3rem)] aspect-1155/678 w-144.5 -translate-x-1/2 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%+36rem)] sm:w-288.75 dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
+          <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[144.5rem] -translate-x-1/2 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%+36rem)] sm:w-[288.75rem] dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
         </div>
       </section>
 
       {/* Categories Grid */}
       <section className="container space-y-6 bg-muted/30 py-8 dark:bg-transparent md:py-12 lg:py-24 max-w-7xl mx-auto px-4 md:px-6 rounded-3xl">
-        <div className="mx-auto flex max-w-288.75 flex-col items-center space-y-4 text-center">
+        <div className="mx-auto flex max-w-[288.75rem] flex-col items-center space-y-4 text-center">
           <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl font-bold">
             Tools for Everyone
           </h2>
@@ -231,7 +231,7 @@ const HomePage = () => {
 
       {/* Features / Tech Stack Section */}
       <section className="container py-12 md:py-24 max-w-7xl mx-auto border-t px-4 md:px-6">
-        <div className="mx-auto flex max-w-232 flex-col items-center justify-center gap-4 text-center mb-12">
+        <div className="mx-auto flex max-w-[232rem] flex-col items-center justify-center gap-4 text-center mb-12">
           <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
             Built with Modern Tech
           </h2>

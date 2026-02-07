@@ -108,6 +108,18 @@ router.get("/download", async (req, res) => {
       return res.status(400).json({ msg: "Filename is required." });
     }
 
+    const allowedPrefixes = [
+      "dkutils_",
+      "screenshot-",
+      "screenshots/screenshot-",
+    ];
+    if (
+      filename.includes("..") ||
+      !allowedPrefixes.some((prefix) => filename.startsWith(prefix))
+    ) {
+      return res.status(403).json({ msg: "Invalid filename." });
+    }
+
     const { data, error } = await supabase.storage
       .from("utilityhub")
       .download(filename);

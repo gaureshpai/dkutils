@@ -19,7 +19,7 @@ router.post("/", async (req, res) => {
 
     const response = await axios.get(screenshotUrl, {
       responseType: "arraybuffer",
-      timeout: 5000,
+      timeout: 30000,
     });
     const imageBuffer = Buffer.from(response.data);
 
