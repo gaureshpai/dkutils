@@ -1,157 +1,128 @@
-# dkutils
-
-This is a web-based utility platform that provides users with multiple everyday tools in one place. It is built using the MERN stack (MongoDB, Express.js, React.js, Node.js) with TailwindCSS for styling.
+# 🛠️ dkutils — The Ultimate Multi-Utility Platform
 
 ![dkutils Logo](frontend/public/logo.png)
 
-## Environment Variables
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Vite](https://img.shields.io/badge/Frontend-Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Turbo](https://img.shields.io/badge/Monorepo-Turbo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build/)
 
-This application uses environment variables for configuration. You need to create `.env` files in both the `backend` and `frontend` directories.
+**dkutils** is a powerful, modern web-based utility platform that provides a comprehensive suite of everyday tools in one unified interface. From image manipulation and PDF processing to text utilities and web development tools, dkutils simplifies your digital workflow.
 
-### Backend (`backend/.env`)
+---
 
-Create a file named `.env` in the `backend` directory with the following content:
+## 🚀 Key Features
 
-```
-PORT=YOUR_BACKEND_PORT
-MONGO_URI=mongodb://localhost:27017/dkutils
-JWT_SECRET=your_jwt_secret_key
-BASE_URL=http://localhost:5000
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-```
+### 🖼️ Image Tools
 
-- `PORT`: The port the backend server will run on.
-- `MONGO_URI`: Your MongoDB connection string.
-- `JWT_SECRET`: A secret key for JWT authentication.
-- `BASE_URL`: The base URL of your backend server (e.g., `http://localhost:5000` for local development).
-- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase credentials.
+- **Conversion**: JPG, PNG, WebP, TIFF, AVIF, and Base64.
+- **Manipulation**: Compress, Resize, Crop, Grayscale, Flip.
+- **Batch Processing**: Convert multiple images to a single PDF.
 
-### Frontend (`frontend/.env`)
+### 📄 PDF Tools
 
-Create a file named `.env` in the `frontend` directory with the following content:
+- **Management**: Merge, Split, Rotate, Delete pages.
+- **Cloud Storage**: Seamless integration with Supabase for secure processing.
+- **Conversion**: PDF to Text, PDF to Word/Excel, Text to PDF.
 
-```
-VITE_API_BASE_URL=http://localhost:5000
-```
+### ✍️ Text Utilities
 
-- `VITE_API_BASE_URL`: The base URL of your backend API. This should match the `BASE_URL` in your backend's `.env` file.
+- **Converters**: Case conversion, Base64, HTML/Markdown, CSV to JSON.
+- **Analysis**: Diff Checker, JSON Validator, Password Strength.
+- **Security**: Strong Password Generator & Hash Generator (MD5, SHA).
 
-### Login-Based File Limits
+### 🌐 Web Tools
 
-- File upload limits are dynamically adjusted based on user authentication status: 10MB for unauthenticated users and 50MB for authenticated users, providing enhanced flexibility for larger file processing.
+- **SEO & Analysis**: Robots.txt/Sitemap viewer, URL Redirect Checker.
+- **Generators**: Link Shortener, QR Code Generator & Scanner.
+- **Capture**: Website Screenshot Generator & Favicon Extractor.
 
-### Image Tools
+---
 
-1.  **Image Format Converter**: Convert images between various formats (JPG, PNG, WebP, TIFF, AVIF).
-2.  **Image Compressor**: Reduce the file size of your images while maintaining quality.
-3.  **Image Resizer**: Change the dimensions (width and height) of your images.
-4.  **PNG to JPG Converter**: Quickly convert PNG images to JPG format.
-5.  **Image Cropper**: Crop images to a specific area or aspect ratio.
-6.  **Image Grayscaler**: Convert your colored images to grayscale.
-7.  **Image Flipper**: Flip images horizontally or vertically.
-8.  **Image to Base64 Converter**: Convert images into Base64 strings for embedding or transfer.
-9.  **Image to PDF Converter**: Combine multiple images into a single PDF document.
+## 💻 Tech Stack
 
-### PDF Tools
+- **Frontend**: [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [Lucide Icons](https://lucide.dev/)
+- **Backend**: [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/)
+- **Database**: [MongoDB](https://www.mongodb.com/) (Meta-data), [Supabase](https://supabase.com/) (File Storage)
+- **Monorepo Management**: [Turborepo](https://turbo.build/)
+- **Utilities**: [Sharp](https://sharp.pixelplumbing.com/) (Image handling), [PDF-lib](https://pdf-lib.js.org/) (PDF manipulation)
 
-1.  **PDF Merger**: Combine multiple PDF documents into one single PDF file.
-2.  **PDF Splitter**: Split a PDF document into multiple smaller PDF files by pages or ranges.
-3.  **PDF Compressor**: Reduce the file size of your PDF documents.
-4.  **PDF to Word Converter**: Convert PDF into word format.
-5.  **PDF to Excel Converter**: Convert PDF into Excel spreadsheets format.
-6.  **Text to PDF Generator**: Convert plain text content into a PDF document.
-7.  **PDF to Text Converter**: Extract all text content from PDF documents.
-8.  **PDF Rotator**: Rotate pages within a PDF document by 90, 180, or 270 degrees.
-9.  **PDF Page Deleter**: Delete specific pages from a PDF document.
+---
 
-### Text Tools
+## 🛠️ Getting Started
 
-1.  **Text Case Converter**: Convert text to various case formats (e.g., UPPERCASE, lowercase, Title Case).
-2.  **Text Difference Checker**: Compare two texts and highlight the differences between them.
-3.  **Base64 Text Converter**: Encode or decode text to/from Base64 format.
-4.  **HTML to Markdown Converter**: Convert HTML content to Markdown format.
-5.  **Markdown to HTML Converter**: Convert Markdown content to HTML format.
-6.  **JSON Formatter/Validator**: Format and validate JSON data for readability and correctness.
-7.  **Hash Generator**: Generate various cryptographic hashes (e.g., MD5, SHA1, SHA256) from text.
-8.  **Password Generator**: Generate strong, random, and customizable passwords.
-9.  **CSV to JSON Converter**: Convert CSV (Comma Separated Values) data to JSON (JavaScript Object Notation) format.
+### Prerequisites
 
-### Web Tools
+- [Node.js](https://nodejs.org/) (v18+)
+- [pnpm](https://pnpm.io/) (v10+)
+- MongoDB instance (local or Atlas)
+- Supabase Account (for API keys)
 
-1.  **Link Shortener**: Shorten long URLs for easier sharing and tracking.
-2.  **QR Code Generator**: Create QR codes from text or URLs.
-3.  **QR Code Scanner**: Scan QR codes from uploaded images to extract data.
-4.  **Website Screenshot Generator**: Capture a full-page screenshot of any website.
-5.  **Favicon Extractor**: Extract favicons (website icons) from any website URL.
-6.  **URL Redirect Checker**: Trace and analyze URL redirect chains.
-7.  **Robots.txt / Sitemap.xml Viewer**: View and validate `robots.txt` and `sitemap.xml` files for SEO analysis.
-8.  **JSON <-> XML Converter**: Convert between JSON and XML data formats, essential for web service integration and API data transformation.
-9.  **Password Strength Checker**: Analyze the strength of your password and provide feedback for improvement.
+### Environment Setup
 
-### General/Core Functionalities
+1. **Backend (`backend/.env`)**:
 
-1.  **User Authentication**: Secure user registration and login system using JWT (JSON Web Tokens).
+   ```env
+   PORT=5000
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_secret_key
+   BASE_URL=http://localhost:5000
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ```
 
-## Authentication:
+2. **Frontend (`frontend/.env`)**:
+   ```env
+   VITE_API_BASE_URL=http://localhost:5000
+   ```
 
-This application includes JWT-based authentication. Some premium/bulk features are protected and require a user to be logged in. You can register and log in using the provided forms.
+### Installation & Running
 
-## How to Run the Application:
-
-**1. Start the Application (Frontend & Backend):**
-Navigate to the root directory of the project in your terminal:
+From the root directory:
 
 ```bash
+# Install dependencies
 pnpm install
-pnpm start
-```
 
-This will install all root dependencies (including `concurrently`) and then start both the backend and frontend servers. The backend server will run on the port specified in your `backend/.env` file (default: 5000) and the frontend application will open in your browser, usually at `http://localhost:3000`.
-
-**Alternatively, start servers individually:**
-
-**1. Start the Backend Server:**
-Navigate to the `backend` directory in your terminal:
-
-```bash
-cd backend
-```
-
-Install dependencies (if you haven't already):
-
-```bash
-pnpm install
-```
-
-Start the server:
-
-```bash
-pnpm start
-```
-
-The backend server will run on the port specified in your `backend/.env` file (default: 5000).
-
-**2. Start the Frontend Development Server:**
-Open a new terminal window and navigate to the `frontend` directory:
-
-```bash
-cd frontend
-```
-
-Install dependencies (if you haven't already):
-
-```bash
-pnpm install
-```
-
-Start the development server:
-
-```bash
+# Run development servers (Frontend + Backend)
 pnpm dev
+
+# Build the entire project
+pnpm build
+
+# Start production build
+pnpm start
 ```
 
-The frontend application will open in your browser, usually at `http://localhost:3000`.
+---
 
-**4. MongoDB:**
-Ensure you have a MongoDB instance running. The application is configured to connect to `mongodb://localhost:27017/dkutils`. If your MongoDB is running on a different port or location, update the `MONGO_URI` in `backend/.env` accordingly.
+## 🔒 Security & Performance
+
+- **Dynamic Limits**: Upload limits are 10MB for guests and 50MB for authenticated users.
+- **JWT Auth**: Secure user accounts for tracking tool usage.
+- **Fast Pathing**: Single-file operations avoid archive overhead for instant results.
+- **Worker-Safe**: Heavy image processing handled via Sharp for high performance.
+
+---
+
+## 🤝 Contributing
+
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+
+---
+
+## 📄 License
+
+Distributed under the **ISC License**. See `LICENSE` for more information.
+
+---
+
+**Developed with ❤️ by [gaureshpai](https://github.com/gaureshpai)**
