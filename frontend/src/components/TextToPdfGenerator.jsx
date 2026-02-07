@@ -26,13 +26,13 @@ const TextToPdfGenerator = () => {
         },
       );
 
-      const zipBlob = new Blob([res.data], { type: "application/zip" });
+      const pdfBlob = new Blob([res.data], { type: "application/pdf" });
 
-      const url = window.URL.createObjectURL(zipBlob);
+      const url = window.URL.createObjectURL(pdfBlob);
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `converted-text-${Date.now()}.zip`;
+      a.download = `converted-text-${Date.now()}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();

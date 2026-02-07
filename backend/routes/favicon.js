@@ -135,13 +135,42 @@ router.post("/", async (req, res) => {
       const fileData = await downloadFile(faviconUrl);
       if (fileData && fileData.buffer) {
         const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
-        return { buffer: fileData.buffer, name: fileName };
+        return {
+          buffer: fileData.buffer,
+          name: fileName,
+          contentType: fileData.contentType,
+        };
       }
       return null;
     });
 
     const fileDataArray = await Promise.all(downloadPromises);
     const validFiles = fileDataArray.filter((file) => file !== null);
+
+    if (validFiles.length === 1) {
+      const file = validFiles[0];
+      const outputFileName = `favicon-${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from("utilityhub")
+        .upload(`favicons/${outputFileName}`, file.buffer, {
+          contentType: file.contentType || "image/x-icon",
+          upsert: true,
+        });
+
+      if (error) {
+        console.error("Supabase upload error:", error);
+        return res.status(500).json({
+          msg: "Failed to upload favicon to Supabase",
+          error: error.message,
+        });
+      }
+
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`favicons/${outputFileName}`)}`;
+
+      return res
+        .status(200)
+        .json({ path: downloadUrl, originalname: outputFileName });
+    }
 
     const zipBuffer = await new Promise((resolve, reject) => {
       const buffers = [];
@@ -173,13 +202,11 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from("utilityhub")
-      .getPublicUrl(`favicons/${zipFileName}`);
+    const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`favicons/${zipFileName}`)}`;
 
     return res
       .status(200)
-      .json({ path: publicUrlData.publicUrl, originalname: zipFileName });
+      .json({ path: downloadUrl, originalname: zipFileName });
   } catch (err) {
     console.error("Error extracting favicons:", err);
     return res.status(500).json({

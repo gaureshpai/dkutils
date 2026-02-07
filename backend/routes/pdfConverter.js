@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const { PDFDocument, degrees } = require("pdf-lib");
-const archiver = require("archiver");
 const { supabase } = require("../utils/supabaseClient");
 const pdfParse = require("pdf-parse");
 const {
@@ -55,27 +54,11 @@ router.post(
 
       const mergedPdfBuffer = await merger.saveAsBuffer();
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
-
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(mergedPdfBuffer, {
-          name: `dkutils_merged-${Date.now()}.pdf`,
-        });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_merged_pdf_${Date.now()}.zip`;
+      const outputFileName = `dkutils_merged-${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
+        .upload(outputFileName, mergedPdfBuffer, {
+          contentType: "application/pdf",
         });
 
       if (uploadError) {
@@ -85,13 +68,11 @@ router.post(
         );
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
+        path: downloadUrl,
+        originalname: outputFileName,
         success: true,
         message: "PDFs merged successfully!",
       });
@@ -145,27 +126,11 @@ router.post(
 
       const newPdfBytes = await newPdfDoc.save();
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
-
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(Buffer.from(newPdfBytes), {
-          name: `dkutils_split-${Date.now()}.pdf`,
-        });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_split_pdf_${Date.now()}.zip`;
+      const outputFileName = `dkutils_split-${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
+        .upload(outputFileName, Buffer.from(newPdfBytes), {
+          contentType: "application/pdf",
         });
 
       if (uploadError) {
@@ -173,13 +138,11 @@ router.post(
         throw new Error("Failed to upload split PDF to storage.");
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
+        path: downloadUrl,
+        originalname: outputFileName,
         success: true,
         message: "PDF split successfully!",
       });
@@ -265,27 +228,11 @@ router.post(
 
       const modifiedPdfBytes = await pdfDoc.save();
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
-
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
-
-        archive.append(Buffer.from(modifiedPdfBytes), {
-          name: `dkutils_rotated-${Date.now()}.pdf`,
-        });
-        archive.finalize();
-      });
-
-      const zipFileName = `dkutils_rotated_pdf_${Date.now()}.zip`;
+      const outputFileName = `dkutils_rotated-${Date.now()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
+        .upload(outputFileName, Buffer.from(modifiedPdfBytes), {
+          contentType: "application/pdf",
         });
 
       if (uploadError) {
@@ -293,13 +240,11 @@ router.post(
         throw new Error("Failed to upload rotated PDF.");
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("utilityhub")
-        .getPublicUrl(zipFileName);
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
       return res.json({
-        path: publicUrlData.publicUrl,
-        originalname: zipFileName,
+        path: downloadUrl,
+        originalname: outputFileName,
         success: true,
         message: "PDF rotated successfully!",
       });
@@ -378,77 +323,28 @@ router.post(
       );
 
       // Only create ZIP if there's significant compression
-      if (compressionRatio > 5) {
-        const archive = archiver("zip", {
-          zlib: { level: 9 },
+      const outputFileName = `dkutils_compressed_${Date.now()}.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from("utilityhub")
+        .upload(outputFileName, Buffer.from(compressedPdfBytes), {
+          contentType: "application/pdf",
         });
 
-        const archiveBuffer = await new Promise((resolve, reject) => {
-          const buffers = [];
-          archive.on("data", (data) => buffers.push(data));
-          archive.on("end", () => resolve(Buffer.concat(buffers)));
-          archive.on("error", (err) => reject(err));
-
-          archive.append(Buffer.from(compressedPdfBytes), {
-            name: `dkutils_compressed-${Date.now()}.pdf`,
-          });
-          archive.finalize();
-        }).catch((err) => {
-          console.error("Archive creation error:", err);
-          throw new Error("Failed to create archive.");
-        });
-
-        const zipFileName = `dkutils_compressed_pdf_${Date.now()}.zip`;
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(zipFileName, archiveBuffer, {
-            contentType: "application/zip",
-          });
-
-        if (uploadError) {
-          console.error("Supabase upload error:", uploadError);
-          throw new Error("Failed to upload compressed PDF.");
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from("utilityhub")
-          .getPublicUrl(zipFileName);
-
-        res.status(200).json({
-          path: publicUrlData.publicUrl,
-          originalname: zipFileName,
-          success: true,
-          message: `PDF compressed successfully with ${compressionLevel} compression! Reduced by ${formattedCompression}%`,
-          compressionRatio,
-          compressionLevel,
-        });
-      } else {
-        // If compression is minimal, just return the optimized PDF directly
-        const fileName = `dkutils_optimized_${Date.now()}.pdf`;
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(fileName, Buffer.from(compressedPdfBytes), {
-            contentType: "application/pdf",
-          });
-
-        if (uploadError) {
-          console.error("Supabase upload error:", uploadError);
-          throw new Error("Failed to upload optimized PDF.");
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from("utilityhub")
-          .getPublicUrl(fileName);
-
-        res.status(200).json({
-          path: publicUrlData.publicUrl,
-          originalname: fileName,
-          success: true,
-          message: `PDF optimized successfully with ${compressionLevel} compression! Reduced by ${formattedCompression}%`,
-          compressionRatio,
-          compressionLevel,
-        });
+      if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
+        throw new Error("Failed to upload compressed PDF.");
       }
+
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+      res.status(200).json({
+        path: downloadUrl,
+        originalname: outputFileName,
+        success: true,
+        message: `PDF compressed successfully with ${compressionLevel} compression! Reduced by ${formattedCompression}%`,
+        compressionRatio,
+        compressionLevel,
+      });
     } catch (err) {
       const errorInfo = handlePdfError(err, "PDF Compression");
       return res.status(errorInfo.statusCode).json({

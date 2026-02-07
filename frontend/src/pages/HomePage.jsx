@@ -114,10 +114,10 @@ const HomePage = () => {
       <section className="relative overflow-hidden pt-8 pb-12 md:pt-20 md:pb-32 lg:pt-32 lg:pb-40">
         {/* Background Pattern */}
         <div className="absolute inset-x-0 -top-20 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
+          <div className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-288.75 dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
         </div>
 
-        <div className="container px-4 md:px-6 flex max-w-[64rem] flex-col items-center gap-6 md:gap-10 text-center mx-auto">
+        <div className="container px-4 md:px-6 flex max-w-5xl flex-col items-center gap-6 md:gap-10 text-center mx-auto">
           <div className="inline-flex items-center rounded-full border border-chart-2/20 bg-chart-2/10 px-3 py-1 text-sm font-medium text-chart-2 backdrop-blur-md ">
             <span className="mr-2 flex h-2 w-2 rounded-full animate-pulse bg-chart-2/100"></span>
             <span>Open Source & Free Forever 🚀</span>
@@ -125,12 +125,12 @@ const HomePage = () => {
 
           <h1 className="font-heading text-4xl font-black leading-tight tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
             Everything you need to <br className="hidden sm:inline" />
-            <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 dark:from-blue-400 dark:via-blue-300 dark:to-cyan-300">
+            <span className="text-primary bg-clip-text bg-linear-to-r from-blue-600 via-blue-500 to-cyan-400 dark:from-blue-400 dark:via-blue-300 dark:to-cyan-300">
               Manage Your Files
             </span>
           </h1>
 
-          <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
+          <p className="max-w-2xl leading-normal text-muted-foreground sm:text-xl sm:leading-8">
             Convert, compress, edit, and analyze images, PDFs, text, and web
             resources instantly. No server uploads for most tools - secure,
             fast, and free.
@@ -159,13 +159,13 @@ const HomePage = () => {
 
         {/* Bottom decorative gradient */}
         <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
-          <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem] dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
+          <div className="relative left-[calc(50%+3rem)] aspect-1155/678 w-144.5 -translate-x-1/2 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%+36rem)] sm:w-288.75 dark:from-[#3b82f6] dark:to-[#14b8a6]"></div>
         </div>
       </section>
 
       {/* Categories Grid */}
       <section className="container space-y-6 bg-muted/30 py-8 dark:bg-transparent md:py-12 lg:py-24 max-w-7xl mx-auto px-4 md:px-6 rounded-3xl">
-        <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+        <div className="mx-auto flex max-w-288.75 flex-col items-center space-y-4 text-center">
           <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl font-bold">
             Tools for Everyone
           </h2>
@@ -231,7 +231,7 @@ const HomePage = () => {
 
       {/* Features / Tech Stack Section */}
       <section className="container py-12 md:py-24 max-w-7xl mx-auto border-t px-4 md:px-6">
-        <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
+        <div className="mx-auto flex max-w-232 flex-col items-center justify-center gap-4 text-center mb-12">
           <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
             Built with Modern Tech
           </h2>
@@ -240,7 +240,7 @@ const HomePage = () => {
             security, and reliability.
           </p>
         </div>
-        <div className="mx-auto grid justify-center gap-6 sm:grid-cols-1 md:grid-cols-3 md:max-w-[64rem]">
+        <div className="mx-auto grid justify-center gap-6 sm:grid-cols-1 md:grid-cols-3 md:max-w-5xl">
           <Card className="flex flex-col items-center text-center p-6 hover:shadow-md transition-shadow">
             <CardHeader className="p-0 mb-4">
               <div className="p-3 bg-chart-1/10 rounded-full">

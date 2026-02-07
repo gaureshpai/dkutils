@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const PDFDocument = require("pdfkit");
-const archiver = require("archiver");
 
 // @route   POST /api/convert/text-to-pdf
 // @desc    Convert text to PDF and send for direct download
@@ -33,28 +32,12 @@ router.post("/text-to-pdf", async (req, res) => {
 
     const pdfBuffer = await pdfBufferPromise;
 
-    const archive = archiver("zip", {
-      zlib: { level: 9 },
-    });
-
-    const archiveBuffer = await new Promise((resolve, reject) => {
-      const buffers = [];
-      archive.on("data", (data) => buffers.push(data));
-      archive.on("end", () => resolve(Buffer.concat(buffers)));
-      archive.on("error", (err) => reject(err));
-
-      archive.append(pdfBuffer, {
-        name: `dkutils_converted-text-${Date.now()}.pdf`,
-      });
-      archive.finalize();
-    });
-
-    const zipFileName = `dkutils_text_to_pdf_${Date.now()}.zip`;
+    const outputFileName = `dkutils_converted-text-${Date.now()}.pdf`;
     res.writeHead(200, {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${zipFileName}"`,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${outputFileName}"`,
     });
-    res.end(archiveBuffer);
+    res.end(pdfBuffer);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
