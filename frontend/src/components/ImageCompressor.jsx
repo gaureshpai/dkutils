@@ -77,9 +77,8 @@ const ImageCompressor = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Error downloading file:", err);
-      toast.error(
-        "Failed to download compressed image. You can try again or download from the link provided in the network tab.",
-      );
+      toast.error("Failed to download compressed image. You can try again.");
+      throw err;
     }
   };
 
