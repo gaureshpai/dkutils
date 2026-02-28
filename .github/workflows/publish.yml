@@ -79,6 +79,7 @@ jobs:
       - name: Update docs version
         run: |
           VERSION=${{ steps.get_version.outputs.version }}
+          export VERSION
           node - <<'EOF'
 const fs = require('fs');
 const version = process.env.VERSION;
