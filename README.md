@@ -1,5 +1,7 @@
 # 🛠️ dkutils — The Ultimate Multi-Utility Platform
 
+**Version:** 2.0.1
+
 ![dkutils Logo](frontend/public/logo.png)
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
