@@ -1,7 +1,7 @@
 {
   "info": {
     "title": "API Documentation",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "description": "Auto-generated API documentation for Express.js application",
     "generatedAt": "2026-02-28T12:23:03.048Z"
   },
@@ -1291,7 +1291,9 @@
             }
           }
         ],
-        "middleware": ["trackLimiter"]
+        "middleware": [
+          "trackLimiter"
+        ]
       }
     },
     "/api/analytics/stats": {
@@ -1416,20 +1418,33 @@
       "POST": 33,
       "GET": 7
     },
-    "statusCodes": [200, 400, 403, 404, 408, 500],
+    "statusCodes": [
+      200,
+      400,
+      403,
+      404,
+      408,
+      500
+    ],
     "pathsWithParams": 1,
-    "middlewareUsage": ["trackLimiter"]
+    "middlewareUsage": [
+      "trackLimiter"
+    ]
   },
   "tags": {
     "shorten": {
       "name": "shorten",
       "description": "Routes under /shorten",
-      "paths": ["/shorten"]
+      "paths": [
+        "/shorten"
+      ]
     },
     "l": {
       "name": "l",
       "description": "Routes under /l",
-      "paths": ["/l/:code"]
+      "paths": [
+        "/l/:code"
+      ]
     },
     "api": {
       "name": "api",
@@ -1476,12 +1491,16 @@
     "root": {
       "name": "root",
       "description": "Routes under /root",
-      "paths": ["/"]
+      "paths": [
+        "/"
+      ]
     },
     "health": {
       "name": "health",
       "description": "Routes under /health",
-      "paths": ["/health"]
+      "paths": [
+        "/health"
+      ]
     }
   }
 }

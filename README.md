@@ -1,6 +1,6 @@
 # 🛠️ dkutils — The Ultimate Multi-Utility Platform
 
-**Version:** 2.0.1
+**Version:** 2.0.2
 
 ![dkutils Logo](frontend/public/logo.png)
 
