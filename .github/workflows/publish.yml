@@ -123,7 +123,7 @@ EOF
             exit 0
           fi
 
-          git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} release"
+          git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} v${{ steps.get_version.outputs.version }} release"
           # Check if tag already exists
           TAG_NAME="v${{ steps.get_version.outputs.version }}"
           did_commit=false
