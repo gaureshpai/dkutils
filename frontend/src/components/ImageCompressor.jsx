@@ -63,8 +63,7 @@ const ImageCompressor = () => {
   const handleDownload = async (fileUrl, fileName) => {
     try {
       const downloadRes = await axios.get(fileUrl, { responseType: "blob" });
-      const blob = new Blob([downloadRes.data]);
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(downloadRes.data);
 
       const link = document.createElement("a");
       link.href = url;
