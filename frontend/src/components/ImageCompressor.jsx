@@ -59,13 +59,26 @@ const ImageCompressor = () => {
     setQuality(e.target.value);
   };
 
-  const handleDownload = (fileUrl, fileName) => {
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // fetch the file as a blob and trigger download
+  const handleDownload = async (fileUrl, fileName) => {
+    try {
+      const downloadRes = await axios.get(fileUrl, { responseType: "blob" });
+      const url = window.URL.createObjectURL(downloadRes.data);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // cleanup
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading file:", err);
+      toast.error("Failed to download compressed image. You can try again.");
+      throw err;
+    }
   };
 
   const onSubmit = async (e) => {
@@ -96,7 +109,8 @@ const ImageCompressor = () => {
       );
       setConvertedZipFile(res.data);
 
-      handleDownload(res.data.path, res.data.originalname);
+      // trigger download and wait so we can show toast after it completes / errors
+      await handleDownload(res.data.path, res.data.originalname);
       toast.success("Images compressed successfully!");
       setSelectedFiles([]);
       if (fileInputRef.current) {

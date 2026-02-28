@@ -76,6 +76,36 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Update docs version
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          export VERSION
+          node - <<'EOF'
+          const fs = require('fs');
+          const version = process.env.VERSION;
+
+          // update backend api JSON docs
+          const jsonPath = 'backend/docs/api-documentation.json';
+          if (fs.existsSync(jsonPath)) {
+            const doc = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+            doc.info = doc.info || {};
+            doc.info.version = version;
+            fs.writeFileSync(jsonPath, JSON.stringify(doc, null, 2));
+          }
+
+          // update any README files with Version: lines
+          const updateReadme = (p) => {
+            if (fs.existsSync(p)) {
+              let c = fs.readFileSync(p, 'utf8');
+              c = c.replace(/\*\*Version:\*\* .*/, `**Version:** ${version}`);
+              fs.writeFileSync(p, c);
+            }
+          };
+          updateReadme('backend/docs/README.md');
+          updateReadme('README.md');
+          updateReadme('frontend/README.md');
+          EOF
+
       - name: Commit version changes
         id: commit_versions
         run: |
@@ -83,6 +113,10 @@ jobs:
           if [ -f package.json ]; then FILES="$FILES package.json"; fi
           if [ -f frontend/package.json ]; then FILES="$FILES frontend/package.json"; fi
           if [ -f backend/package.json ]; then FILES="$FILES backend/package.json"; fi
+          if [ -f backend/docs/api-documentation.json ]; then FILES="$FILES backend/docs/api-documentation.json"; fi
+          if [ -f backend/docs/README.md ]; then FILES="$FILES backend/docs/README.md"; fi
+          if [ -f README.md ]; then FILES="$FILES README.md"; fi
+          if [ -f frontend/README.md ]; then FILES="$FILES frontend/README.md"; fi
           if [ -n "$FILES" ]; then git add $FILES; fi
 
           if git diff --cached --quiet; then
@@ -90,7 +124,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} release"
+          git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} v${{ steps.get_version.outputs.version }} release"
           # Check if tag already exists
           TAG_NAME="v${{ steps.get_version.outputs.version }}"
           did_commit=false
