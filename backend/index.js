@@ -4,34 +4,28 @@ const mongoose = require("mongoose");
 const { createClient } = require("@supabase/supabase-js");
 
 if (!process.env.SUPABASE_URL) {
-  console.error("Error: SUPABASE_URL environment variable is not set.");
-  process.exit(1);
+	console.error("Error: SUPABASE_URL environment variable is not set.");
+	process.exit(1);
 }
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error(
-    "Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set.",
-  );
-  process.exit(1);
+	console.error("Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set.");
+	process.exit(1);
 }
 if (!process.env.MONGO_URI) {
-  console.error("Error: MONGO_URI environment variable is not set.");
-  process.exit(1);
+	console.error("Error: MONGO_URI environment variable is not set.");
+	process.exit(1);
 }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const testSupabaseConnection = async () => {
-  try {
-    const { data: bucket, error: getBucketError } =
-      await supabase.storage.getBucket("utilityhub");
-    if (getBucketError) throw getBucketError;
-    console.log(`Supabase Storage connected!\nBucket '${bucket.name}' found.`);
-  } catch (error) {
-    console.error("Supabase Storage connection failed:", error.message);
-  }
+	try {
+		const { data: bucket, error: getBucketError } = await supabase.storage.getBucket("utilityhub");
+		if (getBucketError) throw getBucketError;
+		console.log(`Supabase Storage connected!\nBucket '${bucket.name}' found.`);
+	} catch (error) {
+		console.error("Supabase Storage connection failed:", error.message);
+	}
 };
 
 mongoose.connect(process.env.MONGO_URI);
@@ -39,8 +33,8 @@ mongoose.connect(process.env.MONGO_URI);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
-  console.log("MongoDB connected!");
-  testSupabaseConnection();
+	console.log("MongoDB connected!");
+	testSupabaseConnection();
 });
 
 const express = require("express");
@@ -124,21 +118,21 @@ const passwordStrength = require("./routes/passwordStrength");
 app.use("/api/password-strength", passwordStrength);
 
 app.get("/", (req, res) => {
-  res.send("Hello from dkutils Backend!");
+	res.send("Hello from dkutils Backend!");
 });
 
 app.get("/health", (req, res) => {
-  res.status(200).send("Backend is healthy!");
+	res.status(200).send("Backend is healthy!");
 });
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({
-    msg: err.message || "Server error",
-  });
+	console.error(err);
+	res.status(err.status || 500).json({
+		msg: err.message || "Server error",
+	});
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
+	console.log(`Server is running on port: ${port}`);
 });

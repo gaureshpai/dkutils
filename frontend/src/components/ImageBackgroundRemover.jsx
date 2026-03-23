@@ -1,0 +1,89 @@
+import { removeBackground } from "@imgly/background-removal";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
+
+import useAnalytics from "../utils/useAnalytics";
+
+const ImageBackgroundRemover = () => {
+	const { trackToolUsage } = useAnalytics();
+	const [selectedFile, setSelectedFile] = useState(null);
+	const [loading, setLoading] = useState(false);
+
+	const handleFileChange = (event) => {
+		const file = event.target.files?.[0];
+		if (!file) {
+			setSelectedFile(null);
+			return;
+		}
+
+		if (!file.type.startsWith("image/")) {
+			toast.error("Please upload a valid image file.");
+			event.target.value = "";
+			setSelectedFile(null);
+			return;
+		}
+
+		setSelectedFile(file);
+	};
+
+	const handleSubmit = async (event) => {
+		event.preventDefault();
+
+		if (!selectedFile) {
+			toast.error("Please select an image first.");
+			return;
+		}
+
+		setLoading(true);
+		try {
+			trackToolUsage("ImageBackgroundRemover", "image");
+			const blob = await removeBackground(selectedFile);
+			const objectUrl = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = objectUrl;
+			link.download = `${selectedFile.name.replace(/\.[^.]+$/, "")}-no-bg.png`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(objectUrl);
+			toast.success("Background removed successfully.");
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to remove the image background.");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">Background Remover</h2>
+			<form onSubmit={handleSubmit}>
+				<div className="mb-4">
+					<label
+						className="block mb-2 text-sm font-medium text-foreground"
+						htmlFor="background_remover_file"
+					>
+						Upload an image
+					</label>
+					<input
+						id="background_remover_file"
+						type="file"
+						accept="image/*"
+						className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
+						onChange={handleFileChange}
+					/>
+				</div>
+				<button
+					type="submit"
+					className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 focus:outline-none"
+					disabled={loading}
+				>
+					{loading ? "Removing..." : "Remove Background"}
+				</button>
+			</form>
+		</div>
+	);
+};
+
+export default ImageBackgroundRemover;

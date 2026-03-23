@@ -1,63 +1,58 @@
 {
-  "name": "dkutils-frontend",
-  "description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
-  "version": "2.0.2",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@radix-ui/react-label": "^2.1.8",
-    "@radix-ui/react-separator": "^1.1.8",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@tailwindcss/vite": "^4.1.18",
-    "axios": "^1.13.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "diff-match-patch": "^1.0.5",
-    "dom-to-image": "^2.6.0",
-    "js-md5": "^0.8.3",
-    "jspdf": "^4.0.0",
-    "jsqr": "^1.4.0",
-    "jwt-decode": "^4.0.0",
-    "lucide-react": "^0.556.0",
-    "marked": "^16.4.2",
-    "papaparse": "^5.5.3",
-    "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.4.530",
-    "prop-types": "^15.8.1",
-    "qrcode.react": "^4.2.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-helmet-async": "^2.0.5",
-    "react-icons": "^5.5.0",
-    "react-router-dom": "^7.13.0",
-    "react-toastify": "^11.0.5",
-    "tailwind-merge": "^3.4.0",
-    "turndown": "^7.2.2",
-    "web-vitals": "^2.1.4"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.4.24",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
-    "vite": "^6.4.1"
-  }
+	"name": "dkutils-frontend",
+	"description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
+	"version": "2.0.2",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"@imgly/background-removal": "catalog:",
+		"@radix-ui/react-label": "^2.1.8",
+		"@radix-ui/react-separator": "^1.1.8",
+		"@radix-ui/react-slot": "^1.2.4",
+		"@tailwindcss/vite": "^4.1.18",
+		"axios": "catalog:",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"diff-match-patch": "^1.0.5",
+		"dom-to-image": "^2.6.0",
+		"js-md5": "^0.8.3",
+		"jspdf": "^4.0.0",
+		"jsqr": "catalog:",
+		"jwt-decode": "^4.0.0",
+		"lucide-react": "^0.556.0",
+		"marked": "catalog:",
+		"papaparse": "catalog:",
+		"pdf-lib": "catalog:",
+		"pdfjs-dist": "^5.4.530",
+		"prop-types": "^15.8.1",
+		"qrcode.react": "^4.2.0",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"react-helmet-async": "^2.0.5",
+		"react-icons": "^5.5.0",
+		"react-router-dom": "^7.13.0",
+		"react-toastify": "^11.0.5",
+		"tailwind-merge": "^3.4.0",
+		"turndown": "catalog:",
+		"web-vitals": "^2.1.4"
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"test": "echo \"No tests for frontend\"",
+		"preview": "vite preview",
+		"lint": "npx biome lint --write src"
+	},
+	"browserslist": {
+		"production": [">0.2%", "not dead", "not op_mini all"],
+		"development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+	},
+	"devDependencies": {
+		"@tailwindcss/postcss": "^4.1.18",
+		"@vitejs/plugin-react": "^4.7.0",
+		"autoprefixer": "^10.4.24",
+		"postcss": "^8.5.6",
+		"tailwindcss": "^4.1.18",
+		"vite": "^6.4.1"
+	}
 }
