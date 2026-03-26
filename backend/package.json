@@ -52,6 +52,8 @@
 		"pdf-parse": "catalog:",
 		"pdfkit": "catalog:",
 		"jimp": "catalog:",
+		"@jimp/wasm-webp": "catalog:",
+		"@jimp/wasm-avif": "catalog:",
 		"shortid": "^2.2.17",
 		"xlsx": "catalog:",
 		"xml2js": "^0.6.2"

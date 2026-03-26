@@ -6,7 +6,7 @@ const router = require("express").Router();
 router.post("/base64-text", (req, res) => {
 	const { text, type } = req.body;
 
-	if (!text || !type) {
+	if (typeof text !== "string" || text.length === 0 || !type) {
 		return res.status(400).json({ msg: "Text and type (encode/decode) are required." });
 	}
 

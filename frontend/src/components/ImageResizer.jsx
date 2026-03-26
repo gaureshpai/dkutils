@@ -79,13 +79,27 @@ const ImageResizer = () => {
 		trackToolUsage("ImageResizer", "image");
 
 		const reader = new FileReader();
+		reader.onerror = () => {
+			toast.error("Failed to read the image file.");
+			setLoading(false);
+		};
+
 		reader.onload = (event) => {
 			const img = new Image();
+			img.onerror = () => {
+				toast.error("Failed to decode the uploaded image.");
+				setLoading(false);
+			};
 			img.onload = () => {
 				const canvas = document.createElement("canvas");
 				canvas.width = width;
 				canvas.height = height;
 				const ctx = canvas.getContext("2d");
+				if (!ctx) {
+					toast.error("Canvas is not supported in this browser.");
+					setLoading(false);
+					return;
+				}
 				ctx.drawImage(img, 0, 0, width, height);
 				const dataUrl = canvas.toDataURL(originalImage.type);
 				setResizedImageSrc(dataUrl);

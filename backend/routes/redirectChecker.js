@@ -20,6 +20,8 @@ router.post("/", async (req, res) => {
 				const response = await axios.head(currentUrl, {
 					maxRedirects: 0,
 					validateStatus: (status) => status >= 200 && status < 400,
+					timeout: 5000,
+					maxContentLength: 1024 * 1024, // 1MB limit
 				});
 
 				redirectChain.push({ url: currentUrl, status: response.status });
@@ -39,7 +41,10 @@ router.post("/", async (req, res) => {
 		}
 
 		if (redirectChain.length === 0 || redirectChain[redirectChain.length - 1].url !== currentUrl) {
-			const finalResponse = await axios.get(currentUrl);
+			const finalResponse = await axios.get(currentUrl, {
+				timeout: 5000,
+				maxContentLength: 1024 * 1024, // 1MB limit
+			});
 			redirectChain.push({
 				url: finalResponse.request.res.responseUrl,
 				status: finalResponse.status,

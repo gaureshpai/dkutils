@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: "Website Release type (Root, Frontend, Backend)"
+        description: "Website Release type (patch, minor, major, prepatch, preminor, premajor, prerelease)"
         required: true
         default: "patch"
         type: choice
@@ -12,6 +12,10 @@ on:
           - patch
           - minor
           - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
 
 jobs:
   publish:
@@ -44,7 +48,7 @@ jobs:
           echo "Bumping website versions (${{ github.event.inputs.release_type }})"
           # Always bump root, frontend, and backend versions
           npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
-          
+
           cd frontend
           npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
           cd ..
@@ -102,9 +106,7 @@ jobs:
       - name: Commit version changes
         id: commit_versions
         run: |
-          git add package.json frontend/package.json backend/package.json package/package.json \
-                  backend/docs/api-documentation.json backend/docs/README.md README.md \
-                  frontend/README.md package/README.md
+          git add -u
 
           if git diff --cached --quiet; then
             echo "did_commit=false" >> $GITHUB_OUTPUT
@@ -112,7 +114,7 @@ jobs:
           fi
 
           git commit -m "chore: bump versions (Website: v${{ steps.get_versions.outputs.website_version }}, Package: v${{ steps.get_versions.outputs.package_version }})"
-          
+
           TAG_NAME="v${{ steps.get_versions.outputs.website_version }}"
           if git rev-parse -q --verify "refs/tags/$TAG_NAME"; then
             echo "Tag $TAG_NAME already exists, skipping tag creation"

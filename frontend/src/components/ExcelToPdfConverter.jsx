@@ -9,7 +9,9 @@ const ExcelToPdfConverter = () => {
 
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
-	const { isAuthenticated } = useContext(AuthContext);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
 
 	const onFileChange = (e) => {
 		const file = e.target.files[0];

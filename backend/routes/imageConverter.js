@@ -1,11 +1,19 @@
 const PDFDocument = require("pdfkit");
 const router = require("express").Router();
 const archiver = require("archiver");
-const { Jimp } = require("jimp");
+const { createJimp } = require("jimp");
+const webp = require("@jimp/wasm-webp");
+const avif = require("@jimp/wasm-avif");
 const path = require("node:path");
 const os = require("node:os");
 const fsp = require("node:fs").promises;
 const { supabase } = require("../utils/supabaseClient");
+const { sanitizeFilename } = require("../utils/filenameSanitizer");
+
+// Create a custom Jimp instance with WASM plugins
+const Jimp = createJimp({
+	plugins: [webp, avif],
+});
 
 // @route   POST /api/convert/png-to-jpg
 // @desc    Convert PNG images to JPG
@@ -24,9 +32,10 @@ router.post(
 				const file = files[0];
 				const imageBuffer = file.buffer;
 				const { originalname } = file;
-				const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
-				const image = await Jimp.read(imageBuffer);
+				const image = await Jimp.read({ data: imageBuffer });
 				const jpgBuffer = await image.getBuffer("image/jpeg");
 				const outputFileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.jpg`;
 
@@ -61,9 +70,10 @@ router.post(
 				const conversionPromises = files.map(async (file) => {
 					const imageBuffer = file.buffer;
 					const { originalname } = file;
-					const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
-					const image = await Jimp.read(imageBuffer);
+					const image = await Jimp.read({ data: imageBuffer });
 					const jpgBuffer = await image.getBuffer("image/jpeg");
 
 					archive.append(jpgBuffer, {
@@ -183,7 +193,7 @@ router.post(
 				try {
 					const imageBuffer = file.buffer;
 
-					const image = await Jimp.read(imageBuffer);
+					const image = await Jimp.read({ data: imageBuffer });
 					const pngBuffer = await image.getBuffer("image/png");
 
 					tempImagePath = path.join(
@@ -274,12 +284,13 @@ router.post(
 				const file = files[0];
 				const imageBuffer = file.buffer;
 				const { originalname } = file;
-				const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
 				let outputFormat = "jpeg";
 				let extension = "jpg";
 
-				const image = await Jimp.read(imageBuffer);
+				const image = await Jimp.read({ data: imageBuffer });
 				if (image.hasAlpha) {
 					outputFormat = "png";
 					extension = "png";
@@ -321,12 +332,13 @@ router.post(
 				const resizePromises = files.map(async (file) => {
 					const imageBuffer = file.buffer;
 					const { originalname } = file;
-					const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
 					let outputFormat = "jpeg";
 					let extension = "jpg";
 
-					const image = await Jimp.read(imageBuffer);
+					const image = await Jimp.read({ data: imageBuffer });
 					if (image.hasAlpha) {
 						outputFormat = "png";
 						extension = "png";
@@ -397,14 +409,15 @@ router.post(
 				const file = files[0];
 				const imageBuffer = file.buffer;
 				const { originalname } = file;
-				const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
 				let compressedBuffer;
 				let extension;
 				let contentType;
 
 				try {
-					const image = await Jimp.read(imageBuffer);
+					const image = await Jimp.read({ data: imageBuffer });
 					const format = image.mime.split("/")[1];
 					extension = format === "jpeg" ? "jpg" : format;
 					contentType = image.mime;
@@ -412,7 +425,7 @@ router.post(
 					image.quality(parsedQuality);
 					compressedBuffer = await image.getBuffer(image.mime);
 				} catch (error) {
-					const image = await Jimp.read(imageBuffer);
+					const image = await Jimp.read({ data: imageBuffer });
 					image.quality(parsedQuality);
 					compressedBuffer = await image.getBuffer("image/jpeg");
 					extension = "jpg";
@@ -451,20 +464,21 @@ router.post(
 				const compressionPromises = files.map(async (file) => {
 					const imageBuffer = file.buffer;
 					const { originalname } = file;
-					const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
 					let compressedBuffer;
 					let extension;
 
 					try {
-						const image = await Jimp.read(imageBuffer);
+						const image = await Jimp.read({ data: imageBuffer });
 						const format = image.mime.split("/")[1];
 						extension = format === "jpeg" ? "jpg" : format;
 
 						image.quality(parsedQuality);
 						compressedBuffer = await image.getBuffer(image.mime);
 					} catch (error) {
-						const image = await Jimp.read(imageBuffer);
+						const image = await Jimp.read({ data: imageBuffer });
 						image.quality(parsedQuality);
 						compressedBuffer = await image.getBuffer("image/jpeg");
 						extension = "jpg";
@@ -532,9 +546,10 @@ router.post(
 				const file = files[0];
 				const imageBuffer = file.buffer;
 				const { originalname } = file;
-				const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
-				const image = await Jimp.read(imageBuffer);
+				const image = await Jimp.read({ data: imageBuffer });
 				const mime = `image/${normalizedFormat}`;
 				const convertedBuffer = await image.getBuffer(mime);
 
@@ -570,9 +585,10 @@ router.post(
 				const conversionPromises = files.map(async (file) => {
 					const imageBuffer = file.buffer;
 					const { originalname } = file;
-					const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
-					const image = await Jimp.read(imageBuffer);
+					const image = await Jimp.read({ data: imageBuffer });
 					const mime = `image/${normalizedFormat}`;
 					const convertedBuffer = await image.getBuffer(mime);
 
@@ -677,9 +693,8 @@ router.post(
 
 			const imageBuffer = req.file.buffer;
 			const { originalname } = req.file;
-			const { direction } = req.body;
 
-			const image = await Jimp.read(imageBuffer);
+			const image = await Jimp.read({ data: imageBuffer });
 			const outputFormat = image.mime.split("/")[1];
 			const extension = outputFormat === "jpeg" ? "jpg" : outputFormat;
 
@@ -695,7 +710,8 @@ router.post(
 
 			const flippedBuffer = await image.getBuffer(image.mime);
 			const timestamp = Date.now();
-			const nameWithoutExt = path.parse(originalname).name;
+			const sanitizedName = sanitizeFilename(originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const outputFileName = `${nameWithoutExt}_dkutils_flipped_${timestamp}.${extension}`;
 
 			const { error: uploadError } = await supabase.storage
@@ -758,7 +774,7 @@ router.post(
 			const imageBuffer = req.file.buffer;
 			const { originalname } = req.file;
 
-			const image = await Jimp.read(imageBuffer);
+			const image = await Jimp.read({ data: imageBuffer });
 			const outputFormat = image.mime.split("/")[1];
 			const extension = outputFormat === "jpeg" ? "jpg" : outputFormat;
 
@@ -766,7 +782,8 @@ router.post(
 			const grayscaleBuffer = await image.getBuffer(image.mime);
 
 			const timestamp = Date.now();
-			const nameWithoutExt = path.parse(originalname).name;
+			const sanitizedName = sanitizeFilename(originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const outputFileName = `${nameWithoutExt}_dkutils_grayscale_${timestamp}.${extension}`;
 
 			const { error: uploadError } = await supabase.storage

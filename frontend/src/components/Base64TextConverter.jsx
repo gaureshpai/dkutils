@@ -17,8 +17,14 @@ const Base64TextConverter = () => {
 		setLoading(true);
 		trackToolUsage("Base64TextConverter", "text");
 		setTimeout(() => {
-			setConvertedText(btoa(text));
-			setLoading(false);
+			try {
+				setConvertedText(btoa(text));
+			} catch (error) {
+				setConvertedText("");
+				toast.error("Failed to encode text.");
+			} finally {
+				setLoading(false);
+			}
 		}, 500);
 	};
 

@@ -21,6 +21,12 @@ catalogs:
     '@inquirer/prompts':
       specifier: ^8.3.2
       version: 8.3.2
+    '@jimp/wasm-avif':
+      specifier: ^1.6.0
+      version: 1.6.0
+    '@jimp/wasm-webp':
+      specifier: ^1.6.0
+      version: 1.6.0
     '@rslib/core':
       specifier: ^0.12.2
       version: 0.12.4
@@ -125,6 +131,12 @@ importers:
 
   backend:
     dependencies:
+      '@jimp/wasm-avif':
+        specifier: 'catalog:'
+        version: 1.6.0
+      '@jimp/wasm-webp':
+        specifier: 'catalog:'
+        version: 1.6.0
       '@supabase/supabase-js':
         specifier: ^2.93.3
         version: 2.93.3
@@ -1298,6 +1310,14 @@ packages:
     resolution: {integrity: sha512-gqFTGEosKbOkYF/WFj26jMHOI5OH2jeP1MmC/zbK6BF6VJBf8rIC5898dPfSzZEbSA0wbbV5slbntWVc5PKLFA==}
     engines: {node: '>=18'}
 
+  '@jimp/wasm-avif@1.6.0':
+    resolution: {integrity: sha512-OjiqqtD71MTLVQgB/oUOZ8PD+nxLQtl/Lyf/P/hhL56L6iCJbcciA3xO0Y9OJept7+R34ORY4f7RwWwt535DHg==}
+    engines: {node: '>=18'}
+
+  '@jimp/wasm-webp@1.6.0':
+    resolution: {integrity: sha512-P0zUpK6n2XIAn8bt0F6rhSn1+FgteBTrL+TBb6Oqw8v5qEDJoNYkd6LlfZYN8YwtRBTBdZ8GFnWsg2Sar+qOkA==}
+    engines: {node: '>=18'}
+
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
@@ -1313,6 +1333,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@jsquash/avif@1.3.0':
+    resolution: {integrity: sha512-N6zH27O/AioCPNGxaf33PYnUEQZmAjUz0JwwAf9eMHRdYItn+CxwxlsHSSOkFmZKW+v9uVX6c7ZPQ4RTXArL7A==}
+
+  '@jsquash/webp@1.5.0':
+    resolution: {integrity: sha512-KggLoj2MnRSfIqTeKe1EmbljTX2vuV7mh79k89PCL1pyqiDULcPM1L47twxXt0hkb68F70bXiL31MxsuoZtKFw==}
 
   '@mixmark-io/domino@2.2.0':
     resolution: {integrity: sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw==}
@@ -4008,6 +4034,9 @@ packages:
       yaml:
         optional: true
 
+  wasm-feature-detect@1.8.0:
+    resolution: {integrity: sha512-zksaLKM2fVlnB5jQQDqKXXwYHLQUVH9es+5TOOHwGOVJOCeRBCiPjwSg+3tN2AdTCzjgli4jijCH290kXb/zWQ==}
+
   web-vitals@2.1.4:
     resolution: {integrity: sha512-sVWcwhU5mX6crfI5Vd2dC4qchyTqxV8URinzt25XqVh+bHEPGH4C3NPrNionCP7Obx59wrYEbNlw4Z8sjALzZg==}
 
@@ -4930,6 +4959,16 @@ snapshots:
       '@jimp/types': 1.6.0
       tinycolor2: 1.6.0
 
+  '@jimp/wasm-avif@1.6.0':
+    dependencies:
+      '@jsquash/avif': 1.3.0
+      zod: 3.25.76
+
+  '@jimp/wasm-webp@1.6.0':
+    dependencies:
+      '@jsquash/webp': 1.5.0
+      zod: 3.25.76
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -4948,6 +4987,14 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@jsquash/avif@1.3.0':
+    dependencies:
+      wasm-feature-detect: 1.8.0
+
+  '@jsquash/webp@1.5.0':
+    dependencies:
+      wasm-feature-detect: 1.8.0
 
   '@mixmark-io/domino@2.2.0': {}
 
@@ -7664,6 +7711,8 @@ snapshots:
       lightningcss: 1.30.2
       tsx: 4.21.0
       yaml: 2.8.2
+
+  wasm-feature-detect@1.8.0: {}
 
   web-vitals@2.1.4: {}
 

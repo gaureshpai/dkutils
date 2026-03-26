@@ -172,6 +172,11 @@ export async function removeVideoBackground(
 
 	// Lazy-import so the ONNX model is only initialised when called.
 	const { removeBackground } = await import("@imgly/background-removal-node");
+	const config = {
+		publicPath: import.meta
+			.resolve("@imgly/background-removal-node")
+			.replace(/index\.[mc]?js$/, ""),
+	};
 
 	for (const file of files) {
 		const framesDir = path.join(os.tmpdir(), `dkutils-vframes-${Date.now()}`);
@@ -196,7 +201,7 @@ export async function removeVideoBackground(
 
 			for (const frame of frames) {
 				const framePath = path.join(framesDir, frame);
-				const resultBlob = await removeBackground(framePath);
+				const resultBlob = await removeBackground(framePath, config);
 				const arrayBuffer = await resultBlob.arrayBuffer();
 				await fs.writeFile(framePath, Buffer.from(arrayBuffer));
 			}

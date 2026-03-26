@@ -4,6 +4,7 @@ const { PDFDocument, degrees } = require("pdf-lib");
 const { supabase } = require("../utils/supabaseClient");
 const pdfParse = require("pdf-parse");
 const { handlePdfError, validatePdfFile, validatePageRange } = require("../utils/pdfErrorHandler");
+const { sanitizeFilename } = require("../utils/filenameSanitizer");
 
 // @route   POST /api/convert/merge-pdfs
 // @desc    Merge multiple PDFs into one
@@ -115,7 +116,8 @@ router.post(
 
 			const newPdfBytes = await newPdfDoc.save();
 
-			const nameWithoutExt = path.parse(file.originalname).name;
+			const sanitizedName = sanitizeFilename(file.originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const outputFileName = `${nameWithoutExt}_dkutils_split_${Date.now()}.pdf`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
@@ -216,7 +218,8 @@ router.post(
 
 			const modifiedPdfBytes = await pdfDoc.save();
 
-			const nameWithoutExt = path.parse(file.originalname).name;
+			const sanitizedName = sanitizeFilename(file.originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const outputFileName = `${nameWithoutExt}_dkutils_rotated_${Date.now()}.pdf`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
@@ -310,7 +313,8 @@ router.post(
 			);
 
 			// Compress PDF
-			const nameWithoutExt = path.parse(file.originalname).name;
+			const sanitizedName = sanitizeFilename(file.originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const outputFileName = `${nameWithoutExt}_dkutils_compressed_${Date.now()}.pdf`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")

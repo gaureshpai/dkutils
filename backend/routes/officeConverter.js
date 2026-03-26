@@ -4,6 +4,7 @@ const pdf = require("pdf-parse");
 const { Document, Packer, Paragraph, TextRun } = require("docx");
 const XLSX = require("xlsx");
 const { supabase } = require("../utils/supabaseClient");
+const { sanitizeFilename } = require("../utils/filenameSanitizer");
 
 // @route   POST /api/convert/pdf-to-word
 // @desc    Convert PDF to Word (Text Extraction)
@@ -86,7 +87,8 @@ router.post(
 
 			const docxBuffer = await Packer.toBuffer(doc);
 
-			const nameWithoutExt = path.parse(file.originalname).name;
+			const sanitizedName = sanitizeFilename(file.originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const fileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.docx`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
@@ -142,7 +144,8 @@ router.post(
 
 			const excelBuffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-			const nameWithoutExt = path.parse(file.originalname).name;
+			const sanitizedName = sanitizeFilename(file.originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
 			const fileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.xlsx`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")

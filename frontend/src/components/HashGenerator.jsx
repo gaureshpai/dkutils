@@ -95,6 +95,16 @@ const HashGenerator = () => {
 			</div>
 
 			{hashMd5 && (
+				<div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 dark:bg-yellow-900/30 rounded-md mb-4">
+					<p className="text-yellow-700 dark:text-yellow-400 font-semibold text-sm">
+						⚠️ MD5 Warning: MD5 is cryptographically insecure and should only be used for legacy
+						compatibility or non-sensitive checksums. For security-sensitive applications, use
+						SHA-256 or better.
+					</p>
+				</div>
+			)}
+
+			{hashMd5 && (
 				<div className="mt-4">
 					<h3 className="text-xl font-bold mb-2">
 						MD5 Hash:

@@ -86,7 +86,12 @@ const PdfSplitter = () => {
 
 			for (const part of parts) {
 				if (part.includes("-")) {
-					const [start, end] = part.split("-").map(Number);
+					const bounds = part.split("-").map((v) => v.trim());
+					if (bounds.length !== 2 || bounds[0] === "" || bounds[1] === "") {
+						isValidRange = false;
+						break;
+					}
+					const [start, end] = bounds.map(Number);
 					if (
 						Number.isNaN(start) ||
 						Number.isNaN(end) ||

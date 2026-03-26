@@ -57,25 +57,41 @@ const ImageCropper = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("ImageCropper", "image");
-		const image = imageRef.current;
-		const canvas = canvasRef.current;
-		const ctx = canvas.getContext("2d");
+		try {
+			trackToolUsage("ImageCropper", "image");
+			const image = imageRef.current;
+			const canvas = canvasRef.current;
 
-		const cropX = image.naturalWidth * 0.25;
-		const cropY = image.naturalHeight * 0.25;
-		const cropWidth = image.naturalWidth * 0.5;
-		const cropHeight = image.naturalHeight * 0.5;
+			if (!image || !canvas) {
+				toast.error("Image or canvas reference is missing.");
+				return;
+			}
 
-		canvas.width = cropWidth;
-		canvas.height = cropHeight;
+			const ctx = canvas.getContext("2d");
+			if (!ctx) {
+				toast.error("Could not get canvas context.");
+				return;
+			}
 
-		ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-		const dataUrl = canvas.toDataURL(image.type);
-		setCroppedImageSrc(dataUrl);
+			const cropX = image.naturalWidth * 0.25;
+			const cropY = image.naturalHeight * 0.25;
+			const cropWidth = image.naturalWidth * 0.5;
+			const cropHeight = image.naturalHeight * 0.5;
 
-		handleDownload(dataUrl, `cropped-image-${Date.now()}.png`);
-		setLoading(false);
+			canvas.width = cropWidth;
+			canvas.height = cropHeight;
+
+			ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+			const dataUrl = canvas.toDataURL(image.type || "image/png");
+			setCroppedImageSrc(dataUrl);
+
+			handleDownload(dataUrl, `dkutils-cropped-image-${Date.now()}.png`);
+		} catch (error) {
+			console.error("Cropping error:", error);
+			toast.error("An error occurred during cropping.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleDownload = (fileUrl, fileName) => {

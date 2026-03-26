@@ -4,7 +4,7 @@ const { ServiceUsage, TotalUsage } = require("../models/ServiceUsage");
 const apiActivityTracker = async (req, res, next) => {
 	try {
 		const apiActivity = new ApiActivity({
-			endpoint: req.originalUrl,
+			endpoint: req.path,
 			method: req.method,
 			userId: req.user ? req.user.id : null,
 			ipAddress: req.ip,
@@ -14,7 +14,7 @@ const apiActivityTracker = async (req, res, next) => {
 		await TotalUsage.findOneAndUpdate({}, { $inc: { totalCount: 1 } }, { upsert: true, new: true });
 
 		await ServiceUsage.findOneAndUpdate(
-			{ endpoint: req.originalUrl },
+			{ endpoint: req.path },
 			{ $inc: { count: 1 } },
 			{ upsert: true, new: true },
 		);

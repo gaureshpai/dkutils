@@ -19,28 +19,26 @@ const PngToJpgConverter = () => {
 		const maxSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
 		const validFiles = [];
-		let hasInvalidFile = false;
 
 		for (const file of files) {
 			if (!allowedTypes.includes(file.type)) {
 				toast.error(`Invalid file type: ${file.name}. Only PNG images are allowed.`);
-				hasInvalidFile = true;
+				setSelectedFiles([]);
+				e.target.value = "";
 				return;
 			}
 			if (file.size > maxSize) {
 				toast.error(
 					`File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
 				);
-				hasInvalidFile = true;
+				setSelectedFiles([]);
+				e.target.value = "";
 				return;
 			}
 			validFiles.push(file);
 		}
 
 		setSelectedFiles(validFiles);
-		if (hasInvalidFile) {
-			e.target.value = "";
-		}
 	};
 
 	const onSubmit = async (e) => {

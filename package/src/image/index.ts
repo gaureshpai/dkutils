@@ -55,7 +55,10 @@ async function processBatch(
 
 			// Quality and format-specific options
 			if (targetFormat === "jpeg" || targetFormat === "jpg") {
-				pipeline.jpeg({ quality: (options as any).quality ?? 82, mozjpeg: true });
+				pipeline.jpeg({
+					quality: (options as any).quality ?? 82,
+					mozjpeg: true,
+				});
 			} else if (targetFormat === "webp") {
 				pipeline.webp({ quality: (options as any).quality ?? 82 });
 			} else if (targetFormat === "png") {
@@ -113,7 +116,12 @@ export const cropImages = (opts: any) =>
 		...opts,
 		suffix: "-cropped",
 		action: (p) =>
-			p.extract({ left: opts.left, top: opts.top, width: opts.width, height: opts.height }),
+			p.extract({
+				left: opts.left,
+				top: opts.top,
+				width: opts.width,
+				height: opts.height,
+			}),
 	});
 
 export const grayscaleImages = (opts: any) =>
@@ -139,10 +147,15 @@ export async function removeBackground(options: FileTaskOptions): Promise<BatchR
 	const results: BatchResult[] = [];
 
 	const { removeBackground: runRemoval } = await import("@imgly/background-removal-node");
+	const config = {
+		publicPath: import.meta
+			.resolve("@imgly/background-removal-node")
+			.replace(/index\.[mc]?js$/, ""),
+	};
 
 	for (const file of files) {
 		try {
-			const resultBlob = await runRemoval(file);
+			const resultBlob = await runRemoval(file, config);
 			const arrayBuffer = await resultBlob.arrayBuffer();
 			let buffer: any = Buffer.from(arrayBuffer);
 
@@ -196,7 +209,10 @@ export async function imageToBase64(options: FileTaskOptions): Promise<BatchResu
 			const metadata = await sharp(file).metadata();
 			const mime = `image/${metadata.format}`;
 			const buffer = await sharp(file).toBuffer();
-			results.push({ input: file, output: `data:${mime};base64,${buffer.toString("base64")}` });
+			results.push({
+				input: file,
+				output: `data:${mime};base64,${buffer.toString("base64")}`,
+			});
 		} catch (e: any) {
 			results.push({ input: file, error: e.message });
 		}

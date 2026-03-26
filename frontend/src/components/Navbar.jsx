@@ -87,6 +87,7 @@ const Navbar = () => {
 							variant="ghost"
 							size="icon"
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+							aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
 							aria-expanded={mobileMenuOpen}
 							aria-controls="mobile-menu"
 						>

@@ -23,10 +23,21 @@ const isValidCategory = (category) => {
 // @access  Public
 router.post("/track", trackLimiter, async (req, res) => {
 	try {
-		const { toolName, category } = req.body;
+		let { toolName, category } = req.body;
+
+		if (typeof toolName !== "string" || typeof category !== "string") {
+			return res.status(400).json({ msg: "Tool name and category must be strings." });
+		}
+
+		toolName = toolName.trim();
+		category = category.trim();
 
 		if (!toolName || !category) {
 			return res.status(400).json({ msg: "Tool name and category are required." });
+		}
+
+		if (toolName.length > 100 || category.length > 50) {
+			return res.status(400).json({ msg: "Tool name or category is too long." });
 		}
 
 		if (!isValidCategory(category)) {
