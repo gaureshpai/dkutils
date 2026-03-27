@@ -53,20 +53,32 @@ const PdfPageDeleter = () => {
 				.split(",")
 				.map((s) => s.trim())
 				.filter(Boolean)
-				.flatMap((range) => {
-					if (range.includes("-")) {
-						const [start, end] = range.split("-").map(Number);
+				.flatMap((token) => {
+					const parts = token.split("-").map((p) => p.trim());
+
+					if (parts.length === 1) {
+						const page = Number(parts[0]);
+						if (!Number.isInteger(page) || page < 1 || page > numPages) {
+							throw new Error(`Invalid page number: ${token}`);
+						}
+						return [page];
+					}
+
+					if (parts.length === 2) {
+						const [start, end] = parts.map(Number);
 						if (
-							Number.isNaN(start) ||
-							Number.isNaN(end) ||
+							!Number.isInteger(start) ||
+							!Number.isInteger(end) ||
 							start < 1 ||
 							end > numPages ||
 							start > end
 						) {
-							throw new Error(`Invalid page range: ${range}`);
+							throw new Error(`Invalid page range: ${token}`);
 						}
 						return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 					}
+
+					throw new Error(`Invalid page selector: ${token}`);
 				});
 
 			pagesToDeleteArray.sort((a, b) => b - a);
