@@ -12,7 +12,6 @@ const ImageFormatConverter = () => {
 	const [selectedFiles, setSelectedFiles] = useState([]);
 	const [format, setFormat] = useState("jpeg");
 	const [loading, setLoading] = useState(false);
-	const [convertedZipFile, setConvertedZipFile] = useState(null);
 
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");

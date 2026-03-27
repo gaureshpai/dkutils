@@ -87,7 +87,7 @@ app.use("/api/keep-alive", authMiddleware, keepAlive);
 
 const cleanSupabase = require("./routes/cleanSupabase");
 
-app.use("/api/clean-supabase", authMiddleware, cleanSupabase);
+app.use("/api/clean-supabase", cleanSupabase);
 
 const screenshot = require("./routes/screenshot");
 

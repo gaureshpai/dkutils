@@ -88,13 +88,23 @@ const ImageToPdfConverter = () => {
 		}
 	};
 
-	const handleDownload = (fileUrl, fileName) => {
-		const link = document.createElement("a");
-		link.href = fileUrl;
-		link.setAttribute("download", fileName);
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
+	const handleDownload = async (fileUrl, fileName) => {
+		try {
+			const downloadRes = await axios.get(fileUrl, { responseType: "blob" });
+			const url = window.URL.createObjectURL(downloadRes.data);
+
+			const link = document.createElement("a");
+			link.href = url;
+			link.setAttribute("download", fileName);
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error("Error downloading file:", err);
+			toast.error("Failed to download PDF. You can try again.");
+		}
 	};
 
 	return (
@@ -125,6 +135,18 @@ const ImageToPdfConverter = () => {
 					{loading ? "Converting..." : "Convert"}
 				</button>
 			</form>
+			{convertedFile && (
+				<div className="mt-4 p-4 border rounded-md bg-muted/30">
+					<p className="text-sm font-medium text-foreground mb-2">Conversion complete!</p>
+					<button
+						type="button"
+						onClick={() => handleDownload(convertedFile.path, convertedFile.originalname)}
+						className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5"
+					>
+						Download PDF
+					</button>
+				</div>
+			)}
 		</div>
 	);
 };

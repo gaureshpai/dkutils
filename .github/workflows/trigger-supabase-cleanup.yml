@@ -21,4 +21,5 @@ jobs:
             exit 1
           fi
           echo "Triggering Supabase cleanup at $VERCEL_BACKEND_URL/api/clean-supabase/trigger"
-          curl -X GET "$VERCEL_BACKEND_URL/api/clean-supabase/trigger"
+          curl -X POST "$VERCEL_BACKEND_URL/api/clean-supabase/trigger" \
+            -H "x-cron-secret: your-cron-secret-here"

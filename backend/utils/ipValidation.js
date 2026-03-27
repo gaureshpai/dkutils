@@ -13,13 +13,13 @@ const isPrivateIP = (ip) => {
 		/^192\.0\.2\./, // 192.0.2.0/24 (TEST-NET-1)
 		/^198\.51\.100\./, // 198.51.100.0/24 (TEST-NET-2)
 		/^203\.0\.113\./, // 203.0.113.0/24 (TEST-NET-3)
-		/^224\.0\.0\./, // 224.0.0.0/4 (Multicast)
-		/^240\./, // 240.0.0.0/4 (Reserved for future use)
+		/^(22[4-9]|23[0-9])\./, // 224.0.0.0/4 (Multicast)
+		/^(24[0-9]|25[0-5])\./, // 240.0.0.0/4 (Reserved for future use)
 		/^::1$/, // IPv6 loopback
 		/^fc00:/, // IPv6 unique local address (fc00::/7)
 		/^fd00:/, // IPv6 unique local address (fd00::/8)
 		/^fe80:/, // IPv6 link-local address
-		/^2001:db8::/, // IPv6 documentation prefix
+		/^2001:db8:/, // IPv6 documentation prefix (2001:db8::/32)
 	];
 
 	return privateRanges.some((range) => range.test(ip));

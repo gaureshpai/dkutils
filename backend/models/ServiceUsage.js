@@ -13,6 +13,12 @@ const ServiceUsageSchema = new mongoose.Schema({
 });
 
 const TotalUsageSchema = new mongoose.Schema({
+	key: {
+		type: String,
+		required: true,
+		unique: true,
+		default: "global",
+	},
 	totalCount: {
 		type: Number,
 		default: 0,

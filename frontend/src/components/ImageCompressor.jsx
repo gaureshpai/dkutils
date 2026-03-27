@@ -13,7 +13,6 @@ const ImageCompressor = () => {
 	const [selectedFiles, setSelectedFiles] = useState([]);
 	const [quality, setQuality] = useState(80);
 	const [loading, setLoading] = useState(false);
-	const [convertedZipFile, setConvertedZipFile] = useState(null);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = (e) => {
@@ -54,7 +53,8 @@ const ImageCompressor = () => {
 	};
 
 	const onQualityChange = (e) => {
-		setQuality(e.target.value);
+		const value = Math.min(100, Math.max(1, Number(e.target.value) || 1));
+		setQuality(value);
 	};
 
 	// fetch the file as a blob and trigger download
@@ -105,14 +105,15 @@ const ImageCompressor = () => {
 					},
 				},
 			);
-			setConvertedZipFile(res.data);
-
-			// trigger download and wait so we can show toast after it completes / errors
-			await handleDownload(res.data.path, res.data.originalname);
-			toast.success("Images compressed successfully!");
-			setSelectedFiles([]);
-			if (fileInputRef.current) {
-				fileInputRef.current.value = "";
+			try {
+				await handleDownload(res.data.path, res.data.originalname);
+				toast.success("Images compressed successfully!");
+				setSelectedFiles([]);
+				if (fileInputRef.current) {
+					fileInputRef.current.value = "";
+				}
+			} catch {
+				// Download error already toasted in handleDownload
 			}
 		} catch (err) {
 			console.error(err);
@@ -150,6 +151,8 @@ const ImageCompressor = () => {
 					<input
 						type="number"
 						id="quality"
+						min={1}
+						max={100}
 						className="bg-background border border-input text-foreground text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-primary"
 						placeholder="80"
 						value={quality}

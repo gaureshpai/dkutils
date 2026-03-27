@@ -85,7 +85,8 @@ const SeoTools = () => {
 				trackToolUsage("SeoTools:sitemap_xml_success", "web");
 				toast.success("sitemap.xml fetched successfully!");
 			} else {
-				setSitemapXmlContent(res.data.error || "sitemap.xml not found or accessible.");
+				setSitemapXmlError(res.data.error || "sitemap.xml not found or accessible.");
+				setSitemapXmlContent("");
 				trackToolUsage("SeoTools:sitemap_xml_not_found", "web");
 				toast.info("sitemap.xml not found or accessible.");
 			}

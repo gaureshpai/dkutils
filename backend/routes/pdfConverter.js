@@ -274,28 +274,24 @@ router.post(
 			const originalSize = pdfBuffer.length;
 
 			// Configure compression based on level
+			// Note: pdf-lib only supports useObjectStreams, objectsPerTick, and updateFieldAppearances
+			// There is no general "compress" flag - compression comes from using object streams
 			const compressionOptions = {
-				useObjectStreams: true,
 				updateFieldAppearances: false,
 			};
 
 			switch (compressionLevel) {
 				case "low":
-					compressionOptions.compress = false;
 					compressionOptions.useObjectStreams = false;
 					break;
 				case "medium":
-					compressionOptions.compress = true;
 					compressionOptions.useObjectStreams = true;
 					break;
 				case "high":
-					compressionOptions.compress = true;
 					compressionOptions.useObjectStreams = true;
-					// Additional high compression options
 					compressionOptions.objectsPerTick = 50;
 					break;
 				default:
-					compressionOptions.compress = true;
 					compressionOptions.useObjectStreams = true;
 			}
 

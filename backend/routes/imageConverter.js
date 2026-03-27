@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const router = require("express").Router();
 const archiver = require("archiver");
-const { createJimp } = require("jimp");
+const { createJimp, defaultFormats, defaultPlugins } = require("jimp");
 const webp = require("@jimp/wasm-webp");
 const avif = require("@jimp/wasm-avif");
 const path = require("node:path");
@@ -12,7 +12,8 @@ const { sanitizeFilename } = require("../utils/filenameSanitizer");
 
 // Create a custom Jimp instance with WASM plugins
 const Jimp = createJimp({
-	plugins: [webp, avif],
+	formats: [...defaultFormats, webp, avif],
+	plugins: defaultPlugins,
 });
 
 // @route   POST /api/convert/png-to-jpg
@@ -422,12 +423,14 @@ router.post(
 					extension = format === "jpeg" ? "jpg" : format;
 					contentType = image.mime;
 
-					image.quality(parsedQuality);
-					compressedBuffer = await image.getBuffer(image.mime);
+					compressedBuffer = await image.getBuffer(image.mime, {
+						quality: parsedQuality,
+					});
 				} catch (error) {
 					const image = await Jimp.read({ data: imageBuffer });
-					image.quality(parsedQuality);
-					compressedBuffer = await image.getBuffer("image/jpeg");
+					compressedBuffer = await image.getBuffer("image/jpeg", {
+						quality: parsedQuality,
+					});
 					extension = "jpg";
 					contentType = "image/jpeg";
 				}
@@ -693,6 +696,13 @@ router.post(
 
 			const imageBuffer = req.file.buffer;
 			const { originalname } = req.file;
+			const { direction } = req.body;
+
+			if (!direction || (direction !== "horizontal" && direction !== "vertical")) {
+				return res.status(400).json({
+					msg: "Invalid flip direction. Must be 'horizontal' or 'vertical'.",
+				});
+			}
 
 			const image = await Jimp.read({ data: imageBuffer });
 			const outputFormat = image.mime.split("/")[1];
@@ -702,10 +712,6 @@ router.post(
 				image.flip({ horizontal: true, vertical: false });
 			} else if (direction === "vertical") {
 				image.flip({ horizontal: false, vertical: true });
-			} else {
-				return res.status(400).json({
-					msg: "Invalid flip direction. Must be 'horizontal' or 'vertical'.",
-				});
 			}
 
 			const flippedBuffer = await image.getBuffer(image.mime);

@@ -11,6 +11,7 @@ const ImageCropper = () => {
 	} = useContext(AuthContext);
 	const [imageSrc, setImageSrc] = useState(null);
 	const [croppedImageSrc, setCroppedImageSrc] = useState(null);
+	const [originalMimeType, setOriginalMimeType] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const imageRef = useRef(null);
 	const canvasRef = useRef(null);
@@ -34,9 +35,10 @@ const ImageCropper = () => {
 		}
 
 		if (file.size > maxSize) {
-			toast.error(
-				`File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
-			);
+			const message = isAuthenticated
+				? `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB.`
+				: `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`;
+			toast.error(message);
 			setImageSrc(null);
 			setCroppedImageSrc(null);
 			e.target.value = "";
@@ -46,6 +48,7 @@ const ImageCropper = () => {
 		reader.onload = (event) => {
 			setImageSrc(event.target.result);
 			setCroppedImageSrc(null);
+			setOriginalMimeType(file.type);
 		};
 		reader.readAsDataURL(file);
 	};
@@ -73,6 +76,11 @@ const ImageCropper = () => {
 				return;
 			}
 
+			if (!image.complete || image.naturalWidth === 0 || image.naturalHeight === 0) {
+				toast.error("Image is still loading. Please try again in a moment.");
+				return;
+			}
+
 			const cropX = image.naturalWidth * 0.25;
 			const cropY = image.naturalHeight * 0.25;
 			const cropWidth = image.naturalWidth * 0.5;
@@ -82,7 +90,7 @@ const ImageCropper = () => {
 			canvas.height = cropHeight;
 
 			ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-			const dataUrl = canvas.toDataURL(image.type || "image/png");
+			const dataUrl = canvas.toDataURL(originalMimeType || "image/png");
 			setCroppedImageSrc(dataUrl);
 
 			handleDownload(dataUrl, `dkutils-cropped-image-${Date.now()}.png`);

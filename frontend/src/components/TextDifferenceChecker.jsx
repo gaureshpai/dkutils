@@ -40,10 +40,13 @@ const TextDifferenceChecker = () => {
 				.map((part) => {
 					const [type, text] = part;
 					const safeText = escapeHtml(text);
-					if (type === 0) {
-						return safeText;
+					if (type === -1) {
+						return `<del class="bg-red-200 dark:bg-red-900">${safeText}</del>`;
 					}
-					return "";
+					if (type === 1) {
+						return `<ins class="bg-green-200 dark:bg-green-900 no-underline">${safeText}</ins>`;
+					}
+					return safeText;
 				})
 				.join("");
 
@@ -54,9 +57,7 @@ const TextDifferenceChecker = () => {
 
 	const copyToClipboard = async () => {
 		try {
-			const tempElement = document.createElement("div");
-			tempElement.innerHTML = diffResult;
-			await navigator.clipboard.writeText(tempElement.innerText);
+			await navigator.clipboard.writeText(diffResult);
 			toast.success("Copied to clipboard!");
 		} catch (error) {
 			console.error("Failed to copy to clipboard:", error);

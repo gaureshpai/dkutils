@@ -21,9 +21,10 @@ const ExcelToPdfConverter = () => {
 
 			if (fileExtension === "xlsx" || fileExtension === "csv") {
 				if (file.size > maxFileSize) {
-					toast.error(
-						`File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
-					);
+					const message = isAuthenticated
+						? `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB.`
+						: `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`;
+					toast.error(message);
 					setSelectedFile(null);
 					e.target.value = null;
 				} else {
@@ -45,11 +46,15 @@ const ExcelToPdfConverter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("ExcelToPdfConverter", "pdf");
 		const formData = new FormData();
 		formData.append("excel", selectedFile);
 
 		try {
+			void Promise.resolve()
+				.then(() => trackToolUsage("ExcelToPdfConverter", "pdf"))
+				.catch((analyticsError) => {
+					console.error("Failed to track tool usage", analyticsError);
+				});
 			const res = await axios.post(
 				`${import.meta.env.VITE_API_BASE_URL}/api/convert/excel-to-pdf`,
 				formData,
@@ -76,7 +81,19 @@ const ExcelToPdfConverter = () => {
 			toast.success("File converted to PDF successfully!");
 		} catch (err) {
 			console.error(err);
-			toast.error(err.response?.data?.msg || "Error converting file. Please try again.");
+			let errorMessage = "Error converting file. Please try again.";
+			if (err.response?.data instanceof Blob) {
+				try {
+					const text = await err.response.data.text();
+					const parsed = JSON.parse(text);
+					errorMessage = parsed.msg || parsed.message || errorMessage;
+				} catch {
+					// Fall back to generic message
+				}
+			} else if (err.response?.data?.msg) {
+				errorMessage = err.response.data.msg;
+			}
+			toast.error(errorMessage);
 		} finally {
 			setLoading(false);
 		}

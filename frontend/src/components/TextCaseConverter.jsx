@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import useAnalytics from "../utils/useAnalytics";
 
@@ -8,6 +8,15 @@ const TextCaseConverter = () => {
 	const [text, setText] = useState("");
 	const [convertedText, setConvertedText] = useState("");
 	const [loading, setLoading] = useState(false);
+	const timeoutRef = useRef(null);
+
+	useEffect(() => {
+		return () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		};
+	}, []);
 
 	const handleTextChange = (e) => {
 		setText(e.target.value);
@@ -16,7 +25,10 @@ const TextCaseConverter = () => {
 	const toUpperCase = () => {
 		setLoading(true);
 		trackToolUsage("TextCaseConverter", "text");
-		setTimeout(() => {
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
+		timeoutRef.current = setTimeout(() => {
 			setConvertedText(text.toUpperCase());
 			setLoading(false);
 		}, 500);
@@ -25,7 +37,10 @@ const TextCaseConverter = () => {
 	const toLowerCase = () => {
 		setLoading(true);
 		trackToolUsage("TextCaseConverter", "text");
-		setTimeout(() => {
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
+		timeoutRef.current = setTimeout(() => {
 			setConvertedText(text.toLowerCase());
 			setLoading(false);
 		}, 500);
@@ -34,7 +49,10 @@ const TextCaseConverter = () => {
 	const toTitleCase = () => {
 		setLoading(true);
 		trackToolUsage("TextCaseConverter", "text");
-		setTimeout(() => {
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
+		timeoutRef.current = setTimeout(() => {
 			setConvertedText(
 				text.replace(/\w\S*/g, (txt) => {
 					return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
