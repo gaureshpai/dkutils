@@ -43,20 +43,20 @@ const ImageFormatConverter = () => {
 					`Invalid file type: ${file.name}. Only images (JPEG, PNG, GIF, WebP, TIFF, AVIF) are allowed.`,
 				);
 				hasInvalidFile = true;
-				return;
+				continue;
 			}
 			if (file.size > maxSize) {
 				toast.error(
 					`File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
 				);
 				hasInvalidFile = true;
-				return;
+				continue;
 			}
 			validFiles.push(file);
 		}
 
 		setSelectedFiles(validFiles);
-		if (hasInvalidFile) {
+		if (hasInvalidFile || validFiles.length === 0) {
 			e.target.value = "";
 		}
 	};
@@ -86,7 +86,6 @@ const ImageFormatConverter = () => {
 				`${import.meta.env.VITE_API_BASE_URL}/api/convert/convert-image-format`,
 				formData,
 			);
-			setConvertedZipFile(res.data);
 
 			handleDownload(res.data.path, res.data.originalname);
 			toast.success("Image format converted successfully!");

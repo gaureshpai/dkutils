@@ -21,8 +21,9 @@ const requireAuth = (req, res, next) => {
 
 const requireSecret = (req, res, next) => {
 	const secret = req.header("x-cron-secret");
+	const expectedSecret = process.env.SUPABASE_CLEANUP_CRON_SECRET;
 
-	if (!secret || secret !== "your-cron-secret-here") {
+	if (!secret || !expectedSecret || secret !== expectedSecret) {
 		return res.status(401).json({ msg: "Invalid or missing cron secret" });
 	}
 

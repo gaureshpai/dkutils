@@ -171,6 +171,7 @@ router.post(
 
 			const extractedText = data.text;
 
+			res.type("text/plain");
 			if (!extractedText || extractedText.trim().length === 0) {
 				return res
 					.status(200)
@@ -260,6 +261,13 @@ router.post(
 		try {
 			const { file } = req;
 			const { compressionLevel = "medium" } = req.body;
+
+			if (!["low", "medium", "high"].includes(compressionLevel)) {
+				return res.status(400).json({
+					msg: "Invalid compression level. Please choose low, medium, or high.",
+				});
+			}
+
 			validatePdfFile(file);
 
 			const pdfBuffer = file.buffer;
@@ -291,8 +299,6 @@ router.post(
 					compressionOptions.useObjectStreams = true;
 					compressionOptions.objectsPerTick = 50;
 					break;
-				default:
-					compressionOptions.useObjectStreams = true;
 			}
 
 			// Save with compression options that preserve content
@@ -302,10 +308,11 @@ router.post(
 			const compressionRatio =
 				originalSize > 0 ? ((originalSize - compressedSize) / originalSize) * 100 : 0;
 
-			const formattedCompression = compressionRatio.toFixed(2);
+			const absoluteRatio = Math.abs(compressionRatio).toFixed(2);
+			const directionVerb = compressionRatio >= 0 ? "Reduced" : "Increased";
 
 			console.log(
-				`PDF compression: ${originalSize} bytes -> ${compressedSize} bytes (${formattedCompression}% reduction)`,
+				`PDF compression: ${originalSize} bytes -> ${compressedSize} bytes (${directionVerb} by ${absoluteRatio}%)`,
 			);
 
 			// Compress PDF
@@ -329,7 +336,7 @@ router.post(
 				path: downloadUrl,
 				originalname: outputFileName,
 				success: true,
-				message: `PDF compressed successfully with ${compressionLevel} compression! Reduced by ${formattedCompression}%`,
+				message: `PDF compressed successfully with ${compressionLevel} compression! ${directionVerb} by ${absoluteRatio}%`,
 				compressionRatio,
 				compressionLevel,
 			});

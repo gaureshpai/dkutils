@@ -90,10 +90,12 @@ const ImageCropper = () => {
 			canvas.height = cropHeight;
 
 			ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-			const dataUrl = canvas.toDataURL(originalMimeType || "image/png");
+			const mimeType = originalMimeType || "image/png";
+			const dataUrl = canvas.toDataURL(mimeType);
 			setCroppedImageSrc(dataUrl);
 
-			handleDownload(dataUrl, `dkutils-cropped-image-${Date.now()}.png`);
+			const extension = mimeType.split("/")[1] || "png";
+			handleDownload(dataUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
 		} catch (error) {
 			console.error("Cropping error:", error);
 			toast.error("An error occurred during cropping.");

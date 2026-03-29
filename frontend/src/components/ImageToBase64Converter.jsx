@@ -25,6 +25,7 @@ const ImageToBase64Converter = () => {
 					: `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`;
 				toast.error(message);
 				setSelectedFile(null);
+				setBase64String("");
 				e.target.value = null;
 			} else {
 				setSelectedFile(file);

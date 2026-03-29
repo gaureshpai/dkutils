@@ -6,9 +6,9 @@ const checkPasswordStrength = (password) => {
 
 	if (password.length < 8) {
 		feedback.push("Password is too short (min 8 characters).");
-	} else if (password.length >= 8 && password.length < 12) {
+	} else if (password.length < 12) {
 		score += 1;
-	} else if (password.length >= 12) {
+	} else {
 		score += 2;
 	}
 

@@ -478,12 +478,14 @@ router.post(
 						const format = image.mime.split("/")[1];
 						extension = format === "jpeg" ? "jpg" : format;
 
-						image.quality(parsedQuality);
-						compressedBuffer = await image.getBuffer(image.mime);
+						compressedBuffer = await image.getBuffer(image.mime, {
+							quality: parsedQuality,
+						});
 					} catch (error) {
 						const image = await Jimp.read({ data: imageBuffer });
-						image.quality(parsedQuality);
-						compressedBuffer = await image.getBuffer("image/jpeg");
+						compressedBuffer = await image.getBuffer("image/jpeg", {
+							quality: parsedQuality,
+						});
 						extension = "jpg";
 					}
 

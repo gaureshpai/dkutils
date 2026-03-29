@@ -15,6 +15,10 @@ if (!process.env.MONGO_URI) {
 	console.error("Error: MONGO_URI environment variable is not set.");
 	process.exit(1);
 }
+if (!process.env.SUPABASE_CLEANUP_CRON_SECRET) {
+	console.error("Error: SUPABASE_CLEANUP_CRON_SECRET environment variable is not set.");
+	process.exit(1);
+}
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
