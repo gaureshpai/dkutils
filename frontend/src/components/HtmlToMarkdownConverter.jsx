@@ -1,7 +1,7 @@
-﻿import React, { useState } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import TurndownService from "turndown";
-import useAnalytics from "../utils/useAnalytics";
 
 // Create a single shared instance outside the component with better configuration
 const turndownService = new TurndownService({

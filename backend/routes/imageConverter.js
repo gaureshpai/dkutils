@@ -7,8 +7,8 @@ const avif = require("@jimp/wasm-avif");
 const path = require("node:path");
 const os = require("node:os");
 const fsp = require("node:fs").promises;
-const { supabase } = require("../utils/supabaseClient");
-const { sanitizeFilename } = require("../utils/filenameSanitizer");
+const { supabase } = require("@backend/utils/supabaseClient");
+const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
 
 // Create a custom Jimp instance with WASM plugins
 const Jimp = createJimp({
@@ -36,7 +36,7 @@ router.post(
 				const sanitizedName = sanitizeFilename(originalname);
 				const nameWithoutExt = path.parse(sanitizedName).name;
 
-				const image = await Jimp.read({ data: imageBuffer });
+				const image = await Jimp.read(imageBuffer);
 				const jpgBuffer = await image.getBuffer("image/jpeg");
 				const outputFileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.jpg`;
 
@@ -74,7 +74,7 @@ router.post(
 					const sanitizedName = sanitizeFilename(originalname);
 					const nameWithoutExt = path.parse(sanitizedName).name;
 
-					const image = await Jimp.read({ data: imageBuffer });
+					const image = await Jimp.read(imageBuffer);
 					const jpgBuffer = await image.getBuffer("image/jpeg");
 
 					archive.append(jpgBuffer, {
@@ -118,10 +118,11 @@ router.post(
 router.get("/download", async (req, res) => {
 	try {
 		const { filename } = req.query;
-		if (!filename) {
-			return res.status(400).json({ msg: "Filename is required." });
+		if (!filename || typeof filename !== "string") {
+			return res.status(400).json({ msg: "Filename is required and must be a string." });
 		}
 
+		const baseName = path.basename(filename);
 		const allowedPrefixes = [
 			"dkutils_",
 			"dkutils-",
@@ -132,7 +133,7 @@ router.get("/download", async (req, res) => {
 		if (
 			filename.includes("..") ||
 			(!allowedPrefixes.some((prefix) => filename.startsWith(prefix)) &&
-				!filename.includes("_dkutils_"))
+				!baseName.includes("_dkutils_"))
 		) {
 			return res.status(403).json({ msg: "Invalid filename." });
 		}
@@ -143,7 +144,6 @@ router.get("/download", async (req, res) => {
 			throw error;
 		}
 
-		const baseName = path.basename(filename);
 		const arrayBuffer = await data.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
 
@@ -194,7 +194,7 @@ router.post(
 				try {
 					const imageBuffer = file.buffer;
 
-					const image = await Jimp.read({ data: imageBuffer });
+					const image = await Jimp.read(imageBuffer);
 					const pngBuffer = await image.getBuffer("image/png");
 
 					tempImagePath = path.join(
@@ -291,8 +291,8 @@ router.post(
 				let outputFormat = "jpeg";
 				let extension = "jpg";
 
-				const image = await Jimp.read({ data: imageBuffer });
-				if (image.hasAlpha) {
+				const image = await Jimp.read(imageBuffer);
+				if (image.hasAlpha()) {
 					outputFormat = "png";
 					extension = "png";
 				}
@@ -339,12 +339,11 @@ router.post(
 					let outputFormat = "jpeg";
 					let extension = "jpg";
 
-					const image = await Jimp.read({ data: imageBuffer });
-					if (image.hasAlpha) {
+					const image = await Jimp.read(imageBuffer);
+					if (image.hasAlpha()) {
 						outputFormat = "png";
 						extension = "png";
 					}
-
 					image.resize({ width: parsedWidth, height: parsedHeight });
 					const mime = `image/${outputFormat}`;
 					const resizedBuffer = await image.getBuffer(mime);
@@ -418,7 +417,7 @@ router.post(
 				let contentType;
 
 				try {
-					const image = await Jimp.read({ data: imageBuffer });
+					const image = await Jimp.read(imageBuffer);
 					const format = image.mime.split("/")[1];
 					extension = format === "jpeg" ? "jpg" : format;
 					contentType = image.mime;
@@ -427,7 +426,7 @@ router.post(
 						quality: parsedQuality,
 					});
 				} catch (error) {
-					const image = await Jimp.read({ data: imageBuffer });
+					const image = await Jimp.read(imageBuffer);
 					compressedBuffer = await image.getBuffer("image/jpeg", {
 						quality: parsedQuality,
 					});
@@ -474,7 +473,7 @@ router.post(
 					let extension;
 
 					try {
-						const image = await Jimp.read({ data: imageBuffer });
+						const image = await Jimp.read(imageBuffer);
 						const format = image.mime.split("/")[1];
 						extension = format === "jpeg" ? "jpg" : format;
 
@@ -482,7 +481,7 @@ router.post(
 							quality: parsedQuality,
 						});
 					} catch (error) {
-						const image = await Jimp.read({ data: imageBuffer });
+						const image = await Jimp.read(imageBuffer);
 						compressedBuffer = await image.getBuffer("image/jpeg", {
 							quality: parsedQuality,
 						});
@@ -554,7 +553,7 @@ router.post(
 				const sanitizedName = sanitizeFilename(originalname);
 				const nameWithoutExt = path.parse(sanitizedName).name;
 
-				const image = await Jimp.read({ data: imageBuffer });
+				const image = await Jimp.read(imageBuffer);
 				const mime = `image/${normalizedFormat}`;
 				const convertedBuffer = await image.getBuffer(mime);
 
@@ -593,7 +592,7 @@ router.post(
 					const sanitizedName = sanitizeFilename(originalname);
 					const nameWithoutExt = path.parse(sanitizedName).name;
 
-					const image = await Jimp.read({ data: imageBuffer });
+					const image = await Jimp.read(imageBuffer);
 					const mime = `image/${normalizedFormat}`;
 					const convertedBuffer = await image.getBuffer(mime);
 
@@ -706,7 +705,7 @@ router.post(
 				});
 			}
 
-			const image = await Jimp.read({ data: imageBuffer });
+			const image = await Jimp.read(imageBuffer);
 			const outputFormat = image.mime.split("/")[1];
 			const extension = outputFormat === "jpeg" ? "jpg" : outputFormat;
 
@@ -782,7 +781,7 @@ router.post(
 			const imageBuffer = req.file.buffer;
 			const { originalname } = req.file;
 
-			const image = await Jimp.read({ data: imageBuffer });
+			const image = await Jimp.read(imageBuffer);
 			const outputFormat = image.mime.split("/")[1];
 			const extension = outputFormat === "jpeg" ? "jpg" : outputFormat;
 

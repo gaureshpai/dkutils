@@ -14,6 +14,9 @@ export default defineConfig({
 			"dkutils-cli": "./src/cli.ts",
 		},
 		tsconfigPath: "./tsconfig.json",
+		alias: {
+			"@package": "./src",
+		},
 	},
 	output: {
 		target: "node",

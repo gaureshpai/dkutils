@@ -2,7 +2,7 @@ const router = require("express").Router();
 const { check, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const User = require("@backend/models/User");
 
 // @route   POST /api/auth/register
 // @desc    Register user

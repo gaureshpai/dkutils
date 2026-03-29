@@ -22,6 +22,12 @@ const isPrivateIP = (ip) => {
 		/^2001:db8:/i, // IPv6 documentation prefix (2001:db8::/32)
 	];
 
+	// Check for IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
+	if (ip.toLowerCase().startsWith("::ffff:")) {
+		const ipv4Part = ip.substring(7);
+		return privateRanges.some((range) => range.test(ipv4Part));
+	}
+
 	return privateRanges.some((range) => range.test(ip));
 };
 

@@ -1,6 +1,6 @@
-﻿import React, { useState } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const JsonFormatterValidator = () => {
 	const { trackToolUsage } = useAnalytics();

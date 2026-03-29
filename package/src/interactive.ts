@@ -2,15 +2,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { confirm, input, select } from "@inquirer/prompts";
-
-import { DKU_BRAND, capabilityGroups } from "./constants/index.js";
+import { DKU_BRAND, capabilityGroups } from "@package/constants/index.js";
 import {
 	type CompressionLevel,
 	type FlipDirection,
 	type ImageFormat,
 	type YouTubeFormat,
 	YouTubeVideoInfo,
-} from "./interfaces/index.js";
+} from "@package/interfaces/index.js";
 
 const imageFormatChoices: { name: ImageFormat; value: ImageFormat }[] = [
 	{ name: "jpeg", value: "jpeg" },
@@ -65,7 +64,7 @@ async function runImageWizard(print: (value: unknown) => void): Promise<void> {
 		})),
 	});
 
-	const module = await import("./image/index.js");
+	const module = await import("@package/image/index.js");
 
 	const inputPath = ".";
 	const recursive = false;
@@ -214,7 +213,7 @@ async function runPdfWizard(print: (value: unknown) => void): Promise<void> {
 		message: "Choose a PDF operation",
 		choices: capabilityGroups.pdf.map((item) => ({ name: item, value: item })),
 	});
-	const module = await import("./pdf/index.js");
+	const module = await import("@package/pdf/index.js");
 
 	const inputPath = ".";
 	if (!(await isValidPath(inputPath))) {
@@ -344,7 +343,7 @@ async function runVideoWizard(print: (value: unknown) => void): Promise<void> {
 			value: item,
 		})),
 	});
-	const module = await import("./video/index.js");
+	const module = await import("@package/video/index.js");
 
 	const inputPath = ".";
 	if (!(await isValidPath(inputPath))) {
@@ -394,7 +393,7 @@ async function runVideoWizard(print: (value: unknown) => void): Promise<void> {
 }
 
 async function runYoutubeWizard(print: (value: unknown) => void): Promise<void> {
-	const module = await import("./video/index.js");
+	const module = await import("@package/video/index.js");
 	const url = await ask("YouTube URL");
 
 	try {
@@ -423,7 +422,7 @@ async function askNumber(message: string, defaultValue?: number): Promise<number
 	return Number(value);
 }
 
-import { handleUserError, readConfig, writeConfig } from "./utils/index.js";
+import { handleUserError, readConfig, writeConfig } from "@package/utils/index.js";
 
 async function askWatermark(): Promise<boolean> {
 	const config = await readConfig();

@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { supabase } = require("../utils/supabaseClient");
+const { supabase } = require("@backend/utils/supabaseClient");
 
 const generateRandomString = (sizeInBytes) => {
 	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

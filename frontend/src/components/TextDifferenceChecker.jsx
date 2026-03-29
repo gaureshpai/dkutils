@@ -1,7 +1,7 @@
-﻿import { diff_match_patch } from "diff-match-patch";
-import React, { useState } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import { diff_match_patch } from "diff-match-patch";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const TextDifferenceChecker = () => {
 	const { trackToolUsage } = useAnalytics();

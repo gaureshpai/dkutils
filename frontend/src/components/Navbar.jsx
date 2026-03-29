@@ -1,8 +1,10 @@
-﻿import { useContext, useState } from "react";
+﻿import { Button } from "@frontend/components/ui/button";
+import { AuthContext } from "@frontend/context/AuthContext"; // Adjusted path
+import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext"; // Adjusted path
-import { Button } from "./ui/button";
 
+import { ModeToggle } from "@frontend/components/mode-toggle";
+import { cn } from "@frontend/lib/utils";
 import {
 	FileText,
 	Globe,
@@ -14,8 +16,6 @@ import {
 	Type,
 	X,
 } from "lucide-react";
-import { cn } from "../lib/utils";
-import { ModeToggle } from "./mode-toggle";
 
 const Navbar = () => {
 	const { state, dispatch } = useContext(AuthContext);

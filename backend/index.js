@@ -1,3 +1,4 @@
+require("module-alias/register");
 require("dotenv").config();
 
 const mongoose = require("mongoose");
@@ -51,73 +52,73 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-const apiActivityTracker = require("./middleware/apiActivityTracker");
-const authMiddleware = require("./middleware/auth");
-const uploadLimiter = require("./middleware/uploadLimiter");
+const apiActivityTracker = require("@backend/middleware/apiActivityTracker");
+const authMiddleware = require("@backend/middleware/auth");
+const uploadLimiter = require("@backend/middleware/uploadLimiter");
 
 app.use(apiActivityTracker);
 
-const shortener = require("./routes/shortener");
+const shortener = require("@backend/routes/shortener");
 
 app.use(shortener);
 
-const imageConverter = require("./routes/imageConverter");
+const imageConverter = require("@backend/routes/imageConverter");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, imageConverter);
 
-const pdfConverter = require("./routes/pdfConverter");
+const pdfConverter = require("@backend/routes/pdfConverter");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, pdfConverter);
 
-const textToPdf = require("./routes/textToPdf");
+const textToPdf = require("@backend/routes/textToPdf");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, textToPdf);
 
-const officeConverter = require("./routes/officeConverter");
+const officeConverter = require("@backend/routes/officeConverter");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, officeConverter);
 
-const textConverter = require("./routes/textConverter");
+const textConverter = require("@backend/routes/textConverter");
 
 app.use("/api/convert", textConverter);
 
-const auth = require("./routes/auth");
+const auth = require("@backend/routes/auth");
 
 app.use("/api/auth", auth);
 
-const keepAlive = require("./routes/keepAlive");
+const keepAlive = require("@backend/routes/keepAlive");
 
 app.use("/api/keep-alive", authMiddleware, keepAlive);
 
-const cleanSupabase = require("./routes/cleanSupabase");
+const cleanSupabase = require("@backend/routes/cleanSupabase");
 
 app.use("/api/clean-supabase", cleanSupabase);
 
-const screenshot = require("./routes/screenshot");
+const screenshot = require("@backend/routes/screenshot");
 
 app.use("/api/screenshot", authMiddleware, uploadLimiter, screenshot);
 
-const favicon = require("./routes/favicon");
+const favicon = require("@backend/routes/favicon");
 
 app.use("/api/favicon", authMiddleware, uploadLimiter, favicon);
 
-const redirectChecker = require("./routes/redirectChecker");
+const redirectChecker = require("@backend/routes/redirectChecker");
 
 app.use("/api/redirect-checker", redirectChecker);
 
-const jsonXmlConverter = require("./routes/jsonXmlConverter");
+const jsonXmlConverter = require("@backend/routes/jsonXmlConverter");
 
 app.use("/api/convert", jsonXmlConverter);
 
-const seoTools = require("./routes/seoTools");
+const seoTools = require("@backend/routes/seoTools");
 
 app.use("/api/seo", seoTools);
 
-const analytics = require("./routes/analytics");
+const analytics = require("@backend/routes/analytics");
 
 app.use("/api/analytics", analytics);
 
-const passwordStrength = require("./routes/passwordStrength");
+const passwordStrength = require("@backend/routes/passwordStrength");
 
 app.use("/api/password-strength", passwordStrength);
 

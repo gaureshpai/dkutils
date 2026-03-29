@@ -3,6 +3,9 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
+		"paths": {
+			"@package/*": ["./src/*"]
+		},
 		"strict": true,
 		"declaration": true,
 		"esModuleInterop": true,

@@ -1,6 +1,6 @@
+import { useTheme } from "@frontend/components/theme-provider";
+import { Button } from "@frontend/components/ui/button";
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "./theme-provider";
-import { Button } from "./ui/button";
 
 /**
  * Toggle the application's theme between "dark" and "light".

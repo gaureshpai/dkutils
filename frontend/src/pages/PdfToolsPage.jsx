@@ -1,16 +1,15 @@
-﻿import React from "react";
+﻿import PdfCompressor from "@frontend/components/PdfCompressor.jsx";
+import PdfMerger from "@frontend/components/PdfMerger.jsx";
+import PdfPageDeleter from "@frontend/components/PdfPageDeleter.jsx";
+import PdfRotator from "@frontend/components/PdfRotator.jsx";
+import PdfSplitter from "@frontend/components/PdfSplitter.jsx";
+import PdfToExcelConverter from "@frontend/components/PdfToExcelConverter.jsx";
+import PdfToTextConverter from "@frontend/components/PdfToTextConverter.jsx";
+import PdfToWordConverter from "@frontend/components/PdfToWordConverter.jsx";
+import TextToPdfGenerator from "@frontend/components/TextToPdfGenerator.jsx";
+import ToolCard from "@frontend/components/ToolCard.jsx";
+import useSortedTools from "@frontend/utils/useSortedTools";
 import { Helmet } from "react-helmet-async";
-import PdfCompressor from "../components/PdfCompressor.jsx";
-import PdfMerger from "../components/PdfMerger.jsx";
-import PdfPageDeleter from "../components/PdfPageDeleter.jsx";
-import PdfRotator from "../components/PdfRotator.jsx";
-import PdfSplitter from "../components/PdfSplitter.jsx";
-import PdfToExcelConverter from "../components/PdfToExcelConverter.jsx";
-import PdfToTextConverter from "../components/PdfToTextConverter.jsx";
-import PdfToWordConverter from "../components/PdfToWordConverter.jsx";
-import TextToPdfGenerator from "../components/TextToPdfGenerator.jsx";
-import ToolCard from "../components/ToolCard.jsx";
-import useSortedTools from "../utils/useSortedTools";
 
 const PDF_TOOL_DEFINITIONS = [
 	{

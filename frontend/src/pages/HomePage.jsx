@@ -1,3 +1,12 @@
+import { Badge } from "@frontend/components/ui/badge";
+import { Button } from "@frontend/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@frontend/components/ui/card";
 import {
 	ArrowRight,
 	FileText,
@@ -7,21 +16,9 @@ import {
 	Layout,
 	Shield,
 	Type,
-	Zap,
 } from "lucide-react";
-import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "../components/ui/card";
 
 const HomePage = () => {
 	const siteUrl = import.meta.env.VITE_SITE_URL || "https://dkutils.vercel.app";

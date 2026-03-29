@@ -1,5 +1,5 @@
-const ApiActivity = require("../models/ApiActivity");
-const { ServiceUsage, TotalUsage } = require("../models/ServiceUsage");
+const ApiActivity = require("@backend/models/ApiActivity");
+const { ServiceUsage, TotalUsage } = require("@backend/models/ServiceUsage");
 
 const apiActivityTracker = async (req, res, next) => {
 	try {

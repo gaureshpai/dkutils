@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const axios = require("axios");
 const dns = require("node:dns");
-const { isPrivateIP } = require("../utils/ipValidation");
+const { isPrivateIP } = require("@backend/utils/ipValidation");
 
 // Function to validate domain and resolve to check for private IPs
 const validateDomain = async (domain) => {

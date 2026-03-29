@@ -13,6 +13,11 @@ export class DkUtilsError extends Error {
 	}
 }
 
+interface NodeError extends Error {
+	code?: string;
+	path?: string;
+}
+
 /**
  * Handles common errors and returns a user-friendly message.
  */
@@ -21,7 +26,7 @@ export function handleUserError(error: unknown): string {
 		return `\nError: ${error.message}${error.suggestion ? `\nSuggestion: ${error.suggestion}` : ""}`;
 	}
 
-	const err = error as any;
+	const err = error as NodeError;
 
 	// File system errors
 	if (err.code === "ENOENT") {

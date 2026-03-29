@@ -1,5 +1,5 @@
 // Use shared Supabase client module
-const { supabase } = require("./supabaseClient");
+const { supabase } = require("@backend/utils/supabaseClient");
 
 const SUPABASE_BUCKET_NAME = "utilityhub";
 const DAYS_TO_KEEP = 7;

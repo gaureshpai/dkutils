@@ -1,28 +1,28 @@
 import { jwtDecode } from "jwt-decode";
 import { useContext, useEffect, useState } from "react";
-import "./App.css";
+import "@frontend/App.css";
+import Navbar from "@frontend/components/Navbar.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import setAuthToken from "@frontend/utils/setAuthToken";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import Navbar from "./components/Navbar.jsx";
-import { AuthContext } from "./context/AuthContext.jsx";
-import setAuthToken from "./utils/setAuthToken";
 
 // Components
-import Base64TextConverter from "./components/Base64TextConverter.jsx";
-import ImageFlipper from "./components/ImageFlipper.jsx";
-import ImageToBase64Converter from "./components/ImageToBase64Converter.jsx";
-import Login from "./components/auth/Login.jsx";
-import Register from "./components/auth/Register.jsx";
+import Base64TextConverter from "@frontend/components/Base64TextConverter.jsx";
+import ImageFlipper from "@frontend/components/ImageFlipper.jsx";
+import ImageToBase64Converter from "@frontend/components/ImageToBase64Converter.jsx";
+import Login from "@frontend/components/auth/Login.jsx";
+import Register from "@frontend/components/auth/Register.jsx";
 
-import Footer from "./components/Footer.jsx";
+import Footer from "@frontend/components/Footer.jsx";
 // Pages
-import HomePage from "./pages/HomePage.jsx";
-import ImageToolsPage from "./pages/ImageToolsPage.jsx";
-import PdfToolsPage from "./pages/PdfToolsPage.jsx";
-import TextToolsPage from "./pages/TextToolsPage.jsx";
-import WebToolsPage from "./pages/WebToolsPage.jsx";
+import HomePage from "@frontend/pages/HomePage.jsx";
+import ImageToolsPage from "@frontend/pages/ImageToolsPage.jsx";
+import PdfToolsPage from "@frontend/pages/PdfToolsPage.jsx";
+import TextToolsPage from "@frontend/pages/TextToolsPage.jsx";
+import WebToolsPage from "@frontend/pages/WebToolsPage.jsx";
 
-import { ThemeProvider } from "./components/theme-provider";
+import { ThemeProvider } from "@frontend/components/theme-provider";
 
 const PrivateRoute = ({ children }) => {
 	const { state } = useContext(AuthContext);
@@ -76,7 +76,7 @@ function App() {
 		<ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
 			<div className="bg-background min-h-screen flex flex-col font-sans antialiased text-foreground">
 				<Navbar />
-				<main className="flex-grow">
+				<main className="grow">
 					<Routes>
 						<Route path="/" element={<HomePage />} />
 						<Route path="/register" element={<Register />} />

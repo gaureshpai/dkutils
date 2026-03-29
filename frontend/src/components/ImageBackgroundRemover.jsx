@@ -1,8 +1,8 @@
 import { removeBackground } from "@imgly/background-removal";
-import React, { useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 
-import useAnalytics from "../utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 
 const ImageBackgroundRemover = () => {
 	const { trackToolUsage } = useAnalytics();

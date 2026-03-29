@@ -1,17 +1,16 @@
-import React from "react";
+// import ImageToBase64Converter from "@frontend/components/ImageToBase64Converter.jsx";
+import ImageBackgroundRemover from "@frontend/components/ImageBackgroundRemover.jsx";
+import ImageCompressor from "@frontend/components/ImageCompressor.jsx";
+import ImageCropper from "@frontend/components/ImageCropper.jsx";
+import ImageFlipper from "@frontend/components/ImageFlipper.jsx";
+import ImageFormatConverter from "@frontend/components/ImageFormatConverter.jsx";
+import ImageGrayscaler from "@frontend/components/ImageGrayscaler.jsx";
+import ImageResizer from "@frontend/components/ImageResizer.jsx";
+import ImageToPdfConverter from "@frontend/components/ImageToPdfConverter.jsx";
+import PngToJpgConverter from "@frontend/components/PngToJpgConverter.jsx";
+import ToolCard from "@frontend/components/ToolCard.jsx";
+import useSortedTools from "@frontend/utils/useSortedTools";
 import { Helmet } from "react-helmet-async";
-// import ImageToBase64Converter from "../components/ImageToBase64Converter.jsx";
-import ImageBackgroundRemover from "../components/ImageBackgroundRemover.jsx";
-import ImageCompressor from "../components/ImageCompressor.jsx";
-import ImageCropper from "../components/ImageCropper.jsx";
-import ImageFlipper from "../components/ImageFlipper.jsx";
-import ImageFormatConverter from "../components/ImageFormatConverter.jsx";
-import ImageGrayscaler from "../components/ImageGrayscaler.jsx";
-import ImageResizer from "../components/ImageResizer.jsx";
-import ImageToPdfConverter from "../components/ImageToPdfConverter.jsx";
-import PngToJpgConverter from "../components/PngToJpgConverter.jsx";
-import ToolCard from "../components/ToolCard.jsx";
-import useSortedTools from "../utils/useSortedTools";
 
 const IMAGE_TOOL_DEFINITIONS = [
 	{

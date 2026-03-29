@@ -1,1 +1,1 @@
-export * from "./common.js";
+export * from "@package/interfaces/common.js";

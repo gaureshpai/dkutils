@@ -1,15 +1,18 @@
 import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-
+import type { CompressionLevel } from "@package/interfaces/index.js";
+import {
+	applyPdfWatermark,
+	ensureFileOutputPath,
+	writeBuffer,
+	writeText,
+} from "@package/utils/index.js";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { PDFDocument, degrees } from "pdf-lib";
 import pdfParse from "pdf-parse";
 import PDFDocumentKit from "pdfkit";
 import * as XLSX from "xlsx";
-
-import type { CompressionLevel } from "../interfaces/index.js";
-import { applyPdfWatermark, ensureFileOutputPath, writeBuffer, writeText } from "../utils/index.js";
 
 /**
  * Merges multiple PDF files into a single output file.

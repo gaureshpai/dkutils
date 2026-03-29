@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const axios = require("axios");
-const { supabase } = require("../utils/supabaseClient");
+const { supabase } = require("@backend/utils/supabaseClient");
 
 // @route   POST /api/screenshot
 // @desc    Generate screenshots of a given URL and its internal links.

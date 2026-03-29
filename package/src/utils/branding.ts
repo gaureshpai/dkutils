@@ -1,4 +1,4 @@
-import { capabilityGroups } from "../constants/index.js";
+import { capabilityGroups } from "@package/constants/index.js";
 
 /**
  * Returns the default banner shown when the `dkutils` CLI is invoked without arguments.

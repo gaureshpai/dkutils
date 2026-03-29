@@ -1,7 +1,7 @@
-﻿import jsQR from "jsqr";
-import React, { useRef, useState } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import jsQR from "jsqr";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const QrCodeScanner = () => {
 	const { trackToolUsage } = useAnalytics();

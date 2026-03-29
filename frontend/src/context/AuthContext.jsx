@@ -1,7 +1,7 @@
+import setAuthToken from "@frontend/utils/setAuthToken";
 import { jwtDecode } from "jwt-decode";
 import PropTypes from "prop-types";
-import React, { createContext, useReducer, useEffect } from "react";
-import setAuthToken from "../utils/setAuthToken";
+import { createContext, useEffect, useReducer } from "react";
 
 const AuthContext = createContext();
 

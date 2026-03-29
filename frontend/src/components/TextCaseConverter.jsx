@@ -1,6 +1,6 @@
-﻿import React, { useState, useRef, useEffect } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const TextCaseConverter = () => {
 	const { trackToolUsage } = useAnalytics();

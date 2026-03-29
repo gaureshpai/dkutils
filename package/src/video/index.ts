@@ -7,14 +7,12 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import vm from "node:vm";
-import { Innertube, type Types, Utils } from "youtubei.js";
-import ytDlpPath from "yt-dlp-static";
 import type {
 	BatchResult,
 	FileTaskOptions,
 	YouTubeFormat,
 	YouTubeVideoInfo,
-} from "../interfaces/index.js";
+} from "@package/interfaces/index.js";
 import {
 	collectFiles,
 	defaultOutputDir,
@@ -22,7 +20,9 @@ import {
 	ffmpegPath,
 	mapOutputPath,
 	runFfmpeg,
-} from "../utils/index.js";
+} from "@package/utils/index.js";
+import { Innertube, type Types, Utils } from "youtubei.js";
+import ytDlpPath from "yt-dlp-static";
 
 type ICacheConstructor = Types.ICacheConstructor;
 type BuildScriptResult = Types.BuildScriptResult;
@@ -228,8 +228,11 @@ export async function removeVideoBackground(
 			]);
 
 			results.push({ input: file, output: outputPath });
-		} catch (error: any) {
-			results.push({ input: file, error: error.message });
+		} catch (error) {
+			results.push({
+				input: file,
+				error: error instanceof Error ? error.message : String(error),
+			});
 		} finally {
 			await fs.rm(framesDir, { recursive: true, force: true }).catch(() => {});
 		}

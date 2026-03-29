@@ -1,8 +1,8 @@
-﻿import axios from "axios";
-import React, { useState, useContext } from "react";
+﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import useAnalytics from "@frontend/utils/useAnalytics";
+import axios from "axios";
+import { useContext, useState } from "react";
 import { toast } from "react-toastify";
-import { AuthContext } from "../context/AuthContext.jsx";
-import useAnalytics from "../utils/useAnalytics";
 
 const ImageToBase64Converter = () => {
 	const { trackToolUsage } = useAnalytics();
@@ -47,7 +47,6 @@ const ImageToBase64Converter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("ImageToBase64Converter", "image");
 		const formData = new FormData();
 		formData.append("image", selectedFile);
 
@@ -65,6 +64,7 @@ const ImageToBase64Converter = () => {
 			setBase64String(base64);
 
 			handleDownload(base64, `image-base64-${Date.now()}.txt`);
+			trackToolUsage("ImageToBase64Converter", "image");
 		} catch (err) {
 			console.error(err);
 			toast.error(err.response?.data?.msg || "Error converting image to Base64. Please try again.");

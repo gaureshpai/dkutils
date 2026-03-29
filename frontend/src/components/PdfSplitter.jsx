@@ -1,9 +1,9 @@
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
-import React, { useState, useContext, useRef } from "react";
+import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { AuthContext } from "../context/AuthContext.jsx";
-import useAnalytics from "../utils/useAnalytics";
 
 const PdfSplitter = () => {
 	const { trackToolUsage } = useAnalytics();

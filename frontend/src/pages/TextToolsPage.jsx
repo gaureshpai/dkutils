@@ -1,16 +1,15 @@
-﻿import React from "react";
+﻿import Base64TextConverter from "@frontend/components/Base64TextConverter.jsx";
+import CsvToJsonConverter from "@frontend/components/CsvToJsonConverter.jsx";
+import HashGenerator from "@frontend/components/HashGenerator.jsx";
+import HtmlToMarkdownConverter from "@frontend/components/HtmlToMarkdownConverter.jsx";
+import JsonFormatterValidator from "@frontend/components/JsonFormatterValidator.jsx";
+import MarkdownToHtmlConverter from "@frontend/components/MarkdownToHtmlConverter.jsx";
+import PasswordGenerator from "@frontend/components/PasswordGenerator.jsx";
+import TextCaseConverter from "@frontend/components/TextCaseConverter.jsx";
+import TextDifferenceChecker from "@frontend/components/TextDifferenceChecker.jsx";
+import ToolCard from "@frontend/components/ToolCard.jsx";
+import useSortedTools from "@frontend/utils/useSortedTools";
 import { Helmet } from "react-helmet-async";
-import Base64TextConverter from "../components/Base64TextConverter.jsx";
-import CsvToJsonConverter from "../components/CsvToJsonConverter.jsx";
-import HashGenerator from "../components/HashGenerator.jsx";
-import HtmlToMarkdownConverter from "../components/HtmlToMarkdownConverter.jsx";
-import JsonFormatterValidator from "../components/JsonFormatterValidator.jsx";
-import MarkdownToHtmlConverter from "../components/MarkdownToHtmlConverter.jsx";
-import PasswordGenerator from "../components/PasswordGenerator.jsx";
-import TextCaseConverter from "../components/TextCaseConverter.jsx";
-import TextDifferenceChecker from "../components/TextDifferenceChecker.jsx";
-import ToolCard from "../components/ToolCard.jsx";
-import useSortedTools from "../utils/useSortedTools";
 
 const INITIAL_TOOLS = [
 	{

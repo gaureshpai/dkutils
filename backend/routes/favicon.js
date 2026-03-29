@@ -3,9 +3,9 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const path = require("node:path");
 const archiver = require("archiver");
-const { supabase } = require("../utils/supabaseClient");
+const { supabase } = require("@backend/utils/supabaseClient");
 const dns = require("node:dns");
-const { isPrivateIP } = require("../utils/ipValidation");
+const { isPrivateIP } = require("@backend/utils/ipValidation");
 
 // Function to validate URL and check for private IPs
 const validateUrl = async (url) => {

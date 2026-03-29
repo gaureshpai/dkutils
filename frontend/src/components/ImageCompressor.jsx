@@ -1,8 +1,8 @@
-﻿import axios from "axios";
+﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import useAnalytics from "@frontend/utils/useAnalytics";
+import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { AuthContext } from "../context/AuthContext.jsx";
-import useAnalytics from "../utils/useAnalytics";
 
 const ImageCompressor = () => {
 	const { trackToolUsage } = useAnalytics();

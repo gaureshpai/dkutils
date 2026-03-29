@@ -1,8 +1,8 @@
-﻿import axios from "axios";
-import React, { useState, useContext } from "react";
+﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import useAnalytics from "@frontend/utils/useAnalytics";
+import axios from "axios";
+import { useContext, useState } from "react";
 import { toast } from "react-toastify";
-import { AuthContext } from "../context/AuthContext.jsx";
-import useAnalytics from "../utils/useAnalytics";
 
 const ImageFormatConverter = () => {
 	const { trackToolUsage } = useAnalytics();
@@ -74,7 +74,6 @@ const ImageFormatConverter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("ImageFormatConverter", "image");
 		const formData = new FormData();
 		for (const file of selectedFiles) {
 			formData.append("images", file);
@@ -89,7 +88,7 @@ const ImageFormatConverter = () => {
 
 			handleDownload(res.data.path, res.data.originalname);
 			toast.success("Image format converted successfully!");
-			trackToolUsage("Image Format Converter", "image");
+			trackToolUsage("ImageFormatConverter", "image");
 		} catch (err) {
 			console.error(err);
 			toast.error(err.response?.data?.msg || "Error converting image format. Please try again.");

@@ -1,7 +1,7 @@
-﻿import axios from "axios";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import axios from "axios";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const PasswordStrengthChecker = () => {
 	const [password, setPassword] = useState("");

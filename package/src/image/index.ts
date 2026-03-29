@@ -1,11 +1,26 @@
 import { Buffer } from "node:buffer";
 import path from "node:path";
+import { IMAGE_EXTENSIONS } from "@package/constants/index.js";
+import type {
+	BatchResult,
+	CompressImagesOptions,
+	ConvertImagesOptions,
+	CropOptions,
+	FileTaskOptions,
+	FlipOptions,
+	ImageFormat,
+	ImageQualityOptions,
+	ResizeOptions,
+} from "@package/interfaces/index.js";
+import {
+	collectFiles,
+	defaultOutputDir,
+	mapOutputPath,
+	writeBuffer,
+} from "@package/utils/files.js";
+import { applyImageWatermark } from "@package/utils/watermark.js";
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
-import { IMAGE_EXTENSIONS } from "../constants/index.js";
-import type { BatchResult, FileTaskOptions, ImageFormat } from "../interfaces/index.js";
-import { collectFiles, defaultOutputDir, mapOutputPath, writeBuffer } from "../utils/files.js";
-import { applyImageWatermark } from "../utils/watermark.js";
 
 function normalizeFormat(format?: string): ImageFormat {
 	switch (format?.toLowerCase() || "") {
@@ -32,11 +47,12 @@ function extensionForFormat(format: ImageFormat): string {
  * Modern image processor powered by sharp for high performance.
  */
 async function processBatch(
-	options: FileTaskOptions & {
-		format?: string;
-		suffix: string;
-		action: (pipeline: sharp.Sharp) => sharp.Sharp;
-	},
+	options: FileTaskOptions &
+		ImageQualityOptions & {
+			format?: string;
+			suffix: string;
+			action: (pipeline: sharp.Sharp) => sharp.Sharp;
+		},
 ): Promise<BatchResult[]> {
 	const files = await collectFiles(options.input, IMAGE_EXTENSIONS);
 	const targetFormat = normalizeFormat(options.format);
@@ -56,18 +72,18 @@ async function processBatch(
 			// Quality and format-specific options
 			if (targetFormat === "jpeg" || targetFormat === "jpg") {
 				pipeline.jpeg({
-					quality: (options as any).quality ?? 82,
+					quality: options.quality ?? 82,
 					mozjpeg: true,
 				});
 			} else if (targetFormat === "webp") {
-				pipeline.webp({ quality: (options as any).quality ?? 82 });
+				pipeline.webp({ quality: options.quality ?? 82 });
 			} else if (targetFormat === "png") {
 				pipeline.png({ compressionLevel: 9 });
 			} else if (targetFormat === "avif") {
-				pipeline.avif({ quality: (options as any).quality ?? 60 });
+				pipeline.avif({ quality: options.quality ?? 60 });
 			}
 
-			let buffer: any = await pipeline.toBuffer();
+			let buffer = await pipeline.toBuffer();
 
 			if (options.watermark !== false) {
 				buffer = await applyImageWatermark(buffer, targetFormat);
@@ -81,24 +97,27 @@ async function processBatch(
 			);
 			await writeBuffer(outputPath, buffer);
 			results.push({ input: file, output: outputPath });
-		} catch (error: any) {
-			results.push({ input: file, error: error.message });
+		} catch (error) {
+			results.push({
+				input: file,
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 	}
 	return results;
 }
 
-export const convertImages = (opts: any) =>
+export const convertImages = (opts: ConvertImagesOptions) =>
 	processBatch({ ...opts, suffix: "-converted", action: (p) => p });
 
-export const compressImages = (opts: any) =>
+export const compressImages = (opts: CompressImagesOptions) =>
 	processBatch({
 		...opts,
 		suffix: "-compressed",
-		action: (p) => p, // compression handled in processBatch via options.quality
+		action: (p) => p,
 	});
 
-export const resizeImages = (opts: any) =>
+export const resizeImages = (opts: ResizeOptions) =>
 	processBatch({
 		...opts,
 		suffix: "-resized",
@@ -111,7 +130,7 @@ export const resizeImages = (opts: any) =>
 			}),
 	});
 
-export const cropImages = (opts: any) =>
+export const cropImages = (opts: CropOptions) =>
 	processBatch({
 		...opts,
 		suffix: "-cropped",
@@ -124,10 +143,10 @@ export const cropImages = (opts: any) =>
 			}),
 	});
 
-export const grayscaleImages = (opts: any) =>
+export const grayscaleImages = (opts: FileTaskOptions) =>
 	processBatch({ ...opts, suffix: "-grayscale", action: (p) => p.grayscale() });
 
-export const flipImages = (opts: any) =>
+export const flipImages = (opts: FlipOptions) =>
 	processBatch({
 		...opts,
 		suffix: "-flipped",
@@ -157,20 +176,23 @@ export async function removeBackground(options: FileTaskOptions): Promise<BatchR
 		try {
 			const resultBlob = await runRemoval(file, config);
 			const arrayBuffer = await resultBlob.arrayBuffer();
-			let buffer: any = Buffer.from(arrayBuffer);
+			let buffer: Buffer = Buffer.from(arrayBuffer);
 
 			// Post-process with sharp to ensure optimized PNG
-			buffer = await sharp(buffer).png().toBuffer();
+			buffer = (await sharp(buffer).png().toBuffer()) as Buffer;
 
 			if (options.watermark !== false) {
-				buffer = await applyImageWatermark(buffer, "png");
+				buffer = (await applyImageWatermark(buffer, "png")) as Buffer;
 			}
 
 			const outputPath = mapOutputPath(file, outputDir, "-no-bg", "png");
 			await writeBuffer(outputPath, buffer);
 			results.push({ input: file, output: outputPath });
-		} catch (error: any) {
-			results.push({ input: file, error: error.message });
+		} catch (error) {
+			results.push({
+				input: file,
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 	}
 	return results;
@@ -198,8 +220,10 @@ export async function convertImagesToPdf(options: FileTaskOptions): Promise<stri
 	return outputPath;
 }
 
-export const pngToJpg = (opts: any) => convertImages({ ...opts, format: "jpeg" });
-export const convertToPng = (opts: any) => convertImages({ ...opts, format: "png" });
+export const pngToJpg = (opts: FileTaskOptions) =>
+	convertImages({ ...opts, format: "jpeg" as ImageFormat });
+export const convertToPng = (opts: FileTaskOptions) =>
+	convertImages({ ...opts, format: "png" as ImageFormat });
 
 export async function imageToBase64(options: FileTaskOptions): Promise<BatchResult[]> {
 	const files = await collectFiles(options.input, IMAGE_EXTENSIONS);
@@ -213,8 +237,11 @@ export async function imageToBase64(options: FileTaskOptions): Promise<BatchResu
 				input: file,
 				output: `data:${mime};base64,${buffer.toString("base64")}`,
 			});
-		} catch (e: any) {
-			results.push({ input: file, error: e.message });
+		} catch (e) {
+			results.push({
+				input: file,
+				error: e instanceof Error ? e.message : String(e),
+			});
 		}
 	}
 	return results;

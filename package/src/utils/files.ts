@@ -2,7 +2,7 @@ import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import fg from "fast-glob";
 
-import type { BatchResult } from "../interfaces/index.js";
+import type { BatchResult } from "@package/interfaces/index.js";
 
 export async function ensureDirectory(dirPath: string): Promise<string> {
 	await mkdir(dirPath, { recursive: true });

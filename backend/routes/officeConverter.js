@@ -3,8 +3,8 @@ const path = require("node:path");
 const pdf = require("pdf-parse");
 const { Document, Packer, Paragraph, TextRun } = require("docx");
 const XLSX = require("xlsx");
-const { supabase } = require("../utils/supabaseClient");
-const { sanitizeFilename } = require("../utils/filenameSanitizer");
+const { supabase } = require("@backend/utils/supabaseClient");
+const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
 
 // @route   POST /api/convert/pdf-to-word
 // @desc    Convert PDF to Word (Text Extraction)

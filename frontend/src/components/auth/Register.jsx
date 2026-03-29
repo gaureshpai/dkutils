@@ -1,15 +1,22 @@
-﻿import axios from "axios";
+﻿import { Button } from "@frontend/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@frontend/components/ui/card";
+import { Input } from "@frontend/components/ui/input";
+import { Label } from "@frontend/components/ui/label";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import setAuthToken from "@frontend/utils/setAuthToken";
+import useAnalytics from "@frontend/utils/useAnalytics";
+import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { AlertCircle } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext.jsx";
-import setAuthToken from "../../utils/setAuthToken";
-import useAnalytics from "../../utils/useAnalytics";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
 
 const Register = () => {
 	const { trackToolUsage } = useAnalytics();

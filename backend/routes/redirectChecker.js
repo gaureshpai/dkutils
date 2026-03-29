@@ -2,7 +2,7 @@ const router = require("express").Router();
 const axios = require("axios");
 const dns = require("node:dns").promises;
 const { isIP } = require("node:net");
-const { isPrivateIP: isPrivateIPShared } = require("../utils/ipValidation");
+const { isPrivateIP: isPrivateIPShared } = require("@backend/utils/ipValidation");
 
 const PRIVATE_IP_RANGES = [
 	{ start: "10.0.0.0", end: "10.255.255.255" },
@@ -255,6 +255,11 @@ router.post("/", async (req, res) => {
 					break;
 				}
 			} catch (err) {
+				redirectChain.push({
+					url: currentUrl,
+					status: "error",
+					message: err.message,
+				});
 				break;
 			}
 		}
@@ -266,10 +271,32 @@ router.post("/", async (req, res) => {
 				maxRedirects: 0,
 				validateStatus: (status) => status >= 200 && status < 400,
 			});
+
 			redirectChain.push({
 				url: currentUrl,
 				status: finalResponse.status,
 			});
+
+			if (
+				finalResponse.status >= 300 &&
+				finalResponse.status < 400 &&
+				finalResponse.headers.location
+			) {
+				try {
+					const nextUrl = await validateRedirectLocation(
+						finalResponse.headers.location,
+						currentUrl,
+					);
+					if (nextUrl) {
+						redirectChain.push({
+							url: nextUrl,
+							status: "pending",
+						});
+					}
+				} catch (err) {
+					return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
+				}
+			}
 		}
 
 		return res.status(200).json({ chain: redirectChain });

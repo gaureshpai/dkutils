@@ -49,6 +49,26 @@ export interface CompressImagesOptions extends FileTaskOptions {
 	quality?: number;
 }
 
+export interface ImageQualityOptions {
+	quality?: number;
+}
+
+export interface ResizeOptions extends FileTaskOptions {
+	width?: number;
+	height?: number;
+}
+
+export interface CropOptions extends FileTaskOptions {
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+}
+
+export interface FlipOptions extends FileTaskOptions {
+	direction?: FlipDirection;
+}
+
 export interface YouTubeFormat {
 	format_id: string;
 	format_note?: string;

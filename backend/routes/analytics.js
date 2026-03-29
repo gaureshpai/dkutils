@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const rateLimit = require("express-rate-limit");
-const ToolUsage = require("../models/ToolUsage");
+const ToolUsage = require("@backend/models/ToolUsage");
 
 // Rate limiting for /track endpoint
 const trackLimiter = rateLimit({

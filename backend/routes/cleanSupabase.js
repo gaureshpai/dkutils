@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
-const { cleanSupabaseStorage } = require("../utils/supabaseCleaner");
+const { cleanSupabaseStorage } = require("@backend/utils/supabaseCleaner");
 
 const requireAuth = (req, res, next) => {
 	const token = req.header("x-auth-token");

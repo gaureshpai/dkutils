@@ -1,10 +1,14 @@
 const router = require("express").Router();
 const path = require("node:path");
 const { PDFDocument, degrees } = require("pdf-lib");
-const { supabase } = require("../utils/supabaseClient");
+const { supabase } = require("@backend/utils/supabaseClient");
 const pdfParse = require("pdf-parse");
-const { handlePdfError, validatePdfFile, validatePageRange } = require("../utils/pdfErrorHandler");
-const { sanitizeFilename } = require("../utils/filenameSanitizer");
+const {
+	handlePdfError,
+	validatePdfFile,
+	validatePageRange,
+} = require("@backend/utils/pdfErrorHandler");
+const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
 
 // @route   POST /api/convert/merge-pdfs
 // @desc    Merge multiple PDFs into one

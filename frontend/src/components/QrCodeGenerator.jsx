@@ -1,9 +1,9 @@
-﻿import * as domToImage from "dom-to-image";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import * as domToImage from "dom-to-image";
 import jsPDF from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
-import React, { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const QrCodeGenerator = () => {
 	const { trackToolUsage } = useAnalytics();

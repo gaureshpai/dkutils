@@ -1,16 +1,15 @@
-﻿import React from "react";
+﻿import FaviconExtractor from "@frontend/components/FaviconExtractor.jsx";
+import JsonXmlConverter from "@frontend/components/JsonXmlConverter.jsx";
+import LinkShortener from "@frontend/components/LinkShortener.jsx";
+import PasswordStrengthChecker from "@frontend/components/PasswordStrengthChecker.jsx";
+import QrCodeGenerator from "@frontend/components/QrCodeGenerator.jsx";
+import QrCodeScanner from "@frontend/components/QrCodeScanner.jsx";
+import SeoTools from "@frontend/components/SeoTools.jsx";
+import ToolCard from "@frontend/components/ToolCard.jsx";
+import UrlRedirectChecker from "@frontend/components/UrlRedirectChecker.jsx";
+import WebsiteScreenshotGenerator from "@frontend/components/WebsiteScreenshotGenerator.jsx";
+import useSortedTools from "@frontend/utils/useSortedTools";
 import { Helmet } from "react-helmet-async";
-import FaviconExtractor from "../components/FaviconExtractor.jsx";
-import JsonXmlConverter from "../components/JsonXmlConverter.jsx";
-import LinkShortener from "../components/LinkShortener.jsx";
-import PasswordStrengthChecker from "../components/PasswordStrengthChecker.jsx";
-import QrCodeGenerator from "../components/QrCodeGenerator.jsx";
-import QrCodeScanner from "../components/QrCodeScanner.jsx";
-import SeoTools from "../components/SeoTools.jsx";
-import ToolCard from "../components/ToolCard.jsx";
-import UrlRedirectChecker from "../components/UrlRedirectChecker.jsx";
-import WebsiteScreenshotGenerator from "../components/WebsiteScreenshotGenerator.jsx";
-import useSortedTools from "../utils/useSortedTools";
 
 const INITIAL_TOOLS = [
 	{

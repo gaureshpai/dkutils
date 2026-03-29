@@ -1,7 +1,7 @@
-﻿import { PDFDocument } from "pdf-lib";
-import React, { useState, useRef } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import { PDFDocument } from "pdf-lib";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const PdfPageDeleter = () => {
 	const { trackToolUsage } = useAnalytics();

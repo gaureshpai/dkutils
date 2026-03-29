@@ -3,10 +3,10 @@ import path from "node:path";
 
 import { Command } from "commander";
 
-import { renderCliBanner } from "./branding.js";
-import { startInteractiveCli } from "./interactive.js";
-import { FlipDirection, ImageFormat } from "./interfaces/index.js";
-import { handleUserError, readConfig } from "./utils/index.js";
+import { renderCliBanner } from "@package/branding.js";
+import { startInteractiveCli } from "@package/interactive.js";
+import { type CompressionLevel, FlipDirection, ImageFormat } from "@package/interfaces/index.js";
+import { handleUserError, readConfig } from "@package/utils/index.js";
 
 async function getWatermarkPreference(optionValue?: boolean): Promise<boolean> {
 	if (optionValue === false) return false;
@@ -37,7 +37,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).convertImages({
+					await (await import("@package/image/index.js")).convertImages({
 						input: options.input,
 						format: options.format,
 						recursive: options.recursive,
@@ -55,7 +55,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).compressImages({
+					await (await import("@package/image/index.js")).compressImages({
 						input: options.input,
 						quality: options.quality,
 						recursive: options.recursive,
@@ -74,7 +74,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).resizeImages({
+					await (await import("@package/image/index.js")).resizeImages({
 						input: options.input,
 						width: options.width,
 						height: options.height,
@@ -96,7 +96,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).cropImages({
+					await (await import("@package/image/index.js")).cropImages({
 						input: options.input,
 						left: options.left,
 						top: options.top,
@@ -116,7 +116,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).grayscaleImages({
+					await (await import("@package/image/index.js")).grayscaleImages({
 						input: options.input,
 						recursive: options.recursive,
 						watermark: await getWatermarkPreference(options.watermark),
@@ -133,7 +133,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).flipImages({
+					await (await import("@package/image/index.js")).flipImages({
 						input: options.input,
 						direction: options.direction as "horizontal" | "vertical",
 						recursive: options.recursive,
@@ -150,7 +150,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).removeImageBackground({
+					await (await import("@package/image/index.js")).removeImageBackground({
 						input: options.input,
 						recursive: options.recursive,
 						watermark: await getWatermarkPreference(options.watermark),
@@ -166,7 +166,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from the resulting PDF.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).convertImagesToPdf({
+					await (await import("@package/image/index.js")).convertImagesToPdf({
 						input: options.input,
 						recursive: options.recursive,
 						watermark: await getWatermarkPreference(options.watermark),
@@ -182,7 +182,7 @@ imageCommand
 			.option("-s, --stdout", "Print the Base64 string directly to the terminal.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).imageToBase64({
+					await (await import("@package/image/index.js")).imageToBase64({
 						input: options.input,
 						recursive: options.recursive,
 						stdout: options.stdout,
@@ -198,7 +198,7 @@ imageCommand
 			.option("--no-watermark", "Remove dkutils watermark from processed images.")
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).pngToJpg({
+					await (await import("@package/image/index.js")).pngToJpg({
 						input: options.input,
 						recursive: options.recursive,
 						watermark: await getWatermarkPreference(options.watermark),
@@ -213,7 +213,7 @@ imageCommand
 			.option("-r, --recursive", "Recursively search for images in subdirectories.", false)
 			.action(async (options) =>
 				print(
-					await (await import("./image/index.js")).convertToPng({
+					await (await import("@package/image/index.js")).convertToPng({
 						input: options.input,
 						recursive: options.recursive,
 					}),
@@ -237,7 +237,7 @@ pdfCommand
 					throw new Error("At least one input PDF file is required.");
 				}
 				print(
-					await (await import("./pdf/index.js")).mergePdfs(
+					await (await import("@package/pdf/index.js")).mergePdfs(
 						inputFiles,
 						outputPath,
 						await getWatermarkPreference(options.watermark),
@@ -255,7 +255,7 @@ pdfCommand
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}-split.pdf`);
 				print(
-					await (await import("./pdf/index.js")).splitPdf(
+					await (await import("@package/pdf/index.js")).splitPdf(
 						options.input,
 						options.ranges,
 						outputPath,
@@ -278,10 +278,10 @@ pdfCommand
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}-compressed.pdf`);
 				print(
-					await (await import("./pdf/index.js")).compressPdf(
+					await (await import("@package/pdf/index.js")).compressPdf(
 						options.input,
 						outputPath,
-						options.level as any,
+						options.level as CompressionLevel,
 						await getWatermarkPreference(options.watermark),
 					),
 				);
@@ -301,7 +301,7 @@ pdfCommand
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}-rotated.pdf`);
 				print(
-					await (await import("./pdf/index.js")).rotatePdf(
+					await (await import("@package/pdf/index.js")).rotatePdf(
 						options.input,
 						options.angle,
 						outputPath,
@@ -320,7 +320,7 @@ pdfCommand
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}-modified.pdf`);
 				print(
-					await (await import("./pdf/index.js")).deletePdfPages(
+					await (await import("@package/pdf/index.js")).deletePdfPages(
 						options.input,
 						options.ranges,
 						outputPath,
@@ -336,7 +336,7 @@ pdfCommand
 			.action(async (options) => {
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}.txt`);
-				print(await (await import("./pdf/index.js")).pdfToText(options.input, outputPath));
+				print(await (await import("@package/pdf/index.js")).pdfToText(options.input, outputPath));
 			}),
 	)
 	.addCommand(
@@ -346,7 +346,7 @@ pdfCommand
 			.action(async (options) => {
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}.docx`);
-				print(await (await import("./pdf/index.js")).pdfToWord(options.input, outputPath));
+				print(await (await import("@package/pdf/index.js")).pdfToWord(options.input, outputPath));
 			}),
 	)
 	.addCommand(
@@ -356,7 +356,7 @@ pdfCommand
 			.action(async (options) => {
 				const basename = path.basename(options.input, path.extname(options.input));
 				const outputPath = path.join(process.cwd(), `${basename}.xlsx`);
-				print(await (await import("./pdf/index.js")).pdfToExcel(options.input, outputPath));
+				print(await (await import("@package/pdf/index.js")).pdfToExcel(options.input, outputPath));
 			}),
 	)
 	.addCommand(
@@ -370,7 +370,7 @@ pdfCommand
 				if (!content) throw new Error("Please provide either --input or --text content.");
 				const outputPath = path.join(process.cwd(), "output.pdf");
 				print(
-					await (await import("./pdf/index.js")).textToPdf(
+					await (await import("@package/pdf/index.js")).textToPdf(
 						content,
 						outputPath,
 						await getWatermarkPreference(options.watermark),
@@ -396,7 +396,7 @@ videoCommand
 			)
 			.action(async (options) =>
 				print(
-					await (await import("./video/index.js")).removeVideoBackground({
+					await (await import("@package/video/index.js")).removeVideoBackground({
 						input: options.input,
 						fps: options.fps,
 					}),
@@ -409,7 +409,7 @@ videoCommand
 			.option("-i, --input <path>", "Path to a .mov file or directory.", ".")
 			.action(async (options) =>
 				print(
-					await (await import("./video/index.js")).convertMovToMp4({
+					await (await import("@package/video/index.js")).convertMovToMp4({
 						input: options.input,
 					}),
 				),
@@ -426,7 +426,7 @@ videoCommand
 			)
 			.action(async (options) =>
 				print(
-					await (await import("./video/index.js")).compressVideo({
+					await (await import("@package/video/index.js")).compressVideo({
 						input: options.input,
 						quality: options.quality,
 					}),
@@ -443,7 +443,10 @@ youtubeCommand.addCommand(
 		.requiredOption("-u, --url <url>", "Full YouTube video URL.")
 		.action(async (options) =>
 			print(
-				await (await import("./video/index.js")).downloadYouTubeVideo(options.url, process.cwd()),
+				await (await import("@package/video/index.js")).downloadYouTubeVideo(
+					options.url,
+					process.cwd(),
+				),
 			),
 		),
 );
@@ -455,7 +458,7 @@ configCommand
 	.command("watermark <on|off>")
 	.description("Enable or disable the 'dkutils' watermark on all processed output globally.")
 	.action(async (value) => {
-		const { writeConfig } = await import("./utils/index.js");
+		const { writeConfig } = await import("@package/utils/index.js");
 		const watermark = value === "on";
 		await writeConfig({ watermark });
 		process.stdout.write(`Watermark preference saved: ${watermark ? "on" : "off"}\n`);

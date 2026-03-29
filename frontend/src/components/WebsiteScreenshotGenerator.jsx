@@ -1,7 +1,7 @@
-﻿import axios from "axios";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const WebsiteScreenshotGenerator = () => {
 	const { trackToolUsage } = useAnalytics();

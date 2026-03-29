@@ -1,7 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import sharp from "sharp";
 
-import { DKU_WATERMARK } from "../branding.js";
+import { DKU_WATERMARK } from "@package/branding.js";
 
 export async function applyImageWatermark(
 	buffer: Buffer,

@@ -1,5 +1,5 @@
+import useAnalytics from "@frontend/utils/useAnalytics";
 import { useEffect, useState } from "react";
-import useAnalytics from "./useAnalytics";
 
 const useSortedTools = (category, initialTools) => {
 	const { getToolStats } = useAnalytics();

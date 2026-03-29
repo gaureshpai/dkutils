@@ -1,5 +1,11 @@
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@frontend/components/ui/card";
 import PropTypes from "prop-types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const ToolCard = ({ title, description, children }) => {
 	return (
