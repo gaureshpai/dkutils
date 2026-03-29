@@ -12,6 +12,12 @@ const PRIVATE_IP_RANGES = [
 const MAX_REDIRECTS = 10;
 const TIMEOUT_MS = 5000;
 
+/**
+ * Check whether an IPv4 address falls within the configured private IPv4 ranges.
+ *
+ * @param {string} ip - The address to check; only IPv4 addresses are considered.
+ * @returns {boolean} `true` if `ip` is an IPv4 address contained in any `PRIVATE_IP_RANGES`, `false` otherwise.
+ */
 function isPrivateIP(ip) {
 	if (isIP(ip) === 4) {
 		const parts = ip.split(".").map(Number);
@@ -32,6 +38,11 @@ function isPrivateIP(ip) {
 	return false;
 }
 
+/**
+ * Checks whether the given address is an IPv4 link-local address in the 169.254.0.0/16 range.
+ * @param {string} ip - IP address string in dotted-quad form.
+ * @returns {boolean} `true` if the address is IPv4 and starts with `169.254`, `false` otherwise.
+ */
 function isLinkLocal(ip) {
 	if (isIP(ip) === 4) {
 		const parts = ip.split(".").map(Number);
@@ -40,6 +51,11 @@ function isLinkLocal(ip) {
 	return false;
 }
 
+/**
+ * Determines whether an IP address is a loopback address.
+ * @param {string} ip - The IP address to check.
+ * @returns {boolean} `true` if the address is a loopback address (IPv4 in the 127.0.0.0/8 range or IPv6 `::1`), `false` otherwise.
+ */
 function isLoopback(ip) {
 	if (isIP(ip) === 4) {
 		return ip.startsWith("127.");
@@ -47,6 +63,11 @@ function isLoopback(ip) {
 	return ip === "::1";
 }
 
+/**
+ * Determine whether an IP address is a multicast address.
+ * @param {string} ip - The IP address to check (IPv4 dotted-quad or IPv6).
+ * @returns {boolean} `true` if the address is a multicast address, `false` otherwise.
+ */
 function isMulticast(ip) {
 	if (isIP(ip) === 4) {
 		const parts = ip.split(".").map(Number);
@@ -55,6 +76,21 @@ function isMulticast(ip) {
 	return ip.startsWith("ff");
 }
 
+/**
+ * Validate that a hostname or IP does not equal or resolve to an unsafe network address.
+ *
+ * When given an IP literal the function rejects immediately if the address is private,
+ * link-local, loopback, or multicast. When given a hostname it resolves A records and
+ * rejects if any IPv4 address is private, link-local, loopback, or multicast. If A
+ * resolution fails it attempts AAAA resolution and rejects IPv6 loopback or multicast
+ * addresses. DNS resolution errors (other than the explicit rejection errors) are
+ * ignored so callers can proceed with the outbound request.
+ *
+ * @param {string} hostname - A hostname or IP literal to validate.
+ * @throws {Error} If the provided IP or any resolved address is unsafe:
+ *   - IPv4: private, link-local, loopback, or multicast
+ *   - IPv6: loopback or multicast
+ */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
 		const ip = hostname;
@@ -88,6 +124,11 @@ async function checkIPSafety(hostname) {
 	}
 }
 
+/**
+ * Ensure the provided URL uses the http or https scheme and that its hostname (or resolved IPs) is not unsafe.
+ * @param {string} targetUrl - The URL to validate.
+ * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ...`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (message: `Rejected unsafe IP address: ...` or `Rejected unsafe IP address: ... (resolved from ...)`).
+ */
 async function validateUrl(targetUrl) {
 	const parsed = new URL(targetUrl);
 
@@ -98,6 +139,13 @@ async function validateUrl(targetUrl) {
 	await checkIPSafety(parsed.hostname);
 }
 
+/**
+ * Resolve a redirect `Location` value against a base URL and validate the resulting absolute URL.
+ * @param {string} location - The redirect `Location` header value; may be absolute or relative.
+ * @param {string} baseUrl - The base URL to use when resolving relative `location` values.
+ * @returns {string} The resolved absolute URL.
+ * @throws {Error} If the resolved URL has an invalid scheme or resolves to a disallowed/unsafe IP address.
+ */
 async function validateRedirectLocation(location, baseUrl) {
 	let resolvedUrl;
 	if (!location.startsWith("http")) {
