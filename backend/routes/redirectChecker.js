@@ -14,12 +14,13 @@ const MAX_REDIRECTS = 10;
 const TIMEOUT_MS = 5000;
 
 /**
- * Check whether an IP address is private (IPv4 or IPv6).
- * Supports IPv4 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16),
- * IPv6 ULA (fc00::/7, fd00::/8), and IPv4-mapped IPv6 addresses.
+ * Determine whether an IP address is within known private or local address ranges.
  *
- * @param {string} ip - The address to check (IPv4 or IPv6).
- * @returns {boolean} `true` if `ip` is a private address, `false` otherwise.
+ * Recognizes IPv4 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), IPv6
+ * unique local addresses (fc00::/7), and IPv4-mapped IPv6 addresses.
+ *
+ * @param {string} ip - The IP address or IP literal to test (IPv4 or IPv6).
+ * @returns {boolean} `true` if the address is private/local, `false` otherwise.
  */
 function isPrivateIP(ip) {
 	// Use shared validator which covers both IPv4 and IPv6 private ranges
@@ -179,7 +180,7 @@ async function checkIPSafety(hostname) {
 }
 
 /**
- * Ensure the provided URL uses the http or https scheme and that its hostname (or resolved IPs) is not unsafe.
+ * Validate that a URL uses the http or https scheme and that its hostname (or resolved addresses) is safe.
  * @param {string} targetUrl - The URL to validate.
  * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ...`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (message: `Rejected unsafe IP address: ...` or `Rejected unsafe IP address: ... (resolved from ...)`).
  */
