@@ -208,9 +208,11 @@ router.post("/", async (req, res) => {
 			const finalResponse = await axios.get(currentUrl, {
 				timeout: TIMEOUT_MS,
 				maxContentLength: 1024 * 1024,
+				maxRedirects: 0,
+				validateStatus: (status) => status >= 200 && status < 400,
 			});
 			redirectChain.push({
-				url: finalResponse.request.res.responseUrl,
+				url: currentUrl,
 				status: finalResponse.status,
 			});
 		}
