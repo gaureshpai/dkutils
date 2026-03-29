@@ -77,19 +77,17 @@ function isMulticast(ip) {
 }
 
 /**
- * Validate that a hostname or IP does not equal or resolve to an unsafe network address.
+ * Ensure a hostname or IP literal does not equal or resolve to an unsafe network address.
  *
- * When given an IP literal the function rejects immediately if the address is private,
- * link-local, loopback, or multicast. When given a hostname it resolves A records and
- * rejects if any IPv4 address is private, link-local, loopback, or multicast. If A
- * resolution fails it attempts AAAA resolution and rejects IPv6 loopback or multicast
- * addresses. DNS resolution errors (other than the explicit rejection errors) are
- * ignored so callers can proceed with the outbound request.
+ * If given an IP literal, rejects when the address is private, link-local, loopback, or multicast.
+ * If given a hostname, resolves A records and rejects if any returned IPv4 is private, link-local, loopback, or multicast.
+ * If A resolution fails (and did not explicitly reject), attempts AAAA resolution and rejects if any returned IPv6 is private, loopback, or multicast.
+ * Non-rejection DNS resolution errors are ignored so callers may still attempt the outbound request.
  *
- * @param {string} hostname - A hostname or IP literal to validate.
- * @throws {Error} If the provided IP or any resolved address is unsafe:
+ * @param {string} hostname - Hostname or IP literal to validate.
+ * @throws {Error} If the input or any resolved address is unsafe:
  *   - IPv4: private, link-local, loopback, or multicast
- *   - IPv6: loopback or multicast
+ *   - IPv6: private, loopback, or multicast
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
