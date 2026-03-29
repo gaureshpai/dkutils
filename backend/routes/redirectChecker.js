@@ -1,58 +1,180 @@
 const router = require("express").Router();
 const axios = require("axios");
-const dns = require("node:dns");
+const dns = require("node:dns").promises;
 const { isIP } = require("node:net");
-const { isPrivateIP } = require("../utils/ipValidation");
+const { isPrivateIP: isPrivateIPShared } = require("../utils/ipValidation");
+
+const PRIVATE_IP_RANGES = [
+	{ start: "10.0.0.0", end: "10.255.255.255" },
+	{ start: "172.16.0.0", end: "172.31.255.255" },
+	{ start: "192.168.0.0", end: "192.168.255.255" },
+];
 
 const MAX_REDIRECTS = 10;
 const TIMEOUT_MS = 5000;
 
 /**
- * Validate that a hostname or IP does not equal or resolve to an unsafe network address.
+ * Check whether an IP address is private (IPv4 or IPv6).
+ * Supports IPv4 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16),
+ * IPv6 ULA (fc00::/7, fd00::/8), and IPv4-mapped IPv6 addresses.
  *
- * When given an IP literal the function rejects immediately if the address is private,
- * unique-local, link-local, loopback, or multicast. When given a hostname it resolves all
- * records (consulting OS hosts) and rejects if any address is private, link-local,
- * loopback, or multicast. DNS resolution errors (other than the explicit rejection errors)
- * are ignored so callers can proceed with the outbound request.
+ * @param {string} ip - The address to check (IPv4 or IPv6).
+ * @returns {boolean} `true` if `ip` is a private address, `false` otherwise.
+ */
+function isPrivateIP(ip) {
+	// Use shared validator which covers both IPv4 and IPv6 private ranges
+	if (isPrivateIPShared(ip)) {
+		return true;
+	}
+
+	// Additional IPv4 private range checks for backward compatibility
+	if (isIP(ip) === 4) {
+		const parts = ip.split(".").map(Number);
+		const num = parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
+
+		for (const range of PRIVATE_IP_RANGES) {
+			const startParts = range.start.split(".").map(Number);
+			const endParts = range.end.split(".").map(Number);
+			const startNum =
+				startParts[0] * 16777216 + startParts[1] * 65536 + startParts[2] * 256 + startParts[3];
+			const endNum = endParts[0] * 16777216 + endParts[1] * 65536 + endParts[2] * 256 + endParts[3];
+
+			if (num >= startNum && num <= endNum) {
+				return true;
+			}
+		}
+	}
+
+	// Check for IPv6 ULA (fc00::/7 - covers both fc00::/8 and fd00::/8)
+	if (isIP(ip) === 6) {
+		const normalized = ip.toLowerCase();
+		if (normalized.startsWith("fc") || normalized.startsWith("fd")) {
+			return true;
+		}
+		// Check for IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
+		if (normalized.startsWith("::ffff:")) {
+			const ipv4Part = ip.substring(7);
+			return isPrivateIP(ipv4Part);
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Checks whether the given address is a link-local address.
+ * IPv4: 169.254.0.0/16
+ * IPv6: fe80::/10
+ * @param {string} ip - IP address string.
+ * @returns {boolean} `true` if the address is link-local, `false` otherwise.
+ */
+function isLinkLocal(ip) {
+	if (isIP(ip) === 4) {
+		const parts = ip.split(".").map(Number);
+		return parts[0] === 169 && parts[1] === 254;
+	}
+	if (isIP(ip) === 6) {
+		const normalized = ip.toLowerCase();
+		return normalized.startsWith("fe80:");
+	}
+	return false;
+}
+
+/**
+ * Determines whether an IP address is a loopback address.
+ * IPv4: 127.0.0.0/8
+ * IPv6: ::1 and IPv4-mapped loopback (::ffff:127.0.0.0/8)
+ * @param {string} ip - The IP address to check.
+ * @returns {boolean} `true` if the address is a loopback address, `false` otherwise.
+ */
+function isLoopback(ip) {
+	if (isIP(ip) === 4) {
+		return ip.startsWith("127.");
+	}
+	if (isIP(ip) === 6) {
+		const normalized = ip.toLowerCase();
+		if (normalized === "::1") {
+			return true;
+		}
+		// Check for IPv4-mapped IPv6 loopback (::ffff:127.x.x.x)
+		if (normalized.startsWith("::ffff:127.")) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Determine whether an IP address is a multicast address.
+ * IPv4: 224.0.0.0/4 (224-239)
+ * IPv6: ff00::/8
+ * @param {string} ip - The IP address to check (IPv4 dotted-quad or IPv6).
+ * @returns {boolean} `true` if the address is a multicast address, `false` otherwise.
+ */
+function isMulticast(ip) {
+	if (isIP(ip) === 4) {
+		const parts = ip.split(".").map(Number);
+		return parts[0] >= 224 && parts[0] <= 239;
+	}
+	if (isIP(ip) === 6) {
+		const normalized = ip.toLowerCase();
+		return normalized.startsWith("ff");
+	}
+	return false;
+}
+
+/**
+ * Ensure a hostname or IP literal does not equal or resolve to an unsafe network address.
  *
- * @param {string} hostname - A hostname or IP literal to validate.
- * @throws {Error} If the provided IP or any resolved address is unsafe.
+ * If given an IP literal, rejects when the address is private, link-local, loopback, or multicast.
+ * If given a hostname, resolves both A (IPv4) and AAAA (IPv6) records independently and rejects if any returned address is unsafe.
+ * Both IPv4 and IPv6 resolution are attempted separately to ensure comprehensive validation.
+ * Non-rejection DNS resolution errors are ignored so callers may still attempt the outbound request.
+ *
+ * @param {string} hostname - Hostname or IP literal to validate.
+ * @throws {Error} If the input or any resolved address is unsafe:
+ *   - IPv4: private, link-local, loopback, or multicast
+ *   - IPv6: private, link-local, loopback, or multicast
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
 		const ip = hostname;
-		if (isPrivateIP(ip)) {
+		if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
 			throw new Error(`Rejected unsafe IP address: ${ip}`);
 		}
 		return;
 	}
 
+	// Run IPv4 resolution independently
 	try {
-		const addresses = await new Promise((resolve, reject) => {
-			dns.lookup(hostname, { all: true }, (err, addresses) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve(addresses);
-				}
-			});
-		});
-
-		for (const addr of addresses) {
-			const { address, family } = addr;
-			if (isPrivateIP(address)) {
-				const errorPrefix = family === 6 ? "IPv6 " : "";
-				throw new Error(
-					`Rejected unsafe ${errorPrefix}address: ${address} (resolved from ${hostname})`,
-				);
+		const addresses = await dns.resolve4(hostname);
+		for (const ip of addresses) {
+			if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
+				throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
 			}
 		}
 	} catch (err) {
+		// Propagate "Rejected unsafe..." errors instead of swallowing them
 		if (err.message.includes("Rejected")) {
 			throw err;
 		}
-		// Ignore resolution errors, let axios try anyway
+		// Suppress true DNS resolution errors (e.g., ENOTFOUND, ENODATA)
+	}
+
+	// Run IPv6 resolution independently (not nested in IPv4 catch)
+	try {
+		const addresses6 = await dns.resolve6(hostname);
+		for (const ip of addresses6) {
+			if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
+				throw new Error(`Rejected unsafe IPv6 address: ${ip} (resolved from ${hostname})`);
+			}
+		}
+	} catch (err) {
+		// Propagate "Rejected unsafe..." errors instead of swallowing them
+		if (err.message.includes("Rejected")) {
+			throw err;
+		}
+		// Suppress true DNS resolution errors (e.g., ENOTFOUND, ENODATA)
 	}
 }
 
@@ -138,34 +260,15 @@ router.post("/", async (req, res) => {
 
 		if (redirectChain.length === 0 || redirectChain[redirectChain.length - 1].url !== currentUrl) {
 			const finalResponse = await axios.get(currentUrl, {
-				maxRedirects: 0,
 				timeout: TIMEOUT_MS,
 				maxContentLength: 1024 * 1024,
+				maxRedirects: 0,
 				validateStatus: (status) => status >= 200 && status < 400,
 			});
-
 			redirectChain.push({
 				url: currentUrl,
 				status: finalResponse.status,
 			});
-
-			if (
-				finalResponse.status >= 300 &&
-				finalResponse.status < 400 &&
-				finalResponse.headers.location
-			) {
-				try {
-					const nextUrl = await validateRedirectLocation(
-						finalResponse.headers.location,
-						currentUrl,
-					);
-					// If there was a redirect we didn't follow in the loop, we could recursively call or just end here.
-					// Based on instructions, we should handle it same way main loop does.
-					// For simplicity in the fallback, we just record that it was a redirect.
-				} catch (err) {
-					return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
-				}
-			}
 		}
 
 		return res.status(200).json({ chain: redirectChain });
