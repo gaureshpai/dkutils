@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const axios = require("axios");
-const dnsPromises = require("node:dns").promises;
 const dns = require("node:dns");
 const { isIP } = require("node:net");
 const { isPrivateIP } = require("../utils/ipValidation");
