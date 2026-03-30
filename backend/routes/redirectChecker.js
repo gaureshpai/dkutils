@@ -63,9 +63,9 @@ function isPrivateIP(ip) {
 }
 
 /**
- * Checks whether the given address is a link-local address.
- * IPv4: 169.254.0.0/16
- * IPv6: fe80::/10
+ * Determines whether the given IP address is link-local.
+ *
+ * IPv4 link-local range: 169.254.0.0/16. IPv6 link-local prefix: fe80::/10.
  * @param {string} ip - IP address string.
  * @returns {boolean} `true` if the address is link-local, `false` otherwise.
  */
@@ -195,11 +195,11 @@ async function validateUrl(targetUrl) {
 }
 
 /**
- * Resolve a redirect `Location` value against a base URL and validate the resulting absolute URL.
- * @param {string} location - The redirect `Location` header value; may be absolute or relative.
- * @param {string} baseUrl - The base URL to use when resolving relative `location` values.
+ * Resolve a redirect `Location` header value against a base URL and validate the resulting absolute URL.
+ * @param {string} location - The redirect `Location` header value; may be an absolute URL or a path relative to `baseUrl`.
+ * @param {string} baseUrl - The base URL used to resolve relative `location` values.
  * @returns {string} The resolved absolute URL.
- * @throws {Error} If the resolved URL has an invalid scheme or resolves to a disallowed/unsafe IP address.
+ * @throws {Error} If the resolved URL uses a scheme other than `http` or `https`, or if its hostname/IP is disallowed by safety checks.
  */
 async function validateRedirectLocation(location, baseUrl) {
 	let resolvedUrl;
