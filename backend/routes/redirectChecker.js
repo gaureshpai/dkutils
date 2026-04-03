@@ -204,8 +204,7 @@ async function validateUrl(targetUrl) {
 async function validateRedirectLocation(location, baseUrl) {
 	let resolvedUrl;
 	if (!location.startsWith("http")) {
-		const base = new URL(baseUrl);
-		resolvedUrl = new URL(location, base.origin + base.pathname);
+		resolvedUrl = new URL(location, baseUrl);
 	} else {
 		resolvedUrl = new URL(location);
 	}
