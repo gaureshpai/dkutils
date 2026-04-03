@@ -32,8 +32,11 @@ const sanitizeFilename = (filename, fallback = `file_${Date.now()}`) => {
 
 	// 8. Enforce a maximum length (e.g., 200 characters)
 	if (sanitized.length > 200) {
-		const ext = path.extname(sanitized);
-		sanitized = sanitized.substring(0, 200 - ext.length) + ext;
+		let ext = path.extname(sanitized);
+		ext = ext.slice(0, Math.min(ext.length, 200));
+		const baseLen = Math.max(0, 200 - ext.length);
+		const base = sanitized.substring(0, baseLen);
+		sanitized = base + ext;
 	}
 
 	// 9. Provide a deterministic fallback if the sanitized name is empty

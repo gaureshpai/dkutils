@@ -23,14 +23,23 @@ const TIMEOUT_MS = 5000;
  * @returns {boolean} `true` if the address is private/local, `false` otherwise.
  */
 function isPrivateIP(ip) {
+	let normalizedIp = ip;
+
+	if (isIP(normalizedIp) === 6) {
+		const normalized = normalizedIp.toLowerCase();
+		if (normalized.startsWith("::ffff:")) {
+			normalizedIp = normalizedIp.substring(7);
+		}
+	}
+
 	// Use shared validator which covers both IPv4 and IPv6 private ranges
-	if (isPrivateIPShared(ip)) {
+	if (isPrivateIPShared(normalizedIp)) {
 		return true;
 	}
 
 	// Additional IPv4 private range checks for backward compatibility
-	if (isIP(ip) === 4) {
-		const parts = ip.split(".").map(Number);
+	if (isIP(normalizedIp) === 4) {
+		const parts = normalizedIp.split(".").map(Number);
 		const num = parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
 
 		for (const range of PRIVATE_IP_RANGES) {
@@ -47,15 +56,10 @@ function isPrivateIP(ip) {
 	}
 
 	// Check for IPv6 ULA (fc00::/7 - covers both fc00::/8 and fd00::/8)
-	if (isIP(ip) === 6) {
-		const normalized = ip.toLowerCase();
+	if (isIP(normalizedIp) === 6) {
+		const normalized = normalizedIp.toLowerCase();
 		if (normalized.startsWith("fc") || normalized.startsWith("fd")) {
 			return true;
-		}
-		// Check for IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
-		if (normalized.startsWith("::ffff:")) {
-			const ipv4Part = ip.substring(7);
-			return isPrivateIP(ipv4Part);
 		}
 	}
 
@@ -70,13 +74,18 @@ function isPrivateIP(ip) {
  * @returns {boolean} `true` if the address is link-local, `false` otherwise.
  */
 function isLinkLocal(ip) {
-	if (isIP(ip) === 4) {
-		const parts = ip.split(".").map(Number);
+	let normalizedIp = ip;
+	if (isIP(normalizedIp) === 6 && normalizedIp.toLowerCase().startsWith("::ffff:")) {
+		normalizedIp = normalizedIp.substring(7);
+	}
+	if (isIP(normalizedIp) === 4) {
+		const parts = normalizedIp.split(".").map(Number);
 		return parts[0] === 169 && parts[1] === 254;
 	}
-	if (isIP(ip) === 6) {
-		const normalized = ip.toLowerCase();
-		return normalized.startsWith("fe80:");
+	if (isIP(normalizedIp) === 6) {
+		const firstHextet = normalizedIp.toLowerCase().split(":")[0];
+		const value = Number.parseInt(firstHextet, 16);
+		return !Number.isNaN(value) && value >= 0xfe80 && value <= 0xfebf;
 	}
 	return false;
 }
@@ -113,12 +122,16 @@ function isLoopback(ip) {
  * @returns {boolean} `true` if the address is a multicast address, `false` otherwise.
  */
 function isMulticast(ip) {
-	if (isIP(ip) === 4) {
-		const parts = ip.split(".").map(Number);
+	let normalizedIp = ip;
+	if (isIP(normalizedIp) === 6 && normalizedIp.toLowerCase().startsWith("::ffff:")) {
+		normalizedIp = normalizedIp.substring(7);
+	}
+	if (isIP(normalizedIp) === 4) {
+		const parts = normalizedIp.split(".").map(Number);
 		return parts[0] >= 224 && parts[0] <= 239;
 	}
-	if (isIP(ip) === 6) {
-		const normalized = ip.toLowerCase();
+	if (isIP(normalizedIp) === 6) {
+		const normalized = normalizedIp.toLowerCase();
 		return normalized.startsWith("ff");
 	}
 	return false;
@@ -146,36 +159,20 @@ async function checkIPSafety(hostname) {
 		return;
 	}
 
-	// Run IPv4 resolution independently
 	try {
-		const addresses = await dns.resolve4(hostname);
-		for (const ip of addresses) {
+		const addresses = await dns.lookup(hostname, { all: true, verbatim: true });
+		for (const { address: ip } of addresses) {
 			if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
 				throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
 			}
 		}
 	} catch (err) {
-		// Propagate "Rejected unsafe..." errors instead of swallowing them
 		if (err.message.includes("Rejected")) {
 			throw err;
 		}
-		// Suppress true DNS resolution errors (e.g., ENOTFOUND, ENODATA)
-	}
-
-	// Run IPv6 resolution independently (not nested in IPv4 catch)
-	try {
-		const addresses6 = await dns.resolve6(hostname);
-		for (const ip of addresses6) {
-			if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
-				throw new Error(`Rejected unsafe IPv6 address: ${ip} (resolved from ${hostname})`);
-			}
-		}
-	} catch (err) {
-		// Propagate "Rejected unsafe..." errors instead of swallowing them
-		if (err.message.includes("Rejected")) {
+		if (!["ENOTFOUND", "ENODATA", "EAI_AGAIN", "ENOTIMP"].includes(err.code)) {
 			throw err;
 		}
-		// Suppress true DNS resolution errors (e.g., ENOTFOUND, ENODATA)
 	}
 }
 
@@ -254,21 +251,49 @@ router.post("/", async (req, res) => {
 					break;
 				}
 			} catch (err) {
-				shouldFallbackToGet = true;
-				redirectChain.push({
-					url: currentUrl,
-					status: "error",
-					message: err.message,
-				});
+				try {
+					const finalResponse = await axios.get(currentUrl, {
+						timeout: TIMEOUT_MS,
+						maxContentLength: 1024 * 1024,
+						maxRedirects: 0,
+						validateStatus: (status) => status >= 200 && status < 400,
+					});
+
+					redirectChain.push({
+						url: currentUrl,
+						status: finalResponse.status,
+					});
+
+					if (
+						finalResponse.status >= 300 &&
+						finalResponse.status < 400 &&
+						finalResponse.headers.location
+					) {
+						try {
+							const nextUrl = await validateRedirectLocation(
+								finalResponse.headers.location,
+								currentUrl,
+							);
+							redirectChain.push({
+								url: nextUrl,
+								status: "pending",
+							});
+						} catch (redirectErr) {
+							return res.status(400).json({ msg: `Redirect blocked: ${redirectErr.message}` });
+						}
+					}
+				} catch (getErr) {
+					redirectChain.push({
+						url: currentUrl,
+						status: "error",
+						message: getErr.message,
+					});
+				}
 				break;
 			}
 		}
 
-		if (
-			shouldFallbackToGet ||
-			redirectChain.length === 0 ||
-			redirectChain[redirectChain.length - 1].url !== currentUrl
-		) {
+		if (redirectChain.length === 0 || redirectChain[redirectChain.length - 1].url !== currentUrl) {
 			const finalResponse = await axios.get(currentUrl, {
 				timeout: TIMEOUT_MS,
 				maxContentLength: 1024 * 1024,

@@ -23,6 +23,10 @@ const isPrivateIP = (ip) => {
 	];
 
 	// Check for IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
+	if (!ip || typeof ip !== "string") {
+		return false;
+	}
+
 	if (ip.toLowerCase().startsWith("::ffff:")) {
 		const ipv4Part = ip.substring(7);
 		return privateRanges.some((range) => range.test(ipv4Part));

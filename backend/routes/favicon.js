@@ -69,12 +69,42 @@ const downloadFile = async (fileUrl) => {
 			timeout: 5000,
 		});
 		return {
+			success: true,
 			buffer: Buffer.from(response.data),
 			contentType: response.headers["content-type"],
 		};
 	} catch (error) {
 		console.error(`Failed to download file from ${fileUrl}:`, error.message);
-		return null;
+		if (error.message.includes("validation failed")) {
+			return {
+				success: false,
+				reason: "blocked",
+				message: error.message,
+				blocked: true,
+			};
+		}
+		if (axios.isAxiosError(error) && error.response?.status === 404) {
+			return {
+				success: false,
+				reason: "not_found",
+				message: error.message,
+				blocked: false,
+			};
+		}
+		if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
+			return {
+				success: false,
+				reason: "timeout",
+				message: error.message,
+				blocked: false,
+			};
+		}
+		return {
+			success: false,
+			reason: "other",
+			message: error.message,
+			blocked: false,
+		};
 	}
 };
 

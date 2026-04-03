@@ -40,7 +40,9 @@ const ImageCompressor = () => {
 			}
 			if (file.size > maxSize) {
 				toast.error(
-					`File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
+					isAuthenticated
+						? `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB.`
+						: `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
 				);
 				setSelectedFiles([]);
 				e.target.value = "";

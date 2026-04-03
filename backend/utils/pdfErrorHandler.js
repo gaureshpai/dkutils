@@ -123,10 +123,10 @@ const validatePageRange = (ranges, totalPages) => {
 
 	for (const range of pageRanges) {
 		if (range.includes("-")) {
-			const [start, end] = range.split("-").map((n) => Number.parseInt(n, 10));
-			if (Number.isNaN(start) || Number.isNaN(end)) {
+			if (!/^\d+-\d+$/.test(range)) {
 				throw new Error(`Invalid page range: ${range}. Please use numbers only.`);
 			}
+			const [start, end] = range.split("-").map((n) => Number.parseInt(n, 10));
 			if (start < 1 || end > totalPages) {
 				throw new Error(`Page range ${range} is out of bounds. PDF has ${totalPages} pages.`);
 			}
@@ -139,10 +139,10 @@ const validatePageRange = (ranges, totalPages) => {
 				pageNumbers.push(i - 1);
 			}
 		} else {
-			const pageNum = Number.parseInt(range, 10);
-			if (Number.isNaN(pageNum)) {
+			if (!/^\d+$/.test(range)) {
 				throw new Error(`Invalid page number: ${range}. Please use numbers only.`);
 			}
+			const pageNum = Number.parseInt(range, 10);
 			if (pageNum < 1 || pageNum > totalPages) {
 				throw new Error(`Page ${pageNum} is out of bounds. PDF has ${totalPages} pages.`);
 			}

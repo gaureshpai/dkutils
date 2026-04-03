@@ -27,7 +27,7 @@
 		"build": "turbo run build",
 		"test": "turbo run test",
 		"format": "biome format --write .",
-		"lint": "biome lint --write .",
+		"lint": "biome lint .",
 		"check": "biome check --write .",
 		"lint:all": "npx biome lint --write package backend frontend",
 		"type-check": "pnpm --filter dkutils type-check",

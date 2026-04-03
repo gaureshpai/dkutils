@@ -34,10 +34,12 @@ const Base64TextConverter = () => {
 		setTimeout(() => {
 			try {
 				setConvertedText(atob(text));
-			} catch (e) {
-				setConvertedText("Invalid Base64 string");
+			} catch (error) {
+				setConvertedText("");
+				toast.error("Failed to decode text.");
+			} finally {
+				setLoading(false);
 			}
-			setLoading(false);
 		}, 500);
 	};
 

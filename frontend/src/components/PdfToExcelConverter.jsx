@@ -9,7 +9,9 @@ const PdfToExcelConverter = () => {
 
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
-	const { isAuthenticated } = useContext(AuthContext);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = (e) => {
@@ -56,7 +58,6 @@ const PdfToExcelConverter = () => {
 			const res = await axios.post(
 				`${import.meta.env.VITE_API_BASE_URL}/api/convert/pdf-to-excel`,
 				formData,
-				{},
 			);
 
 			handleDownload(res.data.path, res.data.originalname);

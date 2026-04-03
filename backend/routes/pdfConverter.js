@@ -336,7 +336,7 @@ router.post(
 
 			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-			res.status(200).json({
+			return res.status(200).json({
 				path: downloadUrl,
 				originalname: outputFileName,
 				success: true,

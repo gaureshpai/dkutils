@@ -10,7 +10,9 @@ const PdfRotator = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [rotationAngle, setRotationAngle] = useState(90);
 	const [loading, setLoading] = useState(false);
-const { state: { isAuthenticated } } = useContext(AuthContext);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = (e) => {

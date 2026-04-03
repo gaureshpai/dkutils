@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const axios = require("axios");
+const http = require("node:http");
+const https = require("node:https");
 const dns = require("node:dns");
 const { isPrivateIP } = require("@backend/utils/ipValidation");
 
@@ -14,51 +16,53 @@ const validateDomain = async (domain) => {
 		}
 
 		// Resolve DNS to check IP addresses (dual-stack support)
-		const addresses = await new Promise((resolve, reject) => {
-			// Run both IPv4 and IPv6 lookups in parallel for dual-stack support
-			const ipv4Promise = new Promise((res) => {
-				dns.resolve4(domain, (err, addresses) => {
-					res(err ? [] : addresses);
-				});
-			});
-
-			const ipv6Promise = new Promise((res) => {
-				dns.resolve6(domain, (err, addresses) => {
-					res(err ? [] : addresses);
-				});
-			});
-
-			Promise.all([ipv4Promise, ipv6Promise])
-				.then(([ipv4Addresses, ipv6Addresses]) => {
-					const allAddresses = [...ipv4Addresses, ...ipv6Addresses];
-					if (allAddresses.length === 0) {
-						reject(new Error("DNS resolution failed for both IPv4 and IPv6"));
-					} else {
-						resolve(allAddresses);
-					}
-				})
-				.catch((err) => reject(new Error(`DNS resolution failed: ${err.message}`)));
-		});
+		const addresses = await dns.promises.lookup(domain, { all: true, verbatim: true });
+		if (addresses.length === 0) {
+			throw new Error("DNS resolution failed");
+		}
 
 		// Check if any resolved IP is private
-		for (const ip of addresses) {
+		for (const { address: ip } of addresses) {
 			if (isPrivateIP(ip)) {
 				throw new Error("Private IP ranges not allowed");
 			}
 		}
 
-		return true;
+		return addresses;
 	} catch (error) {
 		throw new Error(`Domain validation failed: ${error.message}`);
 	}
 };
 
-const fetchContent = async (url) => {
+const fetchContent = async (url, validatedAddresses) => {
 	try {
+		const parsedUrl = new URL(url);
+		const pinnedLookup = (hostname, options, callback) => {
+			if (hostname !== parsedUrl.hostname) {
+				return dns.lookup(hostname, options, callback);
+			}
+
+			const family = typeof options === "number" ? options : options?.family;
+			const candidate =
+				validatedAddresses.find((entry) => !family || entry.family === family) ??
+				validatedAddresses[0];
+
+			if (!candidate) {
+				return callback(new Error("No validated DNS records available"));
+			}
+
+			return callback(null, candidate.address, candidate.family);
+		};
+
 		const response = await axios.get(url, {
 			timeout: 5000,
 			maxRedirects: 0, // Disable redirects to prevent SSRF chains
 			validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
+			httpAgent: new http.Agent({ lookup: pinnedLookup }),
+			httpsAgent: new https.Agent({
+				lookup: pinnedLookup,
+				servername: parsedUrl.hostname,
+			}),
 		});
 		return { content: response.data, exists: true };
 	} catch (error) {
@@ -88,27 +92,23 @@ router.post("/robots-txt", async (req, res) => {
 	}
 
 	try {
-		await validateDomain(domain);
+		const validatedAddresses = await validateDomain(domain);
+		const url = `http://${domain}/robots.txt`;
+		const httpsUrl = `https://${domain}/robots.txt`;
+		let result = await fetchContent(httpsUrl, validatedAddresses);
+		if (
+			!result.exists &&
+			(result.error === "File not found (404)" ||
+				result.error?.includes("redirect") ||
+				result.error?.includes("302") ||
+				result.error?.includes("301"))
+		) {
+			result = await fetchContent(url, validatedAddresses);
+		}
+		return res.status(200).json(result);
 	} catch (error) {
 		return res.status(400).json({ msg: error.message });
 	}
-
-	const url = `http://${domain}/robots.txt`;
-	const httpsUrl = `https://${domain}/robots.txt`;
-
-	let result = await fetchContent(httpsUrl);
-	// Fallback to HTTP if HTTPS fails with 404 or redirect-related errors
-	if (
-		!result.exists &&
-		(result.error === "File not found (404)" ||
-			result.error?.includes("redirect") ||
-			result.error?.includes("302") ||
-			result.error?.includes("301"))
-	) {
-		result = await fetchContent(url);
-	}
-
-	return res.status(200).json(result);
 });
 
 // @route   POST /api/seo/sitemap-xml
@@ -122,27 +122,23 @@ router.post("/sitemap-xml", async (req, res) => {
 	}
 
 	try {
-		await validateDomain(domain);
+		const validatedAddresses = await validateDomain(domain);
+		const url = `http://${domain}/sitemap.xml`;
+		const httpsUrl = `https://${domain}/sitemap.xml`;
+		let result = await fetchContent(httpsUrl, validatedAddresses);
+		if (
+			!result.exists &&
+			(result.error === "File not found (404)" ||
+				result.error?.includes("redirect") ||
+				result.error?.includes("302") ||
+				result.error?.includes("301"))
+		) {
+			result = await fetchContent(url, validatedAddresses);
+		}
+		return res.status(200).json(result);
 	} catch (error) {
 		return res.status(400).json({ msg: error.message });
 	}
-
-	const url = `http://${domain}/sitemap.xml`;
-	const httpsUrl = `https://${domain}/sitemap.xml`;
-
-	let result = await fetchContent(httpsUrl);
-	// Fallback to HTTP if HTTPS fails with 404 or redirect-related errors
-	if (
-		!result.exists &&
-		(result.error === "File not found (404)" ||
-			result.error?.includes("redirect") ||
-			result.error?.includes("302") ||
-			result.error?.includes("301"))
-	) {
-		result = await fetchContent(url);
-	}
-
-	return res.status(200).json(result);
 });
 
 module.exports = router;

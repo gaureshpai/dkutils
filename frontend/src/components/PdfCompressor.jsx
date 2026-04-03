@@ -10,15 +10,12 @@ const PdfCompressor = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [compressionLevel, setCompressionLevel] = useState("medium");
-	const { isAuthenticated } = useContext(AuthContext);
+	const { state } = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
-		const {
-			state: { isAuthenticated },
-		} = useContext(AuthContext);
-		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+		const maxFileSize = state.isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
 		if (!file || e.target.files.length === 0) {
 			setSelectedFile(null);

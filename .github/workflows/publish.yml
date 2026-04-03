@@ -42,19 +42,19 @@ jobs:
         run: |
           echo "Bumping NPM package version (always patch)"
           cd package
-          npm version patch --no-git-tag-version
+          npm version patch --no-git-tag-version --force
           cd ..
 
           echo "Bumping website versions (${{ github.event.inputs.release_type }})"
           # Always bump root, frontend, and backend versions
-          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version --force
 
           cd frontend
-          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version --force
           cd ..
 
           cd backend
-          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version --force
           cd ..
 
       - name: Get versions
@@ -90,7 +90,12 @@ jobs:
               if (c.includes('**Version:**')) {
                 c = c.replace(/\*\*Version:\*\* .*/, `**Version:** ${v}`);
               } else {
-                c = c.replace(/^(# .*)/, `$1\n\n**Version:** ${v}`);
+                const h1Match = c.match(/^# .*/m);
+                if (h1Match) {
+                  c = c.replace(/^# .*/m, `${h1Match[0]}\n\n**Version:** ${v}`);
+                } else {
+                  c = `**Version:** ${v}\n\n${c}`;
+                }
               }
               fs.writeFileSync(p, c);
             }
@@ -117,12 +122,13 @@ jobs:
 
           TAG_NAME="v${{ steps.get_versions.outputs.website_version }}"
           if git rev-parse -q --verify "refs/tags/$TAG_NAME"; then
-            echo "Tag $TAG_NAME already exists, skipping tag creation"
+            echo "Tag $TAG_NAME already exists"
+            exit 1
           else
             echo "Creating new tag $TAG_NAME"
             git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            echo "did_commit=true" >> $GITHUB_OUTPUT
           fi
-          echo "did_commit=true" >> $GITHUB_OUTPUT
 
       - name: Push changes and tags
         if: steps.commit_versions.outputs.did_commit == 'true'

@@ -18,6 +18,60 @@ const isValidCategory = (category) => {
 	return allowedCategories.includes(category);
 };
 
+const APPROVED_TOOLS = new Set([
+	"Base64TextConverter",
+	"CsvToJsonConverter",
+	"ExcelToPdfConverter",
+	"FaviconExtractor",
+	"HashGenerator",
+	"HtmlToMarkdownConverter",
+	"HtmlToMarkdownConverter:copy",
+	"ImageBackgroundRemover",
+	"ImageCompressor",
+	"ImageCropper",
+	"ImageFlipper",
+	"ImageFormatConverter",
+	"ImageGrayscaler",
+	"ImageResizer",
+	"ImageToBase64Converter",
+	"ImageToPdfConverter",
+	"JsonFormatterValidator",
+	"JsonToCsvConverter",
+	"JsonXmlConverter",
+	"Link Shortener",
+	"Login",
+	"MarkdownToHtmlConverter",
+	"PasswordGenerator",
+	"PasswordStrengthChecker",
+	"PdfCompressor",
+	"PdfMerger",
+	"PdfPageDeleter",
+	"PdfRotator",
+	"PdfSplitter",
+	"PdfToExcelConverter",
+	"PdfToTextConverter",
+	"PdfToWordConverter",
+	"PngToJpgConverter",
+	"QrCodeGenerator",
+	"QrCodeScanner",
+	"Register",
+	"SeoTools:robots_txt",
+	"SeoTools:robots_txt_error",
+	"SeoTools:robots_txt_not_found",
+	"SeoTools:robots_txt_success",
+	"SeoTools:sitemap_xml",
+	"SeoTools:sitemap_xml_error",
+	"SeoTools:sitemap_xml_not_found",
+	"SeoTools:sitemap_xml_success",
+	"TextCaseConverter",
+	"TextDifferenceChecker",
+	"TextToPdfGenerator",
+	"UrlRedirectChecker",
+	"WebsiteScreenshotGenerator",
+]);
+
+const isApprovedTool = (toolName) => APPROVED_TOOLS.has(toolName);
+
 // @route   POST /api/analytics/track
 // @desc    Track tool usage
 // @access  Public
@@ -44,15 +98,22 @@ router.post("/track", trackLimiter, async (req, res) => {
 			return res.status(400).json({ msg: "Invalid category" });
 		}
 
-		// Find and update or create new entry
+		if (!isApprovedTool(toolName)) {
+			return res.status(403).json({ msg: "Tool is not approved for tracking." });
+		}
+
 		const toolUsage = await ToolUsage.findOneAndUpdate(
 			{ toolName, category },
 			{
 				$inc: { usageCount: 1 },
 				$set: { lastUsed: new Date() },
 			},
-			{ upsert: true, new: true, runValidators: true },
+			{ new: true, runValidators: true },
 		);
+
+		if (!toolUsage) {
+			return res.status(404).json({ msg: "Tool usage record not found." });
+		}
 
 		return res.json({ success: true, usageCount: toolUsage.usageCount });
 	} catch (err) {

@@ -12,8 +12,10 @@ const requireAuth = (req, res, next) => {
 	try {
 		const decoded = jwt.verify(token, process.env.JWT_SECRET);
 		req.user = decoded.user;
-		req.user.role = decoded.user.role;
-		next();
+		if (req.user.role !== "admin") {
+			return res.status(403).json({ msg: "Forbidden - admin only" });
+		}
+		return next();
 	} catch (err) {
 		return res.status(401).json({ msg: "Token is not valid" });
 	}

@@ -13,7 +13,9 @@ const PdfSplitter = () => {
 	const [error, setError] = useState("");
 	const [totalPages, setTotalPages] = useState(0);
 	const [loading, setLoading] = useState(false);
-	const { isAuthenticated } = useContext(AuthContext);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = async (e) => {

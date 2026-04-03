@@ -25,11 +25,17 @@ const PdfPageDeleter = () => {
 				toast.error("Failed to load PDF. Please ensure it is a valid PDF file.");
 				setNumPages(0);
 				setPdfFile(null);
+				if (fileInputRef.current) {
+					fileInputRef.current.value = "";
+				}
 			}
 		} else {
 			toast.error("Please upload a valid PDF file.");
 			setPdfFile(null);
 			setNumPages(0);
+			if (fileInputRef.current) {
+				fileInputRef.current.value = "";
+			}
 		}
 	};
 

@@ -18,6 +18,7 @@ const TextDifferenceChecker = () => {
 	const [text1, setText1] = useState("");
 	const [text2, setText2] = useState("");
 	const [diffResult, setDiffResult] = useState("");
+	const [diffParts, setDiffParts] = useState([]);
 	const [loading, setLoading] = useState(false);
 
 	const handleText1Change = (e) => {
@@ -50,6 +51,13 @@ const TextDifferenceChecker = () => {
 				})
 				.join("");
 
+			setDiffParts(
+				diff.map(([type, text]) => ({
+					key: `${type}:${text}`,
+					type,
+					text,
+				})),
+			);
 			setDiffResult(html);
 			setLoading(false);
 		}, 500);
@@ -57,7 +65,10 @@ const TextDifferenceChecker = () => {
 
 	const copyToClipboard = async () => {
 		try {
-			await navigator.clipboard.writeText(diffResult);
+			const tempElement = document.createElement("div");
+			tempElement.innerHTML = diffResult;
+			const plainText = tempElement.innerText;
+			await navigator.clipboard.writeText(plainText);
 			toast.success("Copied to clipboard!");
 		} catch (error) {
 			console.error("Failed to copy to clipboard:", error);
@@ -127,8 +138,24 @@ const TextDifferenceChecker = () => {
 							</svg>
 						</button>
 					</h3>
-					<div className="bg-background border border-input text-foreground text-sm rounded-lg block w-full p-2.5 h-max">
-						{diffResult}{" "}
+					<div className="bg-background border border-input text-foreground text-sm rounded-lg block w-full p-2.5 h-max whitespace-pre-wrap">
+						{diffParts.map(({ key, type, text }) => {
+							if (type === -1) {
+								return (
+									<del key={key} className="bg-red-200 dark:bg-red-900">
+										{text}
+									</del>
+								);
+							}
+							if (type === 1) {
+								return (
+									<ins key={key} className="bg-green-200 dark:bg-green-900 no-underline">
+										{text}
+									</ins>
+								);
+							}
+							return <span key={key}>{text}</span>;
+						})}
 					</div>
 				</div>
 			)}

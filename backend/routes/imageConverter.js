@@ -16,6 +16,14 @@ const Jimp = createJimp({
 	plugins: defaultPlugins,
 });
 
+const stripControlCharacters = (value) =>
+	Array.from(value)
+		.filter((char) => {
+			const code = char.charCodeAt(0);
+			return code > 31 && code !== 127;
+		})
+		.join("");
+
 // @route   POST /api/convert/png-to-jpg
 // @desc    Convert PNG images to JPG
 // @access  Public
@@ -148,9 +156,7 @@ router.get("/download", async (req, res) => {
 		const buffer = Buffer.from(arrayBuffer);
 
 		// Sanitize filename to prevent header injection
-		const sanitizedBaseName = baseName
-			.replace(/["\\]/g, "_")
-			.replace(new RegExp(/[\x\00-\x\1f\x7f]/g, ""));
+		const sanitizedBaseName = stripControlCharacters(baseName.replace(/["\\]/g, "_"));
 		const encodedFilename = encodeURIComponent(baseName);
 
 		res.set("Content-Type", data.type || "application/octet-stream");
@@ -415,9 +421,10 @@ router.post(
 				let compressedBuffer;
 				let extension;
 				let contentType;
+				let image;
 
 				try {
-					const image = await Jimp.read(imageBuffer);
+					image = await Jimp.read(imageBuffer);
 					const format = image.mime.split("/")[1];
 					extension = format === "jpeg" ? "jpg" : format;
 					contentType = image.mime;
@@ -426,7 +433,7 @@ router.post(
 						quality: parsedQuality,
 					});
 				} catch (error) {
-					const image = await Jimp.read(imageBuffer);
+					image ??= await Jimp.read(imageBuffer);
 					compressedBuffer = await image.getBuffer("image/jpeg", {
 						quality: parsedQuality,
 					});
@@ -471,9 +478,10 @@ router.post(
 
 					let compressedBuffer;
 					let extension;
+					let image;
 
 					try {
-						const image = await Jimp.read(imageBuffer);
+						image = await Jimp.read(imageBuffer);
 						const format = image.mime.split("/")[1];
 						extension = format === "jpeg" ? "jpg" : format;
 
@@ -481,7 +489,7 @@ router.post(
 							quality: parsedQuality,
 						});
 					} catch (error) {
-						const image = await Jimp.read(imageBuffer);
+						image ??= await Jimp.read(imageBuffer);
 						compressedBuffer = await image.getBuffer("image/jpeg", {
 							quality: parsedQuality,
 						});

@@ -45,7 +45,6 @@ const PdfToWordConverter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("PdfToWordConverter", "pdf");
 		const formData = new FormData();
 		formData.append("pdf", selectedFile);
 
@@ -55,6 +54,7 @@ const PdfToWordConverter = () => {
 				formData,
 			);
 			setConvertedFile(res.data);
+			trackToolUsage("PdfToWordConverter", "pdf");
 
 			handleDownload(res.data.path, res.data.originalname);
 			setSelectedFile(null);

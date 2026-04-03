@@ -43,9 +43,9 @@ const PasswordStrengthChecker = () => {
 	const debouncedCheckStrengthRef = useRef(
 		((delay) => {
 			let timeout;
-			return function (...args) {
+			return (...args) => {
 				clearTimeout(timeout);
-				timeout = setTimeout(() => checkStrengthRef.current.apply(this, args), delay);
+				timeout = setTimeout(() => checkStrengthRef.current(...args), delay);
 			};
 		})(500),
 	);
@@ -104,8 +104,8 @@ const PasswordStrengthChecker = () => {
 					{loading && <p className="text-muted-foreground">Checking strength...</p>}
 					{feedback.length > 0 && (
 						<ul className="list-disc list-inside text-muted-foreground mt-2">
-							{feedback.map((msg, index) => (
-								<li key={`${index + 1}`}>{msg}</li>
+							{feedback.map((msg) => (
+								<li key={msg}>{msg}</li>
 							))}
 						</ul>
 					)}

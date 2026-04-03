@@ -3,6 +3,7 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 const { createClient } = require("@supabase/supabase-js");
+const { migrateTotalUsageKey } = require("@backend/scripts/migrateTotalUsageKey");
 
 if (!process.env.SUPABASE_URL) {
 	console.error("Error: SUPABASE_URL environment variable is not set.");
@@ -32,15 +33,6 @@ const testSupabaseConnection = async () => {
 		console.error("Supabase Storage connection failed:", error.message);
 	}
 };
-
-mongoose.connect(process.env.MONGO_URI);
-
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => {
-	console.log("MongoDB connected!");
-	testSupabaseConnection();
-});
 
 const express = require("express");
 const cors = require("cors");
@@ -138,6 +130,20 @@ app.use((err, req, res, next) => {
 	});
 });
 
-app.listen(port, () => {
-	console.log(`Server is running on port: ${port}`);
-});
+const startServer = async () => {
+	try {
+		await mongoose.connect(process.env.MONGO_URI);
+		console.log("MongoDB connected!");
+		await migrateTotalUsageKey();
+		await testSupabaseConnection();
+
+		app.listen(port, () => {
+			console.log(`Server is running on port: ${port}`);
+		});
+	} catch (error) {
+		console.error("Failed to start backend:", error);
+		process.exit(1);
+	}
+};
+
+startServer();

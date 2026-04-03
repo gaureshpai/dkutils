@@ -15,6 +15,7 @@ const ImageToPdfConverter = () => {
 	const [convertedFile, setConvertedFile] = useState(null);
 
 	const onFileChange = (e) => {
+		setConvertedFile(null);
 		const files = Array.from(e.target.files);
 		const allowedTypes = [
 			"image/jpeg",
@@ -59,6 +60,7 @@ const ImageToPdfConverter = () => {
 			return;
 		}
 
+		setConvertedFile(null);
 		setLoading(true);
 		trackToolUsage("ImageToPdfConverter", "image");
 		const formData = new FormData();
@@ -82,6 +84,7 @@ const ImageToPdfConverter = () => {
 			toast.success("Images converted to PDF successfully!");
 		} catch (err) {
 			console.error(err);
+			setConvertedFile(null);
 			toast.error(err.response?.data?.msg || "Error converting images to PDF. Please try again.");
 		} finally {
 			setLoading(false);

@@ -6,8 +6,10 @@
 	"scripts": {
 		"start": "node index.js",
 		"dev": "nodemon index.js",
-		"lint": "npx biome lint --write .",
-		"test": "echo \"No tests for backend\""
+		"lint": "npx biome lint .",
+		"lint:fix": "npx biome lint --write .",
+		"migrate:total-usage-key": "node scripts/migrateTotalUsageKey.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [
 		"utility tools",

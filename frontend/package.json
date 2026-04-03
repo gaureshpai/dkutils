@@ -39,9 +39,10 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"test": "echo \"No tests for frontend\"",
+		"test": "echo \"Error: no test specified\" && exit 1",
 		"preview": "vite preview",
-		"lint": "npx biome lint --write src"
+		"lint": "npx biome lint src",
+		"lint:fix": "npx biome lint --write src"
 	},
 	"browserslist": {
 		"production": [">0.2%", "not dead", "not op_mini all"],

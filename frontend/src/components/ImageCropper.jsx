@@ -94,7 +94,8 @@ const ImageCropper = () => {
 			const dataUrl = canvas.toDataURL(mimeType);
 			setCroppedImageSrc(dataUrl);
 
-			const extension = mimeType.split("/")[1] || "png";
+			const actualMime = dataUrl.match(/^data:([^;]+);base64,/)?.[1] || "image/png";
+			const extension = actualMime.split("/")[1] || "png";
 			handleDownload(dataUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
 		} catch (error) {
 			console.error("Cropping error:", error);

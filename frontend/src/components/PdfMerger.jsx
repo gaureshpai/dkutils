@@ -9,14 +9,17 @@ const PdfMerger = () => {
 	const [selectedFiles, setSelectedFiles] = useState([]);
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
-	const { isAuthenticated } = useContext(AuthContext);
+	const auth = useContext(AuthContext);
+	const isAuthenticated = auth.state?.isAuthenticated ?? false;
+	const maxUploadSize =
+		auth.limits?.maxUploadSizeBytes ??
+		auth.uploadLimit ??
+		(isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024);
 	const [convertedFile, setConvertedFile] = useState(null);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = (e) => {
 		const files = Array.from(e.target.files);
-		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-
 		const validFiles = [];
 		let hasError = false;
 
@@ -26,9 +29,11 @@ const PdfMerger = () => {
 				hasError = true;
 				break;
 			}
-			if (file.size > maxFileSize) {
+			if (file.size > maxUploadSize) {
 				toast.error(
-					`File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
+					isAuthenticated
+						? `File too large: ${file.name}. Maximum size is ${maxUploadSize / (1024 * 1024)}MB.`
+						: `File too large: ${file.name}. Maximum size is ${maxUploadSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
 				);
 				hasError = true;
 				break;
@@ -36,11 +41,12 @@ const PdfMerger = () => {
 			validFiles.push(file);
 		}
 
-		setSelectedFiles(validFiles);
 		if (hasError) {
 			e.target.value = "";
+			setSelectedFiles([]);
 			setError("Some files were not added due to size or type restrictions.");
 		} else {
+			setSelectedFiles(validFiles);
 			setError("");
 		}
 	};
@@ -115,6 +121,10 @@ const PdfMerger = () => {
 						onChange={onFileChange}
 						accept=".pdf"
 					/>
+					<p className="text-sm text-muted-foreground mt-2">
+						Maximum file size: {maxUploadSize / (1024 * 1024)}MB.
+						{!isAuthenticated ? " Login to unlock the higher upload limit." : ""}
+					</p>
 					{error && <p className="text-destructive text-sm mt-2">{error}</p>}
 				</div>
 				<button

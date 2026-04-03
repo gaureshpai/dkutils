@@ -12,9 +12,11 @@ const PasswordGenerator = () => {
 	const [includeNumbers, setIncludeNumbers] = useState(true);
 	const [includeSymbols, setIncludeSymbols] = useState(true);
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
 
 	const generatePassword = () => {
 		setLoading(true);
+		setError("");
 		setTimeout(() => {
 			let charset = "";
 			let newPassword = "";
@@ -25,7 +27,8 @@ const PasswordGenerator = () => {
 			if (includeSymbols) charset += "!@#$%^&*()_+-=[]{};:,.<>?";
 
 			if (charset === "") {
-				setPassword("Please select at least one option.");
+				setPassword("");
+				setError("Please select at least one option.");
 				setLoading(false);
 				return;
 			}
@@ -41,6 +44,7 @@ const PasswordGenerator = () => {
 				newPassword += charset.charAt(randomValues[i] % charset.length);
 			}
 			setPassword(newPassword);
+			setError("");
 			setLoading(false);
 			// Track usage only after successful generation
 			trackToolUsage("PasswordGenerator", "web");
@@ -129,6 +133,7 @@ const PasswordGenerator = () => {
 			>
 				{loading ? "Generating..." : "Generate Password"}
 			</button>
+			{error && <p className="text-destructive text-sm mt-2">{error}</p>}
 
 			{password && (
 				<div className="mt-4">

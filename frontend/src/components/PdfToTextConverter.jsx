@@ -10,7 +10,9 @@ const PdfToTextConverter = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [extractedText, setExtractedText] = useState("");
 	const [loading, setLoading] = useState(false);
-	const { isAuthenticated } = useContext(AuthContext);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
 	const onFileChange = (e) => {
