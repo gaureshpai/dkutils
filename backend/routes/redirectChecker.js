@@ -255,6 +255,7 @@ router.post("/", async (req, res) => {
 					break;
 				}
 			} catch (err) {
+				shouldFallbackToGet = true;
 				redirectChain.push({
 					url: currentUrl,
 					status: "error",
@@ -264,7 +265,11 @@ router.post("/", async (req, res) => {
 			}
 		}
 
-		if (redirectChain.length === 0 || redirectChain[redirectChain.length - 1].url !== currentUrl) {
+		if (
+			shouldFallbackToGet ||
+			redirectChain.length === 0 ||
+			redirectChain[redirectChain.length - 1].url !== currentUrl
+		) {
 			const finalResponse = await axios.get(currentUrl, {
 				timeout: TIMEOUT_MS,
 				maxContentLength: 1024 * 1024,
