@@ -115,11 +115,9 @@ function isLoopback(ip) {
 }
 
 /**
- * Determine whether an IP address is a multicast address.
- * IPv4: 224.0.0.0/4 (224-239)
- * IPv6: ff00::/8
- * @param {string} ip - The IP address to check (IPv4 dotted-quad or IPv6).
- * @returns {boolean} `true` if the address is a multicast address, `false` otherwise.
+ * Check whether an IP literal represents a multicast address.
+ * @param {string} ip - The IP literal to check (IPv4 dotted-quad or IPv6, may be IPv4-mapped IPv6).
+ * @returns {boolean} `true` if the address is multicast (`224.0.0.0/4` for IPv4 or `ff00::/8` for IPv6), `false` otherwise.
  */
 function isMulticast(ip) {
 	let normalizedIp = ip;
@@ -138,17 +136,13 @@ function isMulticast(ip) {
 }
 
 /**
- * Ensure a hostname or IP literal does not equal or resolve to an unsafe network address.
+ * Validate that a hostname or IP literal does not equal or resolve to an unsafe network address.
  *
- * If given an IP literal, rejects when the address is private, link-local, loopback, or multicast.
- * If given a hostname, resolves both A (IPv4) and AAAA (IPv6) records independently and rejects if any returned address is unsafe.
- * Both IPv4 and IPv6 resolution are attempted separately to ensure comprehensive validation.
- * Non-rejection DNS resolution errors are ignored so callers may still attempt the outbound request.
+ * For IP literals, this rejects private, link-local, loopback, or multicast addresses. For hostnames,
+ * this resolves DNS records and rejects if any resolved address is private, link-local, loopback, or multicast.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @throws {Error} If the input or any resolved address is unsafe:
- *   - IPv4: private, link-local, loopback, or multicast
- *   - IPv6: private, link-local, loopback, or multicast
+ * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
