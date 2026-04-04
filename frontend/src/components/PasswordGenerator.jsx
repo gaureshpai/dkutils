@@ -40,9 +40,18 @@ const PasswordGenerator = () => {
 			const randomValues = new Uint32Array(validLength);
 			crypto.getRandomValues(randomValues);
 
-			for (let i = 0; i < validLength; i++) {
-				newPassword += charset.charAt(randomValues[i] % charset.length);
-			}
+const getUniformIndex = (max) => {
+	const limit = Math.floor(0x100000000 / max) * max;
+	const buf = new Uint32Array(1);
+	do {
+		window.crypto.getRandomValues(buf);
+	} while (buf[0] >= limit);
+	return buf[0] % max;
+};
+
+for (let i = 0; i < validLength; i++) {
+	newPassword += charset.charAt(getUniformIndex(charset.length));
+}
 			setPassword(newPassword);
 			setError("");
 			setLoading(false);
