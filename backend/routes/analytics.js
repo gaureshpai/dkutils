@@ -18,6 +18,8 @@ const isValidCategory = (category) => {
 	return allowedCategories.includes(category);
 };
 
+const MAX_SKIP = 10000;
+
 const APPROVED_TOOL_CATEGORY_PAIRS = {
 	"Base64TextConverter": "text",
 	"CsvToJsonConverter": "web",
@@ -133,6 +135,12 @@ router.get("/stats", async (req, res) => {
 		// Validate and parse pagination parameters
 		const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
 		const limitNum = Math.max(1, Math.min(100, Number.parseInt(limit, 10) || 50)); // Max 100 per page
+
+		// Enforce maximum offset to prevent huge MongoDB skips
+		const maxPage = Math.floor(MAX_SKIP / limitNum) + 1;
+		if (pageNum > maxPage) {
+			return res.status(400).json({ msg: `Page number exceeds maximum allowed (${maxPage})` });
+		}
 
 		if (category && !isValidCategory(category)) {
 			return res.status(400).json({ msg: "Invalid category" });

@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const axios = require("axios");
-const dns = require("node:dns").promises;
+const dns = require("node:dns");
 const { isIP } = require("node:net");
 const http = require("node:http");
 const https = require("node:https");
@@ -143,7 +143,7 @@ async function checkIPSafety(hostname) {
 	}
 
 	try {
-		const addresses = await dns.lookup(hostname, { all: true, verbatim: true });
+		const addresses = await dns.promises.lookup(hostname, { all: true, verbatim: true });
 		for (const { address: ip } of addresses) {
 			if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
 				throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
@@ -374,7 +374,13 @@ router.post("/", async (req, res) => {
 
 		return res.status(200).json({ chain: redirectChain });
 	} catch (err) {
-		console.error("Error checking redirects:", err);
+		// Log only non-sensitive error information
+		const sanitizedLog = {
+			message: err.message,
+			status: err.response?.status,
+			location: err.response?.headers?.location,
+		};
+		console.error("Error checking redirects:", sanitizedLog);
 		let errorMessage = "Failed to check redirects.";
 		if (err.response) {
 			errorMessage = `Request failed with status code ${err.response.status}.`;

@@ -29,13 +29,21 @@ const normalizeIPv4Mapped = (ip) => {
 		}
 
 		// Parse hex-encoded IPv4-mapped address (e.g., ::ffff:c0a8:101 or ::ffff:7f00:1)
-		// Remove any colons and parse as hex segments
-		const hexPart = suffix.replace(/:/g, "");
+		// Split on colons to get individual hextets
+		const hextets = suffix.split(":");
 
-		// Handle different formats:
-		// - ::ffff:c0a8:0101 (8 hex digits, 2 groups)
-		// - ::ffff:7f00:1 (shorter, needs padding)
-		let paddedHex = hexPart.padStart(8, "0");
+		// Pad each hextet to 4 characters and concatenate
+		let paddedHex;
+		if (hextets.length === 2) {
+			// Two hextets (e.g., c0a8:101 or 7f00:1)
+			paddedHex = hextets[0].padStart(4, "0") + hextets[1].padStart(4, "0");
+		} else if (hextets.length === 1) {
+			// Single hextet, pad to 8 characters total
+			paddedHex = hextets[0].padStart(8, "0");
+		} else {
+			// Fallback: just remove colons and pad
+			paddedHex = suffix.replace(/:/g, "").padStart(8, "0");
+		}
 
 		// Convert to IPv4 dotted-quad
 		const octet1 = Number.parseInt(paddedHex.substring(0, 2), 16);
