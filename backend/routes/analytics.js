@@ -18,59 +18,61 @@ const isValidCategory = (category) => {
 	return allowedCategories.includes(category);
 };
 
-const APPROVED_TOOLS = new Set([
-	"Base64TextConverter",
-	"CsvToJsonConverter",
-	"ExcelToPdfConverter",
-	"FaviconExtractor",
-	"HashGenerator",
-	"HtmlToMarkdownConverter",
-	"HtmlToMarkdownConverter:copy",
-	"ImageBackgroundRemover",
-	"ImageCompressor",
-	"ImageCropper",
-	"ImageFlipper",
-	"ImageFormatConverter",
-	"ImageGrayscaler",
-	"ImageResizer",
-	"ImageToBase64Converter",
-	"ImageToPdfConverter",
-	"JsonFormatterValidator",
-	"JsonToCsvConverter",
-	"JsonXmlConverter",
-	"Link Shortener",
-	"Login",
-	"MarkdownToHtmlConverter",
-	"PasswordGenerator",
-	"PasswordStrengthChecker",
-	"PdfCompressor",
-	"PdfMerger",
-	"PdfPageDeleter",
-	"PdfRotator",
-	"PdfSplitter",
-	"PdfToExcelConverter",
-	"PdfToTextConverter",
-	"PdfToWordConverter",
-	"PngToJpgConverter",
-	"QrCodeGenerator",
-	"QrCodeScanner",
-	"Register",
-	"SeoTools:robots_txt",
-	"SeoTools:robots_txt_error",
-	"SeoTools:robots_txt_not_found",
-	"SeoTools:robots_txt_success",
-	"SeoTools:sitemap_xml",
-	"SeoTools:sitemap_xml_error",
-	"SeoTools:sitemap_xml_not_found",
-	"SeoTools:sitemap_xml_success",
-	"TextCaseConverter",
-	"TextDifferenceChecker",
-	"TextToPdfGenerator",
-	"UrlRedirectChecker",
-	"WebsiteScreenshotGenerator",
-]);
+const APPROVED_TOOL_CATEGORY_PAIRS = {
+	"Base64TextConverter": "text",
+	"CsvToJsonConverter": "web",
+	"ExcelToPdfConverter": "pdf",
+	"FaviconExtractor": "web",
+	"HashGenerator": "web",
+	"HtmlToMarkdownConverter": "web",
+	"HtmlToMarkdownConverter:copy": "web",
+	"ImageBackgroundRemover": "image",
+	"ImageCompressor": "image",
+	"ImageCropper": "image",
+	"ImageFlipper": "image",
+	"ImageFormatConverter": "image",
+	"ImageGrayscaler": "image",
+	"ImageResizer": "image",
+	"ImageToBase64Converter": "image",
+	"ImageToPdfConverter": "image",
+	"JsonFormatterValidator": "web",
+	"JsonToCsvConverter": "web",
+	"JsonXmlConverter": "web",
+	"Link Shortener": "web",
+	"Login": "web",
+	"MarkdownToHtmlConverter": "web",
+	"PasswordGenerator": "web",
+	"PasswordStrengthChecker": "web",
+	"PdfCompressor": "pdf",
+	"PdfMerger": "pdf",
+	"PdfPageDeleter": "pdf",
+	"PdfRotator": "pdf",
+	"PdfSplitter": "pdf",
+	"PdfToExcelConverter": "pdf",
+	"PdfToTextConverter": "pdf",
+	"PdfToWordConverter": "pdf",
+	"PngToJpgConverter": "image",
+	"QrCodeGenerator": "web",
+	"QrCodeScanner": "web",
+	"Register": "web",
+	"SeoTools:robots_txt": "web",
+	"SeoTools:robots_txt_error": "web",
+	"SeoTools:robots_txt_not_found": "web",
+	"SeoTools:robots_txt_success": "web",
+	"SeoTools:sitemap_xml": "web",
+	"SeoTools:sitemap_xml_error": "web",
+	"SeoTools:sitemap_xml_not_found": "web",
+	"SeoTools:sitemap_xml_success": "web",
+	"TextCaseConverter": "text",
+	"TextDifferenceChecker": "text",
+	"TextToPdfGenerator": "pdf",
+	"UrlRedirectChecker": "web",
+	"WebsiteScreenshotGenerator": "web",
+};
 
-const isApprovedTool = (toolName) => APPROVED_TOOLS.has(toolName);
+const isApprovedToolCategoryPair = (toolName, category) => {
+	return APPROVED_TOOL_CATEGORY_PAIRS[toolName] === category;
+};
 
 // @route   POST /api/analytics/track
 // @desc    Track tool usage
@@ -100,8 +102,8 @@ router.post("/track", trackLimiter, async (req, res) => {
 			return res.status(400).json({ msg: "Invalid category" });
 		}
 
-		if (!isApprovedTool(toolName)) {
-			return res.status(403).json({ msg: "Tool is not approved for tracking." });
+		if (!isApprovedToolCategoryPair(toolName, category)) {
+			return res.status(403).json({ msg: "Tool and category pair is not approved for tracking." });
 		}
 
 		const toolUsage = await ToolUsage.findOneAndUpdate(

@@ -68,7 +68,6 @@ const ImageCropper = () => {
 			return;
 		}
 
-		setLoading(true);
 		try {
 			trackToolUsage("ImageCropper", "image");
 			const image = imageRef.current;
@@ -89,6 +88,8 @@ const ImageCropper = () => {
 				toast.error("Image is still loading. Please try again in a moment.");
 				return;
 			}
+
+			setLoading(true);
 
 			const cropX = image.naturalWidth * 0.25;
 			const cropY = image.naturalHeight * 0.25;
