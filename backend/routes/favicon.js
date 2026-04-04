@@ -175,6 +175,10 @@ router.post("/", async (req, res) => {
 		const fileDataArray = await Promise.all(downloadPromises);
 		const validFiles = fileDataArray.filter((file) => file !== null);
 
+		if (validFiles.length === 0) {
+			return res.status(404).json({ msg: "No favicons found or all downloads failed." });
+		}
+
 		if (validFiles.length === 1) {
 			const file = validFiles[0];
 			const outputFileName = `favicon_dkutils_${Date.now()}_${file.name}`;
