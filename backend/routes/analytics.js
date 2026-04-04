@@ -107,13 +107,10 @@ router.post("/track", trackLimiter, async (req, res) => {
 			{
 				$inc: { usageCount: 1 },
 				$set: { lastUsed: new Date() },
+				$setOnInsert: { toolName, category },
 			},
-			{ new: true, runValidators: true },
+			{ new: true, runValidators: true, upsert: true },
 		);
-
-		if (!toolUsage) {
-			return res.status(404).json({ msg: "Tool usage record not found." });
-		}
 
 		return res.json({ success: true, usageCount: toolUsage.usageCount });
 	} catch (err) {
