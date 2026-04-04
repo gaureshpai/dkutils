@@ -1,7 +1,21 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+const PasswordGenerator = () => {
+	const { trackToolUsage } = useAnalytics();
+
+	const [length, setLength] = useState(12);
+	const [includeUppercase, setIncludeUppercase] = useState(true);
+	const [includeLowercase, setIncludeLowercase] = useState(true);
+	const [includeNumbers, setIncludeNumbers] = useState(true);
+	const [includeSymbols, setIncludeSymbols] = useState(false);
+	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
+	const [loading, setLoading] = useState(false);
+
+	const generatePassword = () => {
+		setLoading(true);
 		setTimeout(() => {
 			try {
 				let charset = "";

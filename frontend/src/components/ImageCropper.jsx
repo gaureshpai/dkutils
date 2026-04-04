@@ -1,6 +1,6 @@
 ﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
 const ImageCropper = () => {
@@ -15,6 +15,15 @@ const ImageCropper = () => {
 	const [loading, setLoading] = useState(false);
 	const imageRef = useRef(null);
 	const canvasRef = useRef(null);
+
+	// Cleanup object URLs to prevent memory leaks
+	useEffect(() => {
+		return () => {
+			if (croppedImageSrc && croppedImageSrc.startsWith("blob:")) {
+				URL.revokeObjectURL(croppedImageSrc);
+			}
+		};
+	}, [croppedImageSrc]);
 
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
@@ -91,16 +100,34 @@ const ImageCropper = () => {
 
 			ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 			const mimeType = originalMimeType || "image/png";
-			const dataUrl = canvas.toDataURL(mimeType);
-			setCroppedImageSrc(dataUrl);
 
-			const actualMime = dataUrl.match(/^data:([^;]+);base64,/)?.[1] || "image/png";
-			const extension = actualMime.split("/")[1] || "png";
-			handleDownload(dataUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
+			// Use toBlob for better performance and memory efficiency
+			canvas.toBlob(
+				(blob) => {
+					if (!blob) {
+						toast.error("Failed to create image blob.");
+						setLoading(false);
+						return;
+					}
+
+					// Revoke previous object URL if exists
+					if (croppedImageSrc && croppedImageSrc.startsWith("blob:")) {
+						URL.revokeObjectURL(croppedImageSrc);
+					}
+
+					const objectUrl = URL.createObjectURL(blob);
+					setCroppedImageSrc(objectUrl);
+
+					const extension = mimeType.split("/")[1] || "png";
+					handleDownload(objectUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
+					setLoading(false);
+				},
+				mimeType,
+			);
+			return; // Exit early since toBlob is async
 		} catch (error) {
 			console.error("Cropping error:", error);
 			toast.error("An error occurred during cropping.");
-		} finally {
 			setLoading(false);
 		}
 	};

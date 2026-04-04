@@ -1,7 +1,7 @@
 ﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import { toast } from "react-toastify";
 
 const ImageToPdfConverter = () => {
@@ -13,6 +13,7 @@ const ImageToPdfConverter = () => {
 	const [selectedFiles, setSelectedFiles] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [convertedFile, setConvertedFile] = useState(null);
+	const conversionIdRef = useRef(0);
 
 	const onFileChange = (e) => {
 		setConvertedFile(null);
@@ -39,9 +40,10 @@ const ImageToPdfConverter = () => {
 				return;
 			}
 			if (file.size > maxSize) {
-				toast.error(
-					`File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
-				);
+				const message = isAuthenticated
+					? `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB.`
+					: `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`;
+				toast.error(message);
 				setSelectedFiles([]);
 				e.target.value = "";
 				return;
@@ -60,11 +62,16 @@ const ImageToPdfConverter = () => {
 			return;
 		}
 
+		// Increment conversion ID to track this specific conversion
+		conversionIdRef.current += 1;
+		const currentConversionId = conversionIdRef.current;
+		const filesSnapshot = [...selectedFiles];
+
 		setConvertedFile(null);
 		setLoading(true);
 		trackToolUsage("ImageToPdfConverter", "image");
 		const formData = new FormData();
-		for (const file of selectedFiles) {
+		for (const file of filesSnapshot) {
 			formData.append("images", file);
 		}
 
@@ -78,16 +85,25 @@ const ImageToPdfConverter = () => {
 					},
 				},
 			);
-			setConvertedFile(res.data);
 
-			handleDownload(res.data.path, res.data.originalname);
-			toast.success("Images converted to PDF successfully!");
+			// Only apply results if this is still the current conversion
+			if (currentConversionId === conversionIdRef.current) {
+				setConvertedFile(res.data);
+				handleDownload(res.data.path, res.data.originalname);
+				toast.success("Images converted to PDF successfully!");
+			}
 		} catch (err) {
 			console.error(err);
-			setConvertedFile(null);
-			toast.error(err.response?.data?.msg || "Error converting images to PDF. Please try again.");
+			// Only show error if this is still the current conversion
+			if (currentConversionId === conversionIdRef.current) {
+				setConvertedFile(null);
+				toast.error(err.response?.data?.msg || "Error converting images to PDF. Please try again.");
+			}
 		} finally {
-			setLoading(false);
+			// Only update loading state if this is still the current conversion
+			if (currentConversionId === conversionIdRef.current) {
+				setLoading(false);
+			}
 		}
 	};
 

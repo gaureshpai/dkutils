@@ -170,6 +170,11 @@ async function checkIPSafety(hostname) {
 		if (err.message.includes("Rejected")) {
 			throw err;
 		}
+		// Suppress certain DNS errors to allow the request to proceed and let axios handle resolution.
+		// ENOTFOUND: domain not found; ENODATA: no data in DNS response; ENOTIMP: not implemented.
+		// EAI_AGAIN: temporary DNS failure - suppressed to avoid blocking on transient network issues,
+		// though this could potentially be exploited in race conditions where DNS changes between
+		// this check and the actual request. The trade-off favors availability over strict validation.
 		if (!["ENOTFOUND", "ENODATA", "EAI_AGAIN", "ENOTIMP"].includes(err.code)) {
 			throw err;
 		}

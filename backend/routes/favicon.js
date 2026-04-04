@@ -4,7 +4,7 @@ const cheerio = require("cheerio");
 const path = require("node:path");
 const archiver = require("archiver");
 const { supabase } = require("@backend/utils/supabaseClient");
-const dns = require("node:dns");
+const { promises: dns } = require("node:dns");
 const { isPrivateIP } = require("@backend/utils/ipValidation");
 
 // Function to validate URL and check for private IPs
@@ -17,33 +17,15 @@ const validateUrl = async (url) => {
 			throw new Error("Only HTTP and HTTPS protocols are allowed");
 		}
 
-		// Extract hostname and resolve to check IP addresses (dual-stack support)
+		// Extract hostname and resolve to check IP addresses using system resolver
 		const hostname = urlObj.hostname;
-		const addresses = await new Promise((resolve, reject) => {
-			// Run both IPv4 and IPv6 lookups in parallel for dual-stack support
-			const ipv4Promise = new Promise((res) => {
-				dns.resolve4(hostname, (err, addresses) => {
-					res(err ? [] : addresses);
-				});
-			});
+		const lookupResults = await dns.lookup(hostname, { all: true });
 
-			const ipv6Promise = new Promise((res) => {
-				dns.resolve6(hostname, (err, addresses) => {
-					res(err ? [] : addresses);
-				});
-			});
+		if (!lookupResults || lookupResults.length === 0) {
+			throw new Error("DNS resolution failed - no addresses returned");
+		}
 
-			Promise.all([ipv4Promise, ipv6Promise])
-				.then(([ipv4Addresses, ipv6Addresses]) => {
-					const allAddresses = [...ipv4Addresses, ...ipv6Addresses];
-					if (allAddresses.length === 0) {
-						reject(new Error("DNS resolution failed for both IPv4 and IPv6"));
-					} else {
-						resolve(allAddresses);
-					}
-				})
-				.catch((err) => reject(new Error(`DNS resolution failed: ${err.message}`)));
-		});
+		const addresses = lookupResults.map((result) => result.address);
 
 		// Check if any resolved IP is private
 		for (const ip of addresses) {

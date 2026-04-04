@@ -77,7 +77,9 @@ const isApprovedTool = (toolName) => APPROVED_TOOLS.has(toolName);
 // @access  Public
 router.post("/track", trackLimiter, async (req, res) => {
 	try {
-		let { toolName, category } = req.body;
+		// Support both new 'toolName' and legacy 'n' parameter for backwards compatibility
+		let toolName = typeof req.body.toolName === "string" ? req.body.toolName : req.body.n;
+		let { category } = req.body;
 
 		if (typeof toolName !== "string" || typeof category !== "string") {
 			return res.status(400).json({ msg: "Tool name and category must be strings." });

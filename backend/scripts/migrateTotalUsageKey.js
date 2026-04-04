@@ -24,21 +24,35 @@ const migrateTotalUsageKey = async () => {
 		.filter((doc) => canonicalDoc && String(doc._id) !== String(canonicalDoc._id))
 		.map((doc) => doc._id);
 
-	if (canonicalDoc) {
-		await TotalUsage.updateOne(
-			{ _id: canonicalDoc._id },
-			{ $set: { key: GLOBAL_KEY, totalCount } },
-		);
-	} else {
-		await TotalUsage.updateOne(
-			{ key: GLOBAL_KEY },
-			{ $setOnInsert: { key: GLOBAL_KEY, totalCount } },
-			{ upsert: true },
-		);
-	}
+	// Perform merge and delete in a transaction to ensure atomicity
+	const session = await mongoose.startSession();
+	session.startTransaction();
 
-	if (duplicateIds.length > 0) {
-		await TotalUsage.deleteMany({ _id: { $in: duplicateIds } });
+	try {
+		if (canonicalDoc) {
+			await TotalUsage.updateOne(
+				{ _id: canonicalDoc._id },
+				{ $set: { key: GLOBAL_KEY, totalCount } },
+				{ session },
+			);
+		} else {
+			await TotalUsage.updateOne(
+				{ key: GLOBAL_KEY },
+				{ $setOnInsert: { key: GLOBAL_KEY, totalCount } },
+				{ upsert: true, session },
+			);
+		}
+
+		if (duplicateIds.length > 0) {
+			await TotalUsage.deleteMany({ _id: { $in: duplicateIds } }, { session });
+		}
+
+		await session.commitTransaction();
+	} catch (error) {
+		await session.abortTransaction();
+		throw error;
+	} finally {
+		session.endSession();
 	}
 
 	const indexes = await TotalUsage.collection.indexes();
