@@ -39,7 +39,6 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"preview": "vite preview",
 		"lint": "npx biome lint src",
 		"lint:fix": "npx biome lint --write src"
