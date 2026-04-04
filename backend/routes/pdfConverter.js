@@ -217,7 +217,7 @@ router.post(
 
 			for (const page of pdfDoc.getPages()) {
 				const currentRotation = page.getRotation().angle;
-				const newRotation = (currentRotation + Number(angle)) % 360;
+				const newRotation = Number(angle);
 				page.setRotation(degrees(newRotation));
 			}
 
