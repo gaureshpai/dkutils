@@ -2,61 +2,38 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-const PasswordGenerator = () => {
-	const { trackToolUsage } = useAnalytics();
-
-	const [password, setPassword] = useState("");
-	const [length, setLength] = useState(12);
-	const [includeUppercase, setIncludeUppercase] = useState(true);
-	const [includeLowercase, setIncludeLowercase] = useState(true);
-	const [includeNumbers, setIncludeNumbers] = useState(true);
-	const [includeSymbols, setIncludeSymbols] = useState(true);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
-
-	const generatePassword = () => {
-		setLoading(true);
-		setError("");
 		setTimeout(() => {
-			let charset = "";
-			let newPassword = "";
+			try {
+				let charset = "";
+				let newPassword = "";
 
-			if (includeUppercase) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			if (includeLowercase) charset += "abcdefghijklmnopqrstuvwxyz";
-			if (includeNumbers) charset += "0123456789";
-			if (includeSymbols) charset += "!@#$%^&*()_+-=[]{};:,.<>?";
+				if (includeUppercase) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+				if (includeLowercase) charset += "abcdefghijklmnopqrstuvwxyz";
+				if (includeNumbers) charset += "0123456789";
+				if (includeSymbols) charset += "!@#$%^&*()_+-=[]{};:,.<>?";
 
-			if (charset === "") {
+				if (charset === "") {
+					setPassword("");
+					setError("Please select at least one option.");
+					return;
+				}
+
+				const validLength = Number.isNaN(length) || length < 4 ? 4 : Math.min(length, 32);
+				const randomValues = new Uint32Array(validLength);
+				crypto.getRandomValues(randomValues);
+
+				for (let i = 0; i < validLength; i++) {
+					newPassword += charset.charAt(randomValues[i] % charset.length);
+				}
+				setPassword(newPassword);
+				setError("");
+				trackToolUsage("PasswordGenerator", "web");
+			} catch {
 				setPassword("");
-				setError("Please select at least one option.");
+				setError("Failed to generate password. Please try again.");
+			} finally {
 				setLoading(false);
-				return;
 			}
-
-			// Validate length to prevent NaN or invalid values
-			const validLength = Number.isNaN(length) || length < 4 ? 4 : Math.min(length, 32);
-
-			// Use Web Crypto API for cryptographically secure random generation
-			const randomValues = new Uint32Array(validLength);
-			crypto.getRandomValues(randomValues);
-
-const getUniformIndex = (max) => {
-	const limit = Math.floor(0x100000000 / max) * max;
-	const buf = new Uint32Array(1);
-	do {
-		window.crypto.getRandomValues(buf);
-	} while (buf[0] >= limit);
-	return buf[0] % max;
-};
-
-for (let i = 0; i < validLength; i++) {
-	newPassword += charset.charAt(getUniformIndex(charset.length));
-}
-			setPassword(newPassword);
-			setError("");
-			setLoading(false);
-			// Track usage only after successful generation
-			trackToolUsage("PasswordGenerator", "web");
 		}, 500);
 	};
 
