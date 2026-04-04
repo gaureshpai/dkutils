@@ -38,10 +38,10 @@ const PrivateRoute = ({ children }) => {
 };
 
 /**
- * Root application component that initializes authentication from a stored JWT and renders the themed app shell.
+ * Initialize authentication from a stored JWT and render the themed application shell.
  *
- * Renders the themed layout including the Navbar, routed pages, Footer, and a global toast container while initializing auth state and default auth header when a valid token is present.
- * @returns {JSX.Element} The root React element containing theming, navigation, routes, footer, and global notifications.
+ * Reads a token from localStorage, configures the default auth header and global auth state when the token is valid, and renders the app layout including navigation, routed pages, footer, and global notifications.
+ * @returns {JSX.Element} The root React element that renders the themed application shell and initial authentication state.
  */
 function App() {
 	const { dispatch } = useContext(AuthContext);

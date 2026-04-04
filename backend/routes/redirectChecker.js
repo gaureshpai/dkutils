@@ -136,12 +136,11 @@ function isMulticast(ip) {
 }
 
 /**
- * Ensure a hostname or IP literal does not equal or resolve to an unsafe network address.
+ * Rejects hostnames or IP literals that are or resolve to unsafe network addresses.
  *
- * For IP literals this rejects private, link-local, loopback, or multicast addresses. For hostnames
- * this resolves all A/AAAA records and rejects if any resolved address is private, link-local,
- * loopback, or multicast. DNS failures with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, or `ENOTIMP`
- * are suppressed (allowing downstream request-time resolution to proceed); other DNS errors are rethrown.
+ * If given an IP literal, throws when it is private, link-local, loopback, or multicast.
+ * If given a hostname, resolves all A/AAAA records and throws when any resolved address is private, link-local, loopback, or multicast.
+ * DNS errors with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, and `ENOTIMP` are suppressed; other DNS errors are rethrown.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
@@ -193,11 +192,11 @@ async function validateUrl(targetUrl) {
 }
 
 /**
- * Resolves a redirect `Location` value against a base URL and validates the resulting absolute URL.
- * @param {string} location - The redirect `Location` header value; may be an absolute URL or a path relative to `baseUrl`.
- * @param {string} baseUrl - The base URL used to resolve relative `location` values.
- * @returns {string} The resolved absolute URL string.
- * @throws {Error} If the resolved URL uses a scheme other than `http` or `https`, or if its hostname/IP is rejected by safety checks.
+ * Resolve a redirect `Location` value against a base URL and ensure the resulting absolute URL is allowed.
+ * @param {string} location - The redirect `Location` header value; absolute or relative to `baseUrl`.
+ * @param {string} baseUrl - Base URL used to resolve relative `location` values.
+ * @returns {string} The resolved absolute URL.
+ * @throws {Error} If the resolved URL's scheme is not `http` or `https`, or if its hostname/IP fails safety checks.
  */
 async function validateRedirectLocation(location, baseUrl) {
 	let resolvedUrl;
