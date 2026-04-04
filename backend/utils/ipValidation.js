@@ -1,4 +1,54 @@
+const { isIP } = require("node:net");
+
 // Shared utility for IP validation
+/**
+ * Normalize IPv4-mapped IPv6 addresses to their IPv4 dotted-quad form.
+ * Handles both dotted-quad mapped (::ffff:192.168.1.1) and hex-encoded mapped (::ffff:c0a8:101).
+ * @param {string} ip - IP address to normalize
+ * @returns {string} Normalized IP address (IPv4 if it was mapped, otherwise original)
+ */
+const normalizeIPv4Mapped = (ip) => {
+	if (!ip || typeof ip !== "string") {
+		return ip;
+	}
+
+	const normalized = ip.toLowerCase();
+
+	// Check if it's an IPv6 address
+	if (isIP(ip) !== 6) {
+		return ip;
+	}
+
+	// Handle IPv4-mapped IPv6 addresses (::ffff:x.x.x.x or ::ffff:xxxx:xxxx)
+	if (normalized.startsWith("::ffff:")) {
+		const suffix = ip.substring(7);
+
+		// If already in dotted-quad form, return it
+		if (suffix.includes(".")) {
+			return suffix;
+		}
+
+		// Parse hex-encoded IPv4-mapped address (e.g., ::ffff:c0a8:101 or ::ffff:7f00:1)
+		// Remove any colons and parse as hex segments
+		const hexPart = suffix.replace(/:/g, "");
+
+		// Handle different formats:
+		// - ::ffff:c0a8:0101 (8 hex digits, 2 groups)
+		// - ::ffff:7f00:1 (shorter, needs padding)
+		let paddedHex = hexPart.padStart(8, "0");
+
+		// Convert to IPv4 dotted-quad
+		const octet1 = Number.parseInt(paddedHex.substring(0, 2), 16);
+		const octet2 = Number.parseInt(paddedHex.substring(2, 4), 16);
+		const octet3 = Number.parseInt(paddedHex.substring(4, 6), 16);
+		const octet4 = Number.parseInt(paddedHex.substring(6, 8), 16);
+
+		return `${octet1}.${octet2}.${octet3}.${octet4}`;
+	}
+
+	return ip;
+};
+
 // Function to check if IP is private/reserved
 const isPrivateIP = (ip) => {
 	const privateRanges = [
@@ -22,17 +72,14 @@ const isPrivateIP = (ip) => {
 		/^2001:db8:/i, // IPv6 documentation prefix (2001:db8::/32)
 	];
 
-	// Check for IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
 	if (!ip || typeof ip !== "string") {
 		return false;
 	}
 
-	if (ip.toLowerCase().startsWith("::ffff:")) {
-		const ipv4Part = ip.substring(7);
-		return privateRanges.some((range) => range.test(ipv4Part));
-	}
+	// Normalize IPv4-mapped IPv6 addresses first
+	const normalizedIp = normalizeIPv4Mapped(ip);
 
-	return privateRanges.some((range) => range.test(ip));
+	return privateRanges.some((range) => range.test(normalizedIp));
 };
 
-module.exports = { isPrivateIP };
+module.exports = { isPrivateIP, normalizeIPv4Mapped };

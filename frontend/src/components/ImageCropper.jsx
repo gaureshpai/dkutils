@@ -19,11 +19,14 @@ const ImageCropper = () => {
 	// Cleanup object URLs to prevent memory leaks
 	useEffect(() => {
 		return () => {
+			if (imageSrc && imageSrc.startsWith("blob:")) {
+				URL.revokeObjectURL(imageSrc);
+			}
 			if (croppedImageSrc && croppedImageSrc.startsWith("blob:")) {
 				URL.revokeObjectURL(croppedImageSrc);
 			}
 		};
-	}, [croppedImageSrc]);
+	}, [imageSrc, croppedImageSrc]);
 
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
@@ -53,13 +56,17 @@ const ImageCropper = () => {
 			e.target.value = "";
 			return;
 		}
-		const reader = new FileReader();
-		reader.onload = (event) => {
-			setImageSrc(event.target.result);
-			setCroppedImageSrc(null);
-			setOriginalMimeType(file.type);
-		};
-		reader.readAsDataURL(file);
+
+		// Revoke previous blob URL if exists
+		if (imageSrc && imageSrc.startsWith("blob:")) {
+			URL.revokeObjectURL(imageSrc);
+		}
+
+		// Use blob URL instead of FileReader for better performance and to avoid race conditions
+		const blobUrl = URL.createObjectURL(file);
+		setImageSrc(blobUrl);
+		setCroppedImageSrc(null);
+		setOriginalMimeType(file.type);
 	};
 
 	const handleCrop = () => {
