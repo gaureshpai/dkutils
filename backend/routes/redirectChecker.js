@@ -115,9 +115,9 @@ function isLoopback(ip) {
 }
 
 /**
- * Check whether an IP literal represents a multicast address.
- * @param {string} ip - The IP literal to check (IPv4 dotted-quad or IPv6, may be IPv4-mapped IPv6).
- * @returns {boolean} `true` if the address is multicast (`224.0.0.0/4` for IPv4 or `ff00::/8` for IPv6), `false` otherwise.
+ * Determine whether an IP literal is a multicast address.
+ * @param {string} ip - IPv4 dotted-quad or IPv6 literal; IPv4-mapped IPv6 (starting with `::ffff:`) is treated as the underlying IPv4 address.
+ * @returns {boolean} `true` if the address is multicast (IPv4: `224.0.0.0/4`; IPv6: `ff00::/8`), `false` otherwise.
  */
 function isMulticast(ip) {
 	let normalizedIp = ip;
@@ -177,9 +177,9 @@ async function checkIPSafety(hostname) {
 }
 
 /**
- * Ensure a URL uses the `http` or `https` scheme and that its hostname (or any addresses it resolves to) is not private, link-local, loopback, or multicast.
+ * Validate that a URL uses the `http` or `https` scheme and that its hostname (or any addresses it resolves to) is not private, link-local, loopback, or multicast.
  * @param {string} targetUrl - The URL to validate.
- * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ...`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (message: `Rejected unsafe IP address: ...` or `Rejected unsafe IP address: ... (resolved from ...)`).
+ * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (message: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
  */
 async function validateUrl(targetUrl) {
 	const parsed = new URL(targetUrl);
