@@ -40,8 +40,8 @@ const PrivateRoute = ({ children }) => {
 /**
  * Initialize authentication from a stored JWT and render the themed application shell.
  *
- * Reads a token from localStorage, configures the default auth header and global auth state when the token is valid, and renders the app layout including navigation, routed pages, footer, and global notifications.
- * @returns {JSX.Element} The root React element that renders the themed application shell and initial authentication state.
+ * Reads a token from localStorage, applies or clears the default auth header and updates global auth state based on token validity, then renders the application layout including navigation, routed pages, footer, and global notifications.
+ * @returns {JSX.Element} The root React element rendering the themed application shell and routed pages.
  */
 function App() {
 	const { dispatch } = useContext(AuthContext);
