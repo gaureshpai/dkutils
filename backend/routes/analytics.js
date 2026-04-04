@@ -9,7 +9,7 @@ const trackLimiter = rateLimit({
 	message: { msg: "Too many tracking requests, please try again later." },
 	standardHeaders: true,
 	legacyHeaders: false,
-	skipFailedRequests: true,
+	skipFailedRequests: false,
 });
 
 const isValidCategory = (category) => {
@@ -138,7 +138,12 @@ router.get("/stats", async (req, res) => {
 			return res.status(400).json({ msg: "Invalid category" });
 		}
 
-		const query = category ? { category } : {};
+		// Build query that restricts to approved tool/category pairs
+		const approvedPairs = Object.entries(APPROVED_TOOL_CATEGORY_PAIRS)
+			.filter(([toolName, cat]) => !category || cat === category)
+			.map(([toolName, cat]) => ({ toolName, category: cat }));
+
+		const query = approvedPairs.length > 0 ? { $or: approvedPairs } : { _id: null };
 
 		// Get total count for pagination metadata
 		const total = await ToolUsage.countDocuments(query);
@@ -177,7 +182,14 @@ router.get("/popular", async (req, res) => {
 
 		// Run all queries in parallel
 		const categoryPromises = categories.map(async (category) => {
-			const tools = await ToolUsage.find({ category })
+			// Build query that restricts to approved tool/category pairs for this category
+			const approvedPairs = Object.entries(APPROVED_TOOL_CATEGORY_PAIRS)
+				.filter(([toolName, cat]) => cat === category)
+				.map(([toolName, cat]) => ({ toolName, category: cat }));
+
+			const query = approvedPairs.length > 0 ? { $or: approvedPairs } : { _id: null };
+
+			const tools = await ToolUsage.find(query)
 				.sort({ usageCount: -1 })
 				.limit(10)
 				.select("toolName usageCount");
