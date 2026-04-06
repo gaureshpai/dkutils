@@ -6,12 +6,6 @@ const http = require("node:http");
 const https = require("node:https");
 const { isPrivateIP: isPrivateIPShared, normalizeIPv4Mapped } = require("@backend/utils/ipValidation");
 
-const PRIVATE_IP_RANGES = [
-	{ start: "10.0.0.0", end: "10.255.255.255" },
-	{ start: "172.16.0.0", end: "172.31.255.255" },
-	{ start: "192.168.0.0", end: "192.168.255.255" },
-];
-
 const MAX_REDIRECTS = 10;
 const TIMEOUT_MS = 5000;
 
@@ -31,24 +25,6 @@ function isPrivateIP(ip) {
 	// Use shared validator which covers both IPv4 and IPv6 private ranges
 	if (isPrivateIPShared(normalizedIp)) {
 		return true;
-	}
-
-	// Additional IPv4 private range checks for backward compatibility
-	if (isIP(normalizedIp) === 4) {
-		const parts = normalizedIp.split(".").map(Number);
-		const num = parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
-
-		for (const range of PRIVATE_IP_RANGES) {
-			const startParts = range.start.split(".").map(Number);
-			const endParts = range.end.split(".").map(Number);
-			const startNum =
-				startParts[0] * 16777216 + startParts[1] * 65536 + startParts[2] * 256 + startParts[3];
-			const endNum = endParts[0] * 16777216 + endParts[1] * 65536 + endParts[2] * 256 + endParts[3];
-
-			if (num >= startNum && num <= endNum) {
-				return true;
-			}
-		}
 	}
 
 	// Check for IPv6 ULA (fc00::/7 - covers both fc00::/8 and fd00::/8)

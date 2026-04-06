@@ -20,14 +20,14 @@ const isValidCategory = (category) => {
 
 const MAX_SKIP = 10000;
 
-const APPROVED_TOOL_CATEGORY_PAIRS = {
+// Public tools that should appear in /stats and /popular endpoints
+const APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS = {
 	"Base64TextConverter": "text",
 	"CsvToJsonConverter": "web",
 	"ExcelToPdfConverter": "pdf",
 	"FaviconExtractor": "web",
 	"HashGenerator": "web",
 	"HtmlToMarkdownConverter": "web",
-	"HtmlToMarkdownConverter:copy": "web",
 	"ImageBackgroundRemover": "image",
 	"ImageCompressor": "image",
 	"ImageCropper": "image",
@@ -41,7 +41,6 @@ const APPROVED_TOOL_CATEGORY_PAIRS = {
 	"JsonToCsvConverter": "web",
 	"JsonXmlConverter": "web",
 	"Link Shortener": "web",
-	"Login": "web",
 	"MarkdownToHtmlConverter": "web",
 	"PasswordGenerator": "web",
 	"PasswordStrengthChecker": "web",
@@ -56,6 +55,18 @@ const APPROVED_TOOL_CATEGORY_PAIRS = {
 	"PngToJpgConverter": "image",
 	"QrCodeGenerator": "web",
 	"QrCodeScanner": "web",
+	"TextCaseConverter": "text",
+	"TextDifferenceChecker": "text",
+	"TextToPdfGenerator": "pdf",
+	"UrlRedirectChecker": "web",
+	"WebsiteScreenshotGenerator": "web",
+};
+
+// All approved tool/category pairs for internal tracking (includes public tools + internal events)
+const APPROVED_TOOL_CATEGORY_PAIRS = {
+	...APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS,
+	"HtmlToMarkdownConverter:copy": "web",
+	"Login": "web",
 	"Register": "web",
 	"SeoTools:robots_txt": "web",
 	"SeoTools:robots_txt_error": "web",
@@ -65,11 +76,6 @@ const APPROVED_TOOL_CATEGORY_PAIRS = {
 	"SeoTools:sitemap_xml_error": "web",
 	"SeoTools:sitemap_xml_not_found": "web",
 	"SeoTools:sitemap_xml_success": "web",
-	"TextCaseConverter": "text",
-	"TextDifferenceChecker": "text",
-	"TextToPdfGenerator": "pdf",
-	"UrlRedirectChecker": "web",
-	"WebsiteScreenshotGenerator": "web",
 };
 
 const isApprovedToolCategoryPair = (toolName, category) => {
@@ -130,7 +136,11 @@ router.post("/track", trackLimiter, async (req, res) => {
 // @access  Public
 router.get("/stats", async (req, res) => {
 	try {
-		const { category, page = 1, limit = 50 } = req.query;
+		const { page = 1, limit = 50 } = req.query;
+		// Trim category and treat empty string as undefined
+		const category = req.query.category && typeof req.query.category === "string"
+			? req.query.category.trim() || undefined
+			: undefined;
 
 		// Validate and parse pagination parameters
 		const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
@@ -146,8 +156,8 @@ router.get("/stats", async (req, res) => {
 			return res.status(400).json({ msg: "Invalid category" });
 		}
 
-		// Build query that restricts to approved tool/category pairs
-		const approvedPairs = Object.entries(APPROVED_TOOL_CATEGORY_PAIRS)
+		// Build query that restricts to approved public tool/category pairs
+		const approvedPairs = Object.entries(APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS)
 			.filter(([toolName, cat]) => !category || cat === category)
 			.map(([toolName, cat]) => ({ toolName, category: cat }));
 
@@ -190,8 +200,8 @@ router.get("/popular", async (req, res) => {
 
 		// Run all queries in parallel
 		const categoryPromises = categories.map(async (category) => {
-			// Build query that restricts to approved tool/category pairs for this category
-			const approvedPairs = Object.entries(APPROVED_TOOL_CATEGORY_PAIRS)
+			// Build query that restricts to approved public tool/category pairs for this category
+			const approvedPairs = Object.entries(APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS)
 				.filter(([toolName, cat]) => cat === category)
 				.map(([toolName, cat]) => ({ toolName, category: cat }));
 
