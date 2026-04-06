@@ -20,7 +20,59 @@ const isValidCategory = (category) => {
 
 const MAX_SKIP = 10000;
 
-// Public tools that should appear in /stats and /popular endpoints
+const APPROVED_TOOL_CATEGORY_PAIRS = {
+	"Base64TextConverter": "text",
+	"CsvToJsonConverter": "web",
+	"ExcelToPdfConverter": "pdf",
+	"FaviconExtractor": "web",
+	"HashGenerator": "web",
+	"HtmlToMarkdownConverter": "web",
+	"HtmlToMarkdownConverter:copy": "web",
+	"ImageBackgroundRemover": "image",
+	"ImageCompressor": "image",
+	"ImageCropper": "image",
+	"ImageFlipper": "image",
+	"ImageFormatConverter": "image",
+	"ImageGrayscaler": "image",
+	"ImageResizer": "image",
+	"ImageToBase64Converter": "image",
+	"ImageToPdfConverter": "image",
+	"JsonFormatterValidator": "web",
+	"JsonToCsvConverter": "web",
+	"JsonXmlConverter": "web",
+	"Link Shortener": "web",
+	"Login": "web",
+	"MarkdownToHtmlConverter": "web",
+	"PasswordGenerator": "web",
+	"PasswordStrengthChecker": "web",
+	"PdfCompressor": "pdf",
+	"PdfMerger": "pdf",
+	"PdfPageDeleter": "pdf",
+	"PdfRotator": "pdf",
+	"PdfSplitter": "pdf",
+	"PdfToExcelConverter": "pdf",
+	"PdfToTextConverter": "pdf",
+	"PdfToWordConverter": "pdf",
+	"PngToJpgConverter": "image",
+	"QrCodeGenerator": "web",
+	"QrCodeScanner": "web",
+	"Register": "web",
+	"SeoTools:robots_txt": "web",
+	"SeoTools:robots_txt_error": "web",
+	"SeoTools:robots_txt_not_found": "web",
+	"SeoTools:robots_txt_success": "web",
+	"SeoTools:sitemap_xml": "web",
+	"SeoTools:sitemap_xml_error": "web",
+	"SeoTools:sitemap_xml_not_found": "web",
+	"SeoTools:sitemap_xml_success": "web",
+	"TextCaseConverter": "text",
+	"TextDifferenceChecker": "text",
+	"TextToPdfGenerator": "pdf",
+	"UrlRedirectChecker": "web",
+	"WebsiteScreenshotGenerator": "web",
+};
+
+// Public tools only - excludes internal events like Login, Register, SeoTools:*, etc.
 const APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS = {
 	"Base64TextConverter": "text",
 	"CsvToJsonConverter": "web",
@@ -60,22 +112,6 @@ const APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS = {
 	"TextToPdfGenerator": "pdf",
 	"UrlRedirectChecker": "web",
 	"WebsiteScreenshotGenerator": "web",
-};
-
-// All approved tool/category pairs for internal tracking (includes public tools + internal events)
-const APPROVED_TOOL_CATEGORY_PAIRS = {
-	...APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS,
-	"HtmlToMarkdownConverter:copy": "web",
-	"Login": "web",
-	"Register": "web",
-	"SeoTools:robots_txt": "web",
-	"SeoTools:robots_txt_error": "web",
-	"SeoTools:robots_txt_not_found": "web",
-	"SeoTools:robots_txt_success": "web",
-	"SeoTools:sitemap_xml": "web",
-	"SeoTools:sitemap_xml_error": "web",
-	"SeoTools:sitemap_xml_not_found": "web",
-	"SeoTools:sitemap_xml_success": "web",
 };
 
 const isApprovedToolCategoryPair = (toolName, category) => {
@@ -136,11 +172,15 @@ router.post("/track", trackLimiter, async (req, res) => {
 // @access  Public
 router.get("/stats", async (req, res) => {
 	try {
-		const { page = 1, limit = 50 } = req.query;
-		// Trim category and treat empty string as undefined
-		const category = req.query.category && typeof req.query.category === "string"
-			? req.query.category.trim() || undefined
-			: undefined;
+		let { category, page = 1, limit = 50 } = req.query;
+
+		// Normalize category: trim and treat empty string as undefined
+		if (typeof category === "string") {
+			category = category.trim();
+			if (category === "") {
+				category = undefined;
+			}
+		}
 
 		// Validate and parse pagination parameters
 		const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
@@ -156,7 +196,7 @@ router.get("/stats", async (req, res) => {
 			return res.status(400).json({ msg: "Invalid category" });
 		}
 
-		// Build query that restricts to approved public tool/category pairs
+		// Build query that restricts to approved public tool/category pairs only
 		const approvedPairs = Object.entries(APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS)
 			.filter(([toolName, cat]) => !category || cat === category)
 			.map(([toolName, cat]) => ({ toolName, category: cat }));
