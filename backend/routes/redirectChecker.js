@@ -106,8 +106,8 @@ function isMulticast(ip) {
  * and `ENOTIMP` are suppressed and cause the function to return `null`.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {string|null} The first resolved IP address suitable for pinning connections, or `null` if no addresses
- *                        were found or DNS errors were suppressed.
+ * @returns {Array<{address: string, family: number}>|null} Array of validated IP address records with their families,
+ *                                                            or `null` if no addresses were found or DNS errors were suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
  */
 async function checkIPSafety(hostname) {
@@ -116,7 +116,9 @@ async function checkIPSafety(hostname) {
 		if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
 			throw new Error(`Rejected unsafe IP address: ${ip}`);
 		}
-		return ip;
+		// Return as an array with family for consistency
+		const family = isIP(ip);
+		return [{ address: ip, family }];
 	}
 
 	try {
@@ -126,8 +128,8 @@ async function checkIPSafety(hostname) {
 				throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
 			}
 		}
-		// Return the first safe IP address for pinning
-		return addresses.length > 0 ? addresses[0].address : null;
+		// Return the full list of validated addresses
+		return addresses.length > 0 ? addresses : null;
 	} catch (err) {
 		if (err.message.includes("Rejected")) {
 			throw err;
@@ -147,7 +149,7 @@ async function checkIPSafety(hostname) {
 /**
  * Validate that a URL uses the `http` or `https` scheme and that its hostname (or any addresses it resolves to) is not private, link-local, loopback, or multicast.
  * @param {string} targetUrl - The URL to validate.
- * @returns {{hostname: string, safeIP: string|null}} The parsed hostname and a pinned safe IP address for connection pinning, or `null` if no address was resolved.
+ * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>|null}} The parsed hostname and validated IP addresses for connection pinning, or `null` if no addresses were resolved.
  * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (messages: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
  */
 async function validateUrl(targetUrl) {
@@ -157,15 +159,15 @@ async function validateUrl(targetUrl) {
 		throw new Error(`Invalid scheme: ${parsed.protocol}. Only http and https are allowed.`);
 	}
 
-	const safeIP = await checkIPSafety(parsed.hostname);
-	return { hostname: parsed.hostname, safeIP };
+	const safeAddresses = await checkIPSafety(parsed.hostname);
+	return { hostname: parsed.hostname, safeAddresses };
 }
 
 /**
  * Resolve a redirect `Location` value against a base URL and validate the resulting absolute URL.
  * @param {string} location - The redirect `Location` header value; absolute or relative to `baseUrl`.
  * @param {string} baseUrl - Base URL used to resolve relative `location` values.
- * @returns {{url: string, safeIP: string|null}} The resolved absolute URL and the IP address to pin connections to, or `null` if no pinning is available.
+ * @returns {{url: string, safeAddresses: Array<{address: string, family: number}>|null}} The resolved absolute URL and validated IP addresses to pin connections to, or `null` if no pinning is available.
  * @throws {Error} If the resolved URL's scheme is not `http` or `https`, or if its hostname/IP fails safety checks.
  */
 async function validateRedirectLocation(location, baseUrl) {
@@ -176,27 +178,36 @@ async function validateRedirectLocation(location, baseUrl) {
 		resolvedUrl = new URL(location);
 	}
 
-	const { safeIP } = await validateUrl(resolvedUrl.href);
-	return { url: resolvedUrl.href, safeIP };
+	const { safeAddresses } = await validateUrl(resolvedUrl.href);
+	return { url: resolvedUrl.href, safeAddresses };
 }
 
 /**
  * Create HTTP and HTTPS agents that resolve a specific hostname to a pinned IP when provided.
  *
- * When `pinnedIP` is set and the requested hostname matches `hostname`, the agents' DNS lookup
- * will return the pinned IP; otherwise they perform normal DNS resolution.
+ * When `validatedAddresses` is set and the requested hostname matches `hostname`, the agents' DNS lookup
+ * will return a pinned IP preferring the requested address family; otherwise they perform normal DNS resolution.
  *
  * @param {string} hostname - The original hostname whose resolution may be pinned.
- * @param {string|null} pinnedIP - Validated IP string to use for `hostname`, or `null` to use normal DNS.
- * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} Agents whose lookup can be pinned to `pinnedIP`.
+ * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated IP address records to use for `hostname`, or `null` to use normal DNS.
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} Agents whose lookup can be pinned to validated addresses.
  */
-function createPinnedAgents(hostname, pinnedIP) {
+function createPinnedAgents(hostname, validatedAddresses) {
 	const lookupFunction = (requestHostname, options, callback) => {
-		// If we have a pinned IP and the request is for our target hostname, use the pinned IP
-		if (pinnedIP && requestHostname === hostname) {
-			// Determine the family (4 for IPv4, 6 for IPv6)
-			const family = isIP(pinnedIP);
-			callback(null, pinnedIP, family);
+		// If we have validated addresses and the request is for our target hostname, use a pinned IP
+		if (validatedAddresses && requestHostname === hostname) {
+			// Determine the requested family (4 for IPv4, 6 for IPv6)
+			const family = typeof options === "number" ? options : options?.family;
+			// Prefer a record matching the request's family, or fall back to any validated record
+			const candidate =
+				validatedAddresses.find((entry) => !family || entry.family === family) ??
+				validatedAddresses[0];
+
+			if (!candidate) {
+				return callback(new Error("No validated DNS records available"));
+			}
+
+			return callback(null, candidate.address, candidate.family);
 		} else {
 			// Fallback to normal DNS lookup for other hostnames
 			dns.lookup(requestHostname, options, callback);
@@ -229,12 +240,12 @@ router.post("/", async (req, res) => {
 	const redirectChain = [];
 	let currentUrl = url;
 	let currentHostname = initialValidation.hostname;
-	let currentSafeIP = initialValidation.safeIP;
+	let currentSafeAddresses = initialValidation.safeAddresses;
 
 	try {
 		for (let i = 0; i < MAX_REDIRECTS; i += 1) {
 			// Create pinned agents for DNS rebinding prevention
-			const agents = createPinnedAgents(currentHostname, currentSafeIP);
+			const agents = createPinnedAgents(currentHostname, currentSafeAddresses);
 
 			try {
 				const response = await axios.head(currentUrl, {
@@ -250,14 +261,14 @@ router.post("/", async (req, res) => {
 
 				if (response.status >= 300 && response.status < 400 && response.headers.location) {
 					try {
-						const { url: nextUrl, safeIP: nextSafeIP } = await validateRedirectLocation(
+						const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
 							response.headers.location,
 							currentUrl,
 						);
 						currentUrl = nextUrl;
 						const parsed = new URL(currentUrl);
 						currentHostname = parsed.hostname;
-						currentSafeIP = nextSafeIP;
+						currentSafeAddresses = nextSafeAddresses;
 						continue;
 					} catch (err) {
 						return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
@@ -268,7 +279,7 @@ router.post("/", async (req, res) => {
 			} catch (err) {
 				// HEAD failed, try GET as fallback
 				try {
-					const agents = createPinnedAgents(currentHostname, currentSafeIP);
+					const agents = createPinnedAgents(currentHostname, currentSafeAddresses);
 					const finalResponse = await axios.get(currentUrl, {
 						timeout: TIMEOUT_MS,
 						maxContentLength: 1024 * 1024,
@@ -289,14 +300,14 @@ router.post("/", async (req, res) => {
 						finalResponse.headers.location
 					) {
 						try {
-							const { url: nextUrl, safeIP: nextSafeIP } = await validateRedirectLocation(
+							const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
 								finalResponse.headers.location,
 								currentUrl,
 							);
 							currentUrl = nextUrl;
 							const parsed = new URL(currentUrl);
 							currentHostname = parsed.hostname;
-							currentSafeIP = nextSafeIP;
+							currentSafeAddresses = nextSafeAddresses;
 							continue;
 						} catch (redirectErr) {
 							return res.status(400).json({ msg: `Redirect blocked: ${redirectErr.message}` });
@@ -315,7 +326,7 @@ router.post("/", async (req, res) => {
 
 		// Final fetch if we haven't recorded this URL yet
 		if (redirectChain.length === 0 || redirectChain[redirectChain.length - 1].url !== currentUrl) {
-			const agents = createPinnedAgents(currentHostname, currentSafeIP);
+			const agents = createPinnedAgents(currentHostname, currentSafeAddresses);
 			const finalResponse = await axios.get(currentUrl, {
 				timeout: TIMEOUT_MS,
 				maxContentLength: 1024 * 1024,
