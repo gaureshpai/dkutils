@@ -10,13 +10,12 @@ const MAX_REDIRECTS = 10;
 const TIMEOUT_MS = 5000;
 
 /**
- * Determine whether an IP address is within known private or local address ranges.
+ * Determine whether an IP literal is in a private or otherwise local address range.
  *
- * Recognizes IPv4 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), IPv6
- * unique local addresses (fc00::/7), and IPv4-mapped IPv6 addresses.
- *
- * @param {string} ip - The IP address or IP literal to test (IPv4 or IPv6).
- * @returns {boolean} `true` if the address is private/local, `false` otherwise.
+ * Accepts IPv4 and IPv6 literals (including IPv4-mapped IPv6) and treats RFC1918 IPv4 ranges
+ * and IPv6 Unique Local Addresses (fc00::/7) as private/local.
+ * @param {string} ip - The IP address literal to test.
+ * @returns {boolean} `true` if the address is private or local, `false` otherwise.
  */
 function isPrivateIP(ip) {
 	// Normalize IPv4-mapped IPv6 addresses to their IPv4 form
@@ -60,9 +59,10 @@ function isLinkLocal(ip) {
 }
 
 /**
- * Determines whether an IP address is a loopback address.
- * IPv4: 127.0.0.0/8
- * IPv6: ::1 and IPv4-mapped loopback (::ffff:127.0.0.0/8)
+ * Checks whether an IP address is a loopback address.
+ *
+ * Normalizes IPv4-mapped IPv6 addresses to IPv4 form before checking.
+ * Considers IPv4 loopback as 127.0.0.0/8 and IPv6 loopback as ::1.
  * @param {string} ip - The IP address to check.
  * @returns {boolean} `true` if the address is a loopback address, `false` otherwise.
  */
@@ -99,14 +99,15 @@ function isMulticast(ip) {
 }
 
 /**
- * Rejects hostnames or IP literals that are or resolve to unsafe network addresses.
+ * Validate that a hostname or IP literal does not refer to private, link-local, loopback, or multicast addresses.
  *
- * If given an IP literal, throws when it is private, link-local, loopback, or multicast.
- * If given a hostname, resolves all A/AAAA records and throws when any resolved address is private, link-local, loopback, or multicast.
- * DNS errors with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, and `ENOTIMP` are suppressed; other DNS errors are rethrown.
+ * If given an IP literal, the function throws when that IP is unsafe. If given a hostname, it resolves all A/AAAA
+ * records and throws when any resolved address is unsafe. DNS errors with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`,
+ * and `ENOTIMP` are suppressed and cause the function to return `null`.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Promise<string>} Returns the safe IP address to use for connections.
+ * @returns {string|null} The first resolved IP address suitable for pinning connections, or `null` if no addresses
+ *                        were found or DNS errors were suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
  */
 async function checkIPSafety(hostname) {
@@ -146,8 +147,8 @@ async function checkIPSafety(hostname) {
 /**
  * Validate that a URL uses the `http` or `https` scheme and that its hostname (or any addresses it resolves to) is not private, link-local, loopback, or multicast.
  * @param {string} targetUrl - The URL to validate.
- * @returns {Promise<{hostname: string, safeIP: string|null}>} Returns the hostname and safe IP for connection pinning.
- * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (message: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
+ * @returns {{hostname: string, safeIP: string|null}} The parsed hostname and a pinned safe IP address for connection pinning, or `null` if no address was resolved.
+ * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (messages: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
  */
 async function validateUrl(targetUrl) {
 	const parsed = new URL(targetUrl);
@@ -161,10 +162,10 @@ async function validateUrl(targetUrl) {
 }
 
 /**
- * Resolve a redirect `Location` value against a base URL and ensure the resulting absolute URL is allowed.
+ * Resolve a redirect `Location` value against a base URL and validate the resulting absolute URL.
  * @param {string} location - The redirect `Location` header value; absolute or relative to `baseUrl`.
  * @param {string} baseUrl - Base URL used to resolve relative `location` values.
- * @returns {Promise<{url: string, safeIP: string|null}>} The resolved absolute URL and safe IP for connection pinning.
+ * @returns {{url: string, safeIP: string|null}} The resolved absolute URL and the IP address to pin connections to, or `null` if no pinning is available.
  * @throws {Error} If the resolved URL's scheme is not `http` or `https`, or if its hostname/IP fails safety checks.
  */
 async function validateRedirectLocation(location, baseUrl) {
@@ -180,11 +181,14 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Create custom HTTP/HTTPS agents with DNS lookup pinned to a specific safe IP.
- * This prevents DNS rebinding attacks by ensuring the connection uses the validated IP.
- * @param {string} hostname - The original hostname from the URL.
- * @param {string|null} pinnedIP - The validated safe IP to use for connections, or null to use normal DNS.
- * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} Custom agents for axios.
+ * Create HTTP and HTTPS agents that resolve a specific hostname to a pinned IP when provided.
+ *
+ * When `pinnedIP` is set and the requested hostname matches `hostname`, the agents' DNS lookup
+ * will return the pinned IP; otherwise they perform normal DNS resolution.
+ *
+ * @param {string} hostname - The original hostname whose resolution may be pinned.
+ * @param {string|null} pinnedIP - Validated IP string to use for `hostname`, or `null` to use normal DNS.
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} Agents whose lookup can be pinned to `pinnedIP`.
  */
 function createPinnedAgents(hostname, pinnedIP) {
 	const lookupFunction = (requestHostname, options, callback) => {
