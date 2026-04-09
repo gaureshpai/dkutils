@@ -198,16 +198,33 @@ function createPinnedAgents(hostname, validatedAddresses) {
 		if (validatedAddresses && requestHostname === hostname) {
 			// Determine the requested family (4 for IPv4, 6 for IPv6)
 			const family = typeof options === "number" ? options : options?.family;
-			// Prefer a record matching the request's family, or fall back to any validated record
-			const candidate =
-				validatedAddresses.find((entry) => !family || entry.family === family) ??
-				validatedAddresses[0];
+			// Check if options.all is true (only when options is an object, not a number)
+			const returnAll = typeof options === "object" && options?.all === true;
 
-			if (!candidate) {
-				return callback(new Error("No validated DNS records available"));
+			if (returnAll) {
+				// Filter by family if specified, otherwise return all
+				const validatedAddressesFiltered = family
+					? validatedAddresses.filter((entry) => entry.family === family)
+					: validatedAddresses;
+
+				if (validatedAddressesFiltered.length === 0) {
+					return callback(new Error("No validated DNS records available"));
+				}
+
+				// Return array of {address, family} objects
+				return callback(null, validatedAddressesFiltered.map((e) => ({ address: e.address, family: e.family })));
+			} else {
+				// Prefer a record matching the request's family, or fall back to any validated record
+				const candidate =
+					validatedAddresses.find((entry) => !family || entry.family === family) ??
+					validatedAddresses[0];
+
+				if (!candidate) {
+					return callback(new Error("No validated DNS records available"));
+				}
+
+				return callback(null, candidate.address, candidate.family);
 			}
-
-			return callback(null, candidate.address, candidate.family);
 		} else {
 			// Fallback to normal DNS lookup for other hostnames
 			dns.lookup(requestHostname, options, callback);
@@ -248,7 +265,7 @@ router.post("/", async (req, res) => {
 			const agents = createPinnedAgents(currentHostname, currentSafeAddresses);
 
 			try {
-				const response = await axios.head(currentUrl, {
+				let response = await axios.head(currentUrl, {
 					maxRedirects: 0,
 					validateStatus: () => true, // Accept all HTTP statuses
 					timeout: TIMEOUT_MS,
@@ -256,6 +273,22 @@ router.post("/", async (req, res) => {
 					httpAgent: agents.httpAgent,
 					httpsAgent: agents.httpsAgent,
 				});
+
+				// If HEAD returned 405 or 501, retry with GET
+				if (response.status === 405 || response.status === 501) {
+					try {
+						response = await axios.get(currentUrl, {
+							maxRedirects: 0,
+							validateStatus: () => true, // Accept all HTTP statuses
+							timeout: TIMEOUT_MS,
+							maxContentLength: 1024 * 1024,
+							httpAgent: agents.httpAgent,
+							httpsAgent: agents.httpsAgent,
+						});
+					} catch (getErr) {
+						return res.status(500).json({ msg: `GET request failed: ${getErr.message}` });
+					}
+				}
 
 				redirectChain.push({ url: currentUrl, status: response.status });
 
