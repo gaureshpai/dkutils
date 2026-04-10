@@ -81,9 +81,9 @@ function isLoopback(ip) {
 }
 
 /**
- * Determine whether an IP literal is a multicast address.
- * @param {string} ip - IPv4 dotted-quad or IPv6 literal; IPv4-mapped IPv6 (starting with `::ffff:`) is treated as the underlying IPv4 address.
- * @returns {boolean} `true` if the address is multicast (IPv4: `224.0.0.0/4`; IPv6: `ff00::/8`), `false` otherwise.
+ * Determines whether an IP literal is a multicast address.
+ * @param {string} ip - IPv4 dotted-quad or IPv6 literal. IPv4-mapped IPv6 (starting with `::ffff:`) is treated as the underlying IPv4 address.
+ * @returns {boolean} `true` if the address is multicast (IPv4: 224.0.0.0/4; IPv6: ff00::/8), `false` otherwise.
  */
 function isMulticast(ip) {
 	const normalizedIp = normalizeIPv4Mapped(ip);
