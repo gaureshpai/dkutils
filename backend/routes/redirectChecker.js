@@ -4,7 +4,10 @@ const dns = require("node:dns");
 const { isIP } = require("node:net");
 const http = require("node:http");
 const https = require("node:https");
-const { isPrivateIP: isPrivateIPShared, normalizeIPv4Mapped } = require("@backend/utils/ipValidation");
+const {
+	isPrivateIP: isPrivateIPShared,
+	normalizeIPv4Mapped,
+} = require("@backend/utils/ipValidation");
 
 const MAX_REDIRECTS = 10;
 const TIMEOUT_MS = 5000;
@@ -24,14 +27,6 @@ function isPrivateIP(ip) {
 	// Use shared validator which covers both IPv4 and IPv6 private ranges
 	if (isPrivateIPShared(normalizedIp)) {
 		return true;
-	}
-
-	// Check for IPv6 ULA (fc00::/7 - covers both fc00::/8 and fd00::/8)
-	if (isIP(normalizedIp) === 6) {
-		const normalized = normalizedIp.toLowerCase();
-		if (normalized.startsWith("fc") || normalized.startsWith("fd")) {
-			return true;
-		}
 	}
 
 	return false;
@@ -183,6 +178,30 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
+ * Handle a potential redirect response by validating the new location and returning the next state.
+ * @param {import("axios").AxiosResponse} response - The axios response to check for redirects.
+ * @param {string} currentUrl - The current URL that was requested.
+ * @returns {Promise<{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}>}
+ * @throws {Error} If the redirect location is invalid or unsafe.
+ */
+async function handleRedirectResponse(response, currentUrl) {
+	if (response.status >= 300 && response.status < 400 && response.headers.location) {
+		const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
+			response.headers.location,
+			currentUrl,
+		);
+		const parsed = new URL(nextUrl);
+		return {
+			shouldContinue: true,
+			nextUrl,
+			nextHostname: parsed.hostname,
+			nextSafeAddresses,
+		};
+	}
+	return { shouldContinue: false };
+}
+
+/**
  * Creates HTTP and HTTPS agents whose DNS lookup can be pinned to a provided set of validated IP addresses for a specific hostname.
  *
  * When `validatedAddresses` is provided and the request hostname equals `hostname`, the agents return the pinned address(es) (respecting the requested IP family and the `all` option); otherwise the agents fall back to the normal DNS lookup.
@@ -211,23 +230,24 @@ function createPinnedAgents(hostname, validatedAddresses) {
 				}
 
 				// Return array of {address, family} objects
-				return callback(null, validatedAddressesFiltered.map((e) => ({ address: e.address, family: e.family })));
-			} else {
-				// Prefer a record matching the request's family, or fall back to any validated record
-				const candidate =
-					validatedAddresses.find((entry) => !family || entry.family === family) ??
-					validatedAddresses[0];
-
-				if (!candidate) {
-					return callback(new Error("No validated DNS records available"));
-				}
-
-				return callback(null, candidate.address, candidate.family);
+				return callback(
+					null,
+					validatedAddressesFiltered.map((e) => ({ address: e.address, family: e.family })),
+				);
 			}
-		} else {
-			// Fallback to normal DNS lookup for other hostnames
-			dns.lookup(requestHostname, options, callback);
+			// Prefer a record matching the request's family, or fall back to any validated record
+			const candidate =
+				validatedAddresses.find((entry) => !family || entry.family === family) ??
+				validatedAddresses[0];
+
+			if (!candidate) {
+				return callback(new Error("No validated DNS records available"));
+			}
+
+			return callback(null, candidate.address, candidate.family);
 		}
+		// Fallback to normal DNS lookup for other hostnames
+		dns.lookup(requestHostname, options, callback);
 	};
 
 	return {
@@ -291,22 +311,17 @@ router.post("/", async (req, res) => {
 
 				redirectChain.push({ url: currentUrl, status: response.status });
 
-				if (response.status >= 300 && response.status < 400 && response.headers.location) {
-					try {
-						const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
-							response.headers.location,
-							currentUrl,
-						);
-						currentUrl = nextUrl;
-						const parsed = new URL(currentUrl);
-						currentHostname = parsed.hostname;
-						currentSafeAddresses = nextSafeAddresses;
+				try {
+					const redirect = await handleRedirectResponse(response, currentUrl);
+					if (redirect.shouldContinue) {
+						currentUrl = redirect.nextUrl;
+						currentHostname = redirect.nextHostname;
+						currentSafeAddresses = redirect.nextSafeAddresses;
 						continue;
-					} catch (err) {
-						return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
 					}
-				} else {
 					break;
+				} catch (err) {
+					return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
 				}
 			} catch (err) {
 				// HEAD failed, try GET as fallback
@@ -326,24 +341,16 @@ router.post("/", async (req, res) => {
 						status: finalResponse.status,
 					});
 
-					if (
-						finalResponse.status >= 300 &&
-						finalResponse.status < 400 &&
-						finalResponse.headers.location
-					) {
-						try {
-							const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
-								finalResponse.headers.location,
-								currentUrl,
-							);
-							currentUrl = nextUrl;
-							const parsed = new URL(currentUrl);
-							currentHostname = parsed.hostname;
-							currentSafeAddresses = nextSafeAddresses;
+					try {
+						const redirect = await handleRedirectResponse(finalResponse, currentUrl);
+						if (redirect.shouldContinue) {
+							currentUrl = redirect.nextUrl;
+							currentHostname = redirect.nextHostname;
+							currentSafeAddresses = redirect.nextSafeAddresses;
 							continue;
-						} catch (redirectErr) {
-							return res.status(400).json({ msg: `Redirect blocked: ${redirectErr.message}` });
 						}
+					} catch (redirectErr) {
+						return res.status(400).json({ msg: `Redirect blocked: ${redirectErr.message}` });
 					}
 				} catch (getErr) {
 					redirectChain.push({
@@ -373,25 +380,16 @@ router.post("/", async (req, res) => {
 				status: finalResponse.status,
 			});
 
-			if (
-				finalResponse.status >= 300 &&
-				finalResponse.status < 400 &&
-				finalResponse.headers.location
-			) {
-				try {
-					const { url: nextUrl } = await validateRedirectLocation(
-						finalResponse.headers.location,
-						currentUrl,
-					);
-					if (nextUrl) {
-						redirectChain.push({
-							url: nextUrl,
-							status: "pending",
-						});
-					}
-				} catch (err) {
-					return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
+			try {
+				const redirect = await handleRedirectResponse(finalResponse, currentUrl);
+				if (redirect.shouldContinue) {
+					redirectChain.push({
+						url: redirect.nextUrl,
+						status: "pending",
+					});
 				}
+			} catch (err) {
+				return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
 			}
 		}
 

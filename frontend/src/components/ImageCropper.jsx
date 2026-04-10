@@ -1,6 +1,6 @@
 ﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
-import { useContext, useRef, useState, useEffect } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 const ImageCropper = () => {
@@ -19,10 +19,10 @@ const ImageCropper = () => {
 	// Cleanup object URLs to prevent memory leaks
 	useEffect(() => {
 		return () => {
-			if (imageSrc && imageSrc.startsWith("blob:")) {
+			if (imageSrc?.startsWith("blob:")) {
 				URL.revokeObjectURL(imageSrc);
 			}
-			if (croppedImageSrc && croppedImageSrc.startsWith("blob:")) {
+			if (croppedImageSrc?.startsWith("blob:")) {
 				URL.revokeObjectURL(croppedImageSrc);
 			}
 		};
@@ -58,7 +58,7 @@ const ImageCropper = () => {
 		}
 
 		// Revoke previous blob URL if exists
-		if (imageSrc && imageSrc.startsWith("blob:")) {
+		if (imageSrc?.startsWith("blob:")) {
 			URL.revokeObjectURL(imageSrc);
 		}
 
@@ -110,28 +110,25 @@ const ImageCropper = () => {
 			const mimeType = originalMimeType || "image/png";
 
 			// Use toBlob for better performance and memory efficiency
-			canvas.toBlob(
-				(blob) => {
-					if (!blob) {
-						toast.error("Failed to create image blob.");
-						setLoading(false);
-						return;
-					}
-
-					// Revoke previous object URL if exists
-					if (croppedImageSrc && croppedImageSrc.startsWith("blob:")) {
-						URL.revokeObjectURL(croppedImageSrc);
-					}
-
-					const objectUrl = URL.createObjectURL(blob);
-					setCroppedImageSrc(objectUrl);
-
-					const extension = mimeType.split("/")[1] || "png";
-					handleDownload(objectUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
+			canvas.toBlob((blob) => {
+				if (!blob) {
+					toast.error("Failed to create image blob.");
 					setLoading(false);
-				},
-				mimeType,
-			);
+					return;
+				}
+
+				// Revoke previous object URL if exists
+				if (croppedImageSrc?.startsWith("blob:")) {
+					URL.revokeObjectURL(croppedImageSrc);
+				}
+
+				const objectUrl = URL.createObjectURL(blob);
+				setCroppedImageSrc(objectUrl);
+
+				const extension = mimeType.split("/")[1] || "png";
+				handleDownload(objectUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
+				setLoading(false);
+			}, mimeType);
 			return; // Exit early since toBlob is async
 		} catch (error) {
 			console.error("Cropping error:", error);
