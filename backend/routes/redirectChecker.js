@@ -183,14 +183,13 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Create HTTP and HTTPS agents that resolve a specific hostname to a pinned IP when provided.
+ * Creates HTTP and HTTPS agents whose DNS lookup can be pinned to a provided set of validated IP addresses for a specific hostname.
  *
- * When `validatedAddresses` is set and the requested hostname matches `hostname`, the agents' DNS lookup
- * will return a pinned IP preferring the requested address family; otherwise they perform normal DNS resolution.
+ * When `validatedAddresses` is provided and the request hostname equals `hostname`, the agents return the pinned address(es) (respecting the requested IP family and the `all` option); otherwise the agents fall back to the normal DNS lookup.
  *
- * @param {string} hostname - The original hostname whose resolution may be pinned.
- * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated IP address records to use for `hostname`, or `null` to use normal DNS.
- * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} Agents whose lookup can be pinned to validated addresses.
+ * @param {string} hostname - Hostname whose resolution may be pinned to `validatedAddresses`.
+ * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated `{address, family}` records to use for `hostname`, or `null` to disable pinning.
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the custom lookup.
  */
 function createPinnedAgents(hostname, validatedAddresses) {
 	const lookupFunction = (requestHostname, options, callback) => {
