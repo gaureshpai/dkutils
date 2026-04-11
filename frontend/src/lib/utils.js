@@ -7,5 +7,5 @@ import { twMerge } from "tailwind-merge";
  * @returns {string} The consolidated class string with Tailwind utilities merged and conflicts resolved.
  */
 export function cn(...inputs) {
-  return twMerge(clsx(inputs));
+	return twMerge(clsx(inputs));
 }

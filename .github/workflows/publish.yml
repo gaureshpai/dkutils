@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: "Release type"
+        description: "Website Release type (patch, minor, major, prepatch, preminor, premajor, prerelease)"
         required: true
         default: "patch"
         type: choice
@@ -38,102 +38,92 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Detect changes and bump versions
+      - name: Bump versions
         run: |
-          # Fetch tags and get the last release tag
-          git fetch --tags
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -n "$LAST_TAG" ]; then
-            BASE=$(git rev-list -n1 "$LAST_TAG")
-            echo "Using base commit $BASE from last tag $LAST_TAG"
-          else
-            BASE=$(git rev-parse --verify 4b825dc642cb6eb9a060e54bf8d69288fbee4904)
-            echo "No tags found, using empty-tree SHA $BASE"
-          fi
-          CHANGED_FILES=$(git diff --name-only "$BASE" HEAD)
+          echo "Bumping NPM package version (always patch)"
+          cd package
+          npm version patch --no-git-tag-version --force
+          cd ..
 
-          # Determine which workspaces need version bumps
-          if echo "$CHANGED_FILES" | grep -q "^frontend/"; then
-            echo "Frontend changes detected, bumping frontend version"
-            cd frontend
-            npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
-            cd ..
-          fi
+          echo "Bumping website versions (${{ github.event.inputs.release_type }})"
+          # Always bump root, frontend, and backend versions
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version --force
 
-          if echo "$CHANGED_FILES" | grep -q "^backend/"; then
-            echo "Backend changes detected, bumping backend version"
-            cd backend
-            npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
-            cd ..
-          fi
+          cd frontend
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version --force
+          cd ..
 
-          # Always bump root version
-          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version
+          cd backend
+          npm version ${{ github.event.inputs.release_type }} --no-git-tag-version --force
+          cd ..
 
-      - name: Get version
-        id: get_version
+      - name: Get versions
+        id: get_versions
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          WEBSITE_VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_VERSION=$(node -p "require('./package/package.json').version")
+          echo "website_version=$WEBSITE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Update docs version
+      - name: Update docs and READMEs
         run: |
-          VERSION=${{ steps.get_version.outputs.version }}
-          export VERSION
+          W_VERSION=${{ steps.get_versions.outputs.website_version }}
+          P_VERSION=${{ steps.get_versions.outputs.package_version }}
+          export W_VERSION P_VERSION
           node - <<'EOF'
           const fs = require('fs');
-          const version = process.env.VERSION;
+          const wVersion = process.env.W_VERSION;
+          const pVersion = process.env.P_VERSION;
 
-          // update backend api JSON docs
+          // update backend api JSON docs with website version
           const jsonPath = 'backend/docs/api-documentation.json';
           if (fs.existsSync(jsonPath)) {
             const doc = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
             doc.info = doc.info || {};
-            doc.info.version = version;
+            doc.info.version = wVersion;
             fs.writeFileSync(jsonPath, JSON.stringify(doc, null, 2));
           }
 
-          // update any README files with Version: lines
-          const updateReadme = (p) => {
+          const updateReadme = (p, v) => {
             if (fs.existsSync(p)) {
               let c = fs.readFileSync(p, 'utf8');
-              c = c.replace(/\*\*Version:\*\* .*/, `**Version:** ${version}`);
+              if (c.includes('**Version:**')) {
+                c = c.replace(/\*\*Version:\*\* .*/, `**Version:** ${v}`);
+              } else {
+                const h1Match = c.match(/^# .*/m);
+                if (h1Match) {
+                  c = c.replace(/^# .*/m, `${h1Match[0]}\n\n**Version:** ${v}`);
+                } else {
+                  c = `**Version:** ${v}\n\n${c}`;
+                }
+              }
               fs.writeFileSync(p, c);
             }
           };
-          updateReadme('backend/docs/README.md');
-          updateReadme('README.md');
-          updateReadme('frontend/README.md');
+
+          // Update READMEs with appropriate versions
+          updateReadme('package/README.md', pVersion);
+          updateReadme('README.md', wVersion);
+          updateReadme('frontend/README.md', wVersion);
+          updateReadme('backend/docs/README.md', wVersion);
           EOF
 
       - name: Commit version changes
         id: commit_versions
         run: |
-          FILES=""
-          if [ -f package.json ]; then FILES="$FILES package.json"; fi
-          if [ -f frontend/package.json ]; then FILES="$FILES frontend/package.json"; fi
-          if [ -f backend/package.json ]; then FILES="$FILES backend/package.json"; fi
-          if [ -f backend/docs/api-documentation.json ]; then FILES="$FILES backend/docs/api-documentation.json"; fi
-          if [ -f backend/docs/README.md ]; then FILES="$FILES backend/docs/README.md"; fi
-          if [ -f README.md ]; then FILES="$FILES README.md"; fi
-          if [ -f frontend/README.md ]; then FILES="$FILES frontend/README.md"; fi
-          if [ -n "$FILES" ]; then git add $FILES; fi
+          git add -u
 
           if git diff --cached --quiet; then
             echo "did_commit=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          git commit -m "chore: bump versions for ${{ github.event.inputs.release_type }} v${{ steps.get_version.outputs.version }} release"
-          # Check if tag already exists
-          TAG_NAME="v${{ steps.get_version.outputs.version }}"
-          did_commit=false
+          git commit -m "chore: bump versions (Website: v${{ steps.get_versions.outputs.website_version }}, Package: v${{ steps.get_versions.outputs.package_version }})"
+
+          TAG_NAME="v${{ steps.get_versions.outputs.website_version }}"
           if git rev-parse -q --verify "refs/tags/$TAG_NAME"; then
-            echo "Tag $TAG_NAME already exists, skipping tag creation"
-            # Only set did_commit=true if we actually made a new commit
-            if [ "$(git rev-parse HEAD)" != "$(git rev-parse HEAD~1)" ]; then
-              echo "did_commit=true" >> $GITHUB_OUTPUT
-            fi
+            echo "Tag $TAG_NAME already exists"
+            exit 1
           else
             echo "Creating new tag $TAG_NAME"
             git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
@@ -148,8 +138,8 @@ jobs:
         if: steps.commit_versions.outputs.did_commit == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          name: Release v${{ steps.get_version.outputs.version }}
+          tag_name: v${{ steps.get_versions.outputs.website_version }}
+          name: Release v${{ steps.get_versions.outputs.website_version }}
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.event.inputs.release_type, 'pre') }}

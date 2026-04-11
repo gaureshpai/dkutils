@@ -1,128 +1,118 @@
-﻿import React, { useState, useRef, useEffect, useCallback } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const PasswordStrengthChecker = () => {
-  const [password, setPassword] = useState("");
-  const [strengthScore, setStrengthScore] = useState(0);
-  const [feedback, setFeedback] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const { trackToolUsage } = useAnalytics();
+	const [password, setPassword] = useState("");
+	const [strengthScore, setStrengthScore] = useState(0);
+	const [feedback, setFeedback] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const { trackToolUsage } = useAnalytics();
 
-  const checkStrength = useCallback(async (pwd) => {
-    if (pwd.length === 0) {
-      setStrengthScore(0);
-      setFeedback([]);
-      return;
-    }
+	const checkStrength = useCallback(async (pwd) => {
+		if (pwd.length === 0) {
+			setStrengthScore(0);
+			setFeedback([]);
+			return;
+		}
 
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
-        { password: pwd },
-      );
-      setStrengthScore(res.data.score);
-      setFeedback(res.data.feedback);
-    } catch (err) {
-      console.error("Error checking password strength:", err);
-      setStrengthScore(0);
-      setFeedback(["Error checking strength."]);
-      toast.error("Failed to check password strength.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+		setLoading(true);
+		try {
+			const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/password-strength`, {
+				password: pwd,
+			});
+			setStrengthScore(res.data.score);
+			setFeedback(res.data.feedback);
+		} catch (err) {
+			console.error("Error checking password strength:", err);
+			setStrengthScore(0);
+			setFeedback(["Error checking strength."]);
+			toast.error("Failed to check password strength.");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
-  const checkStrengthRef = useRef(checkStrength);
+	const checkStrengthRef = useRef(checkStrength);
 
-  useEffect(() => {
-    checkStrengthRef.current = checkStrength;
-  }, [checkStrength]);
+	useEffect(() => {
+		checkStrengthRef.current = checkStrength;
+	}, [checkStrength]);
 
-  const debouncedCheckStrengthRef = useRef(
-    ((delay) => {
-      let timeout;
-      return function (...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(
-          () => checkStrengthRef.current.apply(context, args),
-          delay,
-        );
-      };
-    })(500),
-  );
+	const debouncedCheckStrengthRef = useRef(
+		((delay) => {
+			let timeout;
+			return (...args) => {
+				clearTimeout(timeout);
+				timeout = setTimeout(() => checkStrengthRef.current(...args), delay);
+			};
+		})(500),
+	);
 
-  // Track usage once on component mount
-  useEffect(() => {
-    trackToolUsage("PasswordStrengthChecker", "web");
-  }, []);
+	// Track usage once on component mount
+	useEffect(() => {
+		trackToolUsage("PasswordStrengthChecker", "web");
+	}, [trackToolUsage]);
 
-  useEffect(() => {
-    debouncedCheckStrengthRef.current(password);
-  }, [password]);
+	useEffect(() => {
+		debouncedCheckStrengthRef.current(password);
+	}, [password]);
 
-  const getStrengthColor = (score) => {
-    if (score === 0) return "text-muted-foreground";
-    if (score <= 2) return "text-destructive";
-    if (score === 3) return "text-chart-4";
-    if (score >= 4) return "text-chart-2";
-    return "text-muted-foreground";
-  };
+	const getStrengthColor = (score) => {
+		if (score === 0) return "text-muted-foreground";
+		if (score <= 2) return "text-destructive";
+		if (score === 3) return "text-chart-4";
+		if (score >= 4) return "text-chart-2";
+		return "text-muted-foreground";
+	};
 
-  const getStrengthText = (score) => {
-    if (score === 0) return "Very Weak";
-    if (score === 1) return "Weak";
-    if (score === 2) return "Moderate";
-    if (score === 3) return "Strong";
-    if (score >= 4) return "Very Strong";
-    return "Unknown";
-  };
+	const getStrengthText = (score) => {
+		if (score === 0) return "Very Weak";
+		if (score === 1) return "Weak";
+		if (score === 2) return "Moderate";
+		if (score === 3) return "Strong";
+		if (score >= 4) return "Very Strong";
+		return "Unknown";
+	};
 
-  return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Password Strength Checker</h2>
-      <div className="mb-4">
-        <label
-          htmlFor="passwordInput"
-          className="block mb-2 text-sm font-medium text-foreground"
-        >
-          Enter Password
-        </label>
-        <input
-          type="password"
-          id="passwordInput"
-          className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
-          placeholder="Type your password here..."
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">Password Strength Checker</h2>
+			<div className="mb-4">
+				<label htmlFor="passwordInput" className="block mb-2 text-sm font-medium text-foreground">
+					Enter Password
+				</label>
+				<input
+					type="password"
+					id="passwordInput"
+					className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
+					placeholder="Type your password here..."
+					value={password}
+					onChange={(e) => setPassword(e.target.value)}
+				/>
+			</div>
 
-      {password.length > 0 && (
-        <div className="mt-4 p-4 border rounded-md bg-background shadow">
-          <h3 className="text-xl font-bold mb-2">
-            Strength:
-            <span className={`${getStrengthColor(strengthScore)} ml-2`}>
-              {getStrengthText(strengthScore)}
-            </span>
-          </h3>
-          {loading && (
-            <p className="text-muted-foreground">Checking strength...</p>
-          )}
-          {feedback.length > 0 && (
-            <ul className="list-disc list-inside text-muted-foreground mt-2">
-              {feedback.map((msg, index) => (
-                <li key={index}>{msg}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  );
+			{password.length > 0 && (
+				<div className="mt-4 p-4 border rounded-md bg-background shadow">
+					<h3 className="text-xl font-bold mb-2">
+						Strength:
+						<span className={`${getStrengthColor(strengthScore)} ml-2`}>
+							{getStrengthText(strengthScore)}
+						</span>
+					</h3>
+					{loading && <p className="text-muted-foreground">Checking strength...</p>}
+					{feedback.length > 0 && (
+						<ul className="list-disc list-inside text-muted-foreground mt-2">
+							{feedback.map((msg) => (
+								<li key={msg}>{msg}</li>
+							))}
+						</ul>
+					)}
+				</div>
+			)}
+		</div>
+	);
 };
 
 export default PasswordStrengthChecker;

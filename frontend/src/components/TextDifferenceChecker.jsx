@@ -1,149 +1,166 @@
-﻿import React, { useState } from "react";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
 import { diff_match_patch } from "diff-match-patch";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
 const TextDifferenceChecker = () => {
-  const { trackToolUsage } = useAnalytics();
+	const { trackToolUsage } = useAnalytics();
 
-  const escapeHtml = (value) =>
-    String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;")
-      .replace(/`/g, "&#96;");
+	const escapeHtml = (value) =>
+		String(value)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/\"/g, "&quot;")
+			.replace(/'/g, "&#39;")
+			.replace(/`/g, "&#96;");
 
-  const [text1, setText1] = useState("");
-  const [text2, setText2] = useState("");
-  const [diffResult, setDiffResult] = useState("");
-  const [loading, setLoading] = useState(false);
+	const [text1, setText1] = useState("");
+	const [text2, setText2] = useState("");
+	const [diffResult, setDiffResult] = useState("");
+	const [diffParts, setDiffParts] = useState([]);
+	const [loading, setLoading] = useState(false);
 
-  const handleText1Change = (e) => {
-    setText1(e.target.value);
-  };
+	const handleText1Change = (e) => {
+		setText1(e.target.value);
+	};
 
-  const handleText2Change = (e) => {
-    setText2(e.target.value);
-  };
+	const handleText2Change = (e) => {
+		setText2(e.target.value);
+	};
 
-  const compareTexts = () => {
-    setLoading(true);
-    trackToolUsage("TextDifferenceChecker", "text");
-    setTimeout(() => {
-      const dmp = new diff_match_patch();
-      const diff = dmp.diff_main(text1, text2);
-      dmp.diff_cleanupSemantic(diff);
+	const compareTexts = () => {
+		setLoading(true);
+		trackToolUsage("TextDifferenceChecker", "text");
+		setTimeout(() => {
+			const dmp = new diff_match_patch();
+			const diff = dmp.diff_main(text1, text2);
+			dmp.diff_cleanupSemantic(diff);
 
-      const html = diff
-        .map((part) => {
-          const [type, text] = part;
-          const safeText = escapeHtml(text);
-          if (type === 0) {
-            return safeText;
-          } else if (type === 1) {
-            return `<span class="bg-chart-2/20">${safeText}</span>`;
-          } else if (type === -1) {
-            return `<span class="bg-destructive/20">${safeText}</span>`;
-          }
-          return "";
-        })
-        .join("");
+			const html = diff
+				.map((part) => {
+					const [type, text] = part;
+					const safeText = escapeHtml(text);
+					if (type === -1) {
+						return `<del class="bg-red-200 dark:bg-red-900">${safeText}</del>`;
+					}
+					if (type === 1) {
+						return `<ins class="bg-green-200 dark:bg-green-900 no-underline">${safeText}</ins>`;
+					}
+					return safeText;
+				})
+				.join("");
 
-      setDiffResult(html);
-      setLoading(false);
-    }, 500);
-  };
+			setDiffParts(
+				diff.map(([type, text]) => ({
+					key: `${type}:${text}`,
+					type,
+					text,
+				})),
+			);
+			setDiffResult(html);
+			setLoading(false);
+		}, 500);
+	};
 
-  const copyToClipboard = async () => {
-    try {
-      const tempElement = document.createElement("div");
-      tempElement.innerHTML = diffResult;
-      await navigator.clipboard.writeText(tempElement.innerText);
-      toast.success("Copied to clipboard!");
-    } catch (error) {
-      console.error("Failed to copy to clipboard:", error);
-      toast.error("Failed to copy to clipboard. Please try again.");
-    }
-  };
+	const copyToClipboard = async () => {
+		try {
+			const tempElement = document.createElement("div");
+			tempElement.innerHTML = diffResult;
+			const plainText = tempElement.innerText;
+			await navigator.clipboard.writeText(plainText);
+			toast.success("Copied to clipboard!");
+		} catch (error) {
+			console.error("Failed to copy to clipboard:", error);
+			toast.error("Failed to copy to clipboard. Please try again.");
+		}
+	};
 
-  return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Text Difference Checker</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label
-            htmlFor="text1"
-            className="block mb-2 text-sm font-medium text-foreground"
-          >
-            Text 1
-          </label>
-          <textarea
-            id="text1"
-            className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
-            rows="10"
-            placeholder="Enter first text..."
-            value={text1}
-            onChange={handleText1Change}
-          ></textarea>
-        </div>
-        <div>
-          <label
-            htmlFor="text2"
-            className="block mb-2 text-sm font-medium text-foreground"
-          >
-            Text 2
-          </label>
-          <textarea
-            id="text2"
-            className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
-            rows="10"
-            placeholder="Enter second text..."
-            value={text2}
-            onChange={handleText2Change}
-          ></textarea>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={compareTexts}
-        className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-        disabled={loading}
-      >
-        {loading ? "Comparing..." : "Compare Texts"}
-      </button>
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">Text Difference Checker</h2>
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+				<div>
+					<label htmlFor="text1" className="block mb-2 text-sm font-medium text-foreground">
+						Text 1
+					</label>
+					<textarea
+						id="text1"
+						className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
+						rows="10"
+						placeholder="Enter first text..."
+						value={text1}
+						onChange={handleText1Change}
+					/>
+				</div>
+				<div>
+					<label htmlFor="text2" className="block mb-2 text-sm font-medium text-foreground">
+						Text 2
+					</label>
+					<textarea
+						id="text2"
+						className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
+						rows="10"
+						placeholder="Enter second text..."
+						value={text2}
+						onChange={handleText2Change}
+					/>
+				</div>
+			</div>
+			<button
+				type="button"
+				onClick={compareTexts}
+				className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
+				disabled={loading}
+			>
+				{loading ? "Comparing..." : "Compare Texts"}
+			</button>
 
-      {diffResult && (
-        <div className="mt-4">
-          <h3 className="text-xl font-bold mb-2">
-            Differences:
-            <button
-              type="button"
-              aria-label="Copy differences"
-              onClick={copyToClipboard}
-              className="ml-2 text-sm text-primary hover:underline"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 inline-block"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-              </svg>
-            </button>
-          </h3>
-          <div
-            className="bg-background border border-input text-foreground text-sm rounded-lg block w-full p-2.5 h-max"
-            dangerouslySetInnerHTML={{ __html: diffResult }}
-          ></div>
-        </div>
-      )}
-    </div>
-  );
+			{diffResult && (
+				<div className="mt-4">
+					<h3 className="text-xl font-bold mb-2">
+						Differences:
+						<button
+							type="button"
+							aria-label="Copy differences"
+							onClick={copyToClipboard}
+							className="ml-2 text-sm text-primary hover:underline"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-5 w-5 inline-block"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								aria-hidden="true"
+							>
+								<path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+								<path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+							</svg>
+						</button>
+					</h3>
+					<div className="bg-background border border-input text-foreground text-sm rounded-lg block w-full p-2.5 h-max whitespace-pre-wrap">
+						{diffParts.map(({ key, type, text }) => {
+							if (type === -1) {
+								return (
+									<del key={key} className="bg-red-200 dark:bg-red-900">
+										{text}
+									</del>
+								);
+							}
+							if (type === 1) {
+								return (
+									<ins key={key} className="bg-green-200 dark:bg-green-900 no-underline">
+										{text}
+									</ins>
+								);
+							}
+							return <span key={key}>{text}</span>;
+						})}
+					</div>
+				</div>
+			)}
+		</div>
+	);
 };
 
 export default TextDifferenceChecker;

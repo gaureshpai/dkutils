@@ -1,140 +1,133 @@
-﻿import React, { useState } from "react";
-import TurndownService from "turndown";
+﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
+import TurndownService from "turndown";
 
 // Create a single shared instance outside the component with better configuration
 const turndownService = new TurndownService({
-  headingStyle: "atx",
-  bulletListMarker: "-",
-  codeBlockStyle: "fenced",
-  fence: "```",
-  emDelimiter: "*",
-  strongDelimiter: "**",
-  linkStyle: "inlined",
-  linkReferenceStyle: "full",
-  preformattedCode: false,
+	headingStyle: "atx",
+	bulletListMarker: "-",
+	codeBlockStyle: "fenced",
+	fence: "```",
+	emDelimiter: "*",
+	strongDelimiter: "**",
+	linkStyle: "inlined",
+	linkReferenceStyle: "full",
+	preformattedCode: false,
 });
 
 const HtmlToMarkdownConverter = () => {
-  const { trackToolUsage } = useAnalytics();
+	const { trackToolUsage } = useAnalytics();
 
-  const [html, setHtml] = useState("");
-  const [markdown, setMarkdown] = useState("");
-  const [hasTracked, setHasTracked] = useState(false);
+	const [html, setHtml] = useState("");
+	const [markdown, setMarkdown] = useState("");
+	const [hasTracked, setHasTracked] = useState(false);
 
-  const handleHtmlChange = (e) => {
-    const newHtml = e.target.value;
-    setHtml(newHtml);
+	const handleHtmlChange = (e) => {
+		const newHtml = e.target.value;
+		setHtml(newHtml);
 
-    // Convert HTML to Markdown with better error handling
-    try {
-      if (newHtml.trim()) {
-        const convertedMarkdown = turndownService.turndown(newHtml);
-        setMarkdown(convertedMarkdown);
-      } else {
-        setMarkdown("");
-      }
-    } catch (error) {
-      console.error("Error converting HTML to Markdown:", error);
-      setMarkdown(
-        "// Error converting HTML to Markdown\n// Please check your HTML input",
-      );
-      toast.error(
-        "Error converting HTML to Markdown. Please check your input.",
-      );
-    }
+		// Convert HTML to Markdown with better error handling
+		try {
+			if (newHtml.trim()) {
+				const convertedMarkdown = turndownService.turndown(newHtml);
+				setMarkdown(convertedMarkdown);
+			} else {
+				setMarkdown("");
+			}
+		} catch (error) {
+			console.error("Error converting HTML to Markdown:", error);
+			setMarkdown("// Error converting HTML to Markdown\n// Please check your HTML input");
+			toast.error("Error converting HTML to Markdown. Please check your input.");
+		}
 
-    // Track usage on first meaningful interaction (non-empty HTML input)
-    if (!hasTracked && newHtml.trim().length > 0) {
-      trackToolUsage("HtmlToMarkdownConverter", "web");
-      setHasTracked(true);
-    }
-  };
+		// Track usage on first meaningful interaction (non-empty HTML input)
+		if (!hasTracked && newHtml.trim().length > 0) {
+			trackToolUsage("HtmlToMarkdownConverter", "web");
+			setHasTracked(true);
+		}
+	};
 
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(markdown);
-      toast.success("Copied to clipboard!");
-      // Track copy action for analytics consistency
-      trackToolUsage("HtmlToMarkdownConverter:copy", "web");
-    } catch (error) {
-      console.error("Failed to copy to clipboard:", error);
-      toast.error("Failed to copy to clipboard. Please try again.");
-    }
-  };
+	const copyToClipboard = async () => {
+		try {
+			await navigator.clipboard.writeText(markdown);
+			toast.success("Copied to clipboard!");
+			// Track copy action for analytics consistency
+			trackToolUsage("HtmlToMarkdownConverter:copy", "web");
+		} catch (error) {
+			console.error("Failed to copy to clipboard:", error);
+			toast.error("Failed to copy to clipboard. Please try again.");
+		}
+	};
 
-  const clearAll = () => {
-    setHtml("");
-    setMarkdown("");
-    setHasTracked(false);
-    toast.info("Cleared all content");
-  };
+	const clearAll = () => {
+		setHtml("");
+		setMarkdown("");
+		setHasTracked(false);
+		toast.info("Cleared all content");
+	};
 
-  return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">HTML to Markdown Converter</h2>
-      <div className="mb-4 flex gap-2">
-        <button
-          type="button"
-          onClick={clearAll}
-          className="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
-        >
-          Clear All
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label
-            htmlFor="htmlInput"
-            className="block mb-2 text-sm font-medium text-foreground"
-          >
-            HTML Input
-          </label>
-          <textarea
-            id="htmlInput"
-            className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
-            rows="10"
-            placeholder="Enter HTML here..."
-            value={html}
-            onChange={handleHtmlChange}
-          ></textarea>
-        </div>
-        <div>
-          <label
-            htmlFor="markdownOutput"
-            className="block mb-2 text-sm font-medium text-foreground"
-          >
-            Markdown Output
-            <button
-              type="button"
-              onClick={copyToClipboard}
-              className="ml-2 text-sm text-primary hover:underline"
-              aria-label="Copy markdown to clipboard"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 inline-block"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-              </svg>
-            </button>
-          </label>
-          <textarea
-            id="markdownOutput"
-            className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
-            rows="10"
-            readOnly
-            value={markdown}
-          ></textarea>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">HTML to Markdown Converter</h2>
+			<div className="mb-4 flex gap-2">
+				<button
+					type="button"
+					onClick={clearAll}
+					className="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
+				>
+					Clear All
+				</button>
+			</div>
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<label htmlFor="htmlInput" className="block mb-2 text-sm font-medium text-foreground">
+						HTML Input
+					</label>
+					<textarea
+						id="htmlInput"
+						className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
+						rows="10"
+						placeholder="Enter HTML here..."
+						value={html}
+						onChange={handleHtmlChange}
+					/>
+				</div>
+				<div>
+					<label
+						htmlFor="markdownOutput"
+						className="block mb-2 text-sm font-medium text-foreground"
+					>
+						Markdown Output
+						<button
+							type="button"
+							onClick={copyToClipboard}
+							className="ml-2 text-sm text-primary hover:underline"
+							aria-label="Copy markdown to clipboard"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-5 w-5 inline-block"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								aria-hidden="true"
+							>
+								<path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+								<path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+							</svg>
+						</button>
+					</label>
+					<textarea
+						id="markdownOutput"
+						className="w-full px-3 py-2 bg-background placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm h-max"
+						rows="10"
+						readOnly
+						value={markdown}
+					/>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 export default HtmlToMarkdownConverter;

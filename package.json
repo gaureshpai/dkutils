@@ -1,55 +1,72 @@
 {
-  "name": "dkutils",
-  "version": "2.0.2",
-  "description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
-  "private": true,
-  "packageManager": "pnpm@10.28.2",
-  "pnpm": {
-    "peerDependencyRules": {
-      "allowedVersions": {
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0"
-      }
-    }
-  },
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "format": "prettier --write .",
-    "prepare": "husky",
-    "start": "turbo run start"
-  },
-  "keywords": [
-    "utility",
-    "tools",
-    "web-app",
-    "mern-stack",
-    "react",
-    "node.js",
-    "express.js",
-    "mongodb",
-    "tailwind-css",
-    "image-converter",
-    "pdf-tools",
-    "text-tools",
-    "url-shortener",
-    "qr-code",
-    "password-generator",
-    "hash-generator",
-    "authentication",
-    "user-management",
-    "responsive-design",
-    "open-source"
-  ],
-  "author": "gaureshpai",
-  "license": "ISC",
-  "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "prettier": "^3.3.3",
-    "turbo": "^2.8.1"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,css,md}": "prettier --write"
-  }
+	"name": "dkutils-workspace",
+	"version": "2.0.2",
+	"description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
+	"private": true,
+	"packageManager": "pnpm@10.28.2",
+	"pnpm": {
+		"peerDependencyRules": {
+			"allowedVersions": {
+				"react": "^19.0.0",
+				"react-dom": "^19.0.0"
+			}
+		},
+		"onlyBuiltDependencies": [
+			"sharp",
+			"onnxruntime-node",
+			"ffmpeg-static",
+			"esbuild",
+			"@biomejs/biome",
+			"core-js",
+			"protobufjs"
+		]
+	},
+	"scripts": {
+		"dev": "turbo run dev",
+		"clean": "reclaimspace --yes",
+		"build": "turbo run build",
+		"test": "turbo run test",
+		"format": "biome format --write .",
+		"lint": "biome lint .",
+		"check": "biome check --write .",
+		"lint:all": "npx biome lint --write package backend frontend",
+		"type-check": "pnpm --filter dkutils type-check",
+		"prepare": "husky",
+		"start": "turbo run start"
+	},
+	"keywords": [
+		"utility",
+		"tools",
+		"web-app",
+		"mern-stack",
+		"react",
+		"node.js",
+		"express.js",
+		"mongodb",
+		"tailwind-css",
+		"image-converter",
+		"pdf-tools",
+		"text-tools",
+		"url-shortener",
+		"qr-code",
+		"password-generator",
+		"hash-generator",
+		"authentication",
+		"user-management",
+		"responsive-design",
+		"open-source"
+	],
+	"author": "gaureshpai",
+	"license": "ISC",
+	"devDependencies": {
+		"@biomejs/biome": "catalog:",
+		"husky": "catalog:",
+		"lint-staged": "^16.2.7",
+		"prettier": "^3.3.3",
+		"turbo": "catalog:",
+		"reclaimspace": "^0.2.1"
+	},
+	"lint-staged": {
+		"*.{js,jsx,ts,tsx,json,css,md}": "biome check --write"
+	}
 }
