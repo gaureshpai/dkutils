@@ -94,15 +94,14 @@ function isMulticast(ip) {
 }
 
 /**
- * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ * Ensure a hostname or IP literal does not refer to private, link-local, loopback, or multicast addresses.
  *
- * If given an IP literal, throws if that IP is unsafe. If given a hostname, resolves all A/AAAA records and throws
- * if any resolved address is unsafe. DNS errors with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, and `ENOTIMP` are
- * suppressed and cause the function to return `null`.
+ * If `hostname` is an IP literal, throws when that IP is unsafe. If `hostname` is a domain name, resolves A/AAAA
+ * records and throws when any resolved address is unsafe. DNS errors with codes `ENOTFOUND`, `ENODATA`,
+ * `EAI_AGAIN`, and `ENOTIMP` are suppressed and cause the function to return `null`.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Array<{address: string, family: number}>|null} Array of validated IP address records with their families,
- *                                                          or `null` if no addresses were found or DNS errors were suppressed.
+ * @returns {Array<{address: string, family: number}>|null} Array of validated IP records with their families, or `null` when no addresses were found or DNS errors were suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
  */
 async function checkIPSafety(hostname) {
@@ -142,10 +141,10 @@ async function checkIPSafety(hostname) {
 }
 
 /**
- * Validate that a URL uses the `http` or `https` scheme and that its hostname (or any addresses it resolves to) is not private, link-local, loopback, or multicast.
+ * Ensure the given URL uses the `http` or `https` scheme and that its hostname and any resolved IP addresses are not private, link-local, loopback, or multicast.
  * @param {string} targetUrl - The URL to validate.
- * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>|null}} The parsed hostname and validated IP addresses for connection pinning, or `null` if no addresses were resolved.
- * @throws {Error} If the URL's scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (messages: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
+ * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>|null}} Parsed hostname and validated IP addresses for connection pinning, or `null` if DNS lookup returned no records.
+ * @throws {Error} If the URL scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (messages: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
  */
 async function validateUrl(targetUrl) {
 	const parsed = new URL(targetUrl);
@@ -178,12 +177,11 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Handle a potential redirect response by validating the new location and returning the next state.
- * @param {import("axios").AxiosResponse} response - The axios response to check for redirects.
- * @param {string} currentUrl - The current URL that was requested.
- * @returns {Promise<{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}>}
- * @throws {Error} If the redirect location is invalid or unsafe.
- */
+ * Determine whether an axios response contains a valid redirect and, if so, provide the next request state.
+ * @param {import("axios").AxiosResponse} response - The axios response to examine for a redirect Location header.
+ * @param {string} currentUrl - The URL that was requested and used to resolve relative redirect locations.
+ * @returns {Promise<{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}>} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when a redirect Location was present and validated; `{ shouldContinue: false }` otherwise.
+ * @throws {Error} If the redirect Location is invalid or resolves to an unsafe address. */
 async function handleRedirectResponse(response, currentUrl) {
 	if (response.status >= 300 && response.status < 400 && response.headers.location) {
 		const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
