@@ -94,15 +94,16 @@ function isMulticast(ip) {
 }
 
 /**
- * Ensure a hostname or IP literal does not refer to private, link-local, loopback, or multicast addresses.
+ * Validate that a hostname or IP literal does not refer to private, link-local, loopback, or multicast addresses.
  *
- * If `hostname` is an IP literal, throws when that IP is unsafe. If `hostname` is a domain name, resolves A/AAAA
- * records and throws when any resolved address is unsafe. DNS errors with codes `ENOTFOUND`, `ENODATA`,
- * `EAI_AGAIN`, and `ENOTIMP` are suppressed and cause the function to return `null`.
+ * If `hostname` is an IP literal, the function checks that IP and throws on unsafe addresses. If `hostname` is a domain name,
+ * it resolves A/AAAA records and throws if any resolved address is unsafe. Certain DNS failures are suppressed and cause the
+ * function to return `null`.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
  * @returns {Array<{address: string, family: number}>|null} Array of validated IP records with their families, or `null` when no addresses were found or DNS errors were suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
+ * @see ENOTFOUND, ENODATA, EAI_AGAIN, ENOTIMP - these DNS error codes are suppressed and result in `null` being returned.
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
@@ -177,11 +178,12 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Determine whether an axios response contains a valid redirect and, if so, provide the next request state.
- * @param {import("axios").AxiosResponse} response - The axios response to examine for a redirect Location header.
- * @param {string} currentUrl - The URL that was requested and used to resolve relative redirect locations.
- * @returns {Promise<{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}>} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when a redirect Location was present and validated; `{ shouldContinue: false }` otherwise.
- * @throws {Error} If the redirect Location is invalid or resolves to an unsafe address. */
+ * Detects and validates an HTTP redirect from an axios response and provides the next request state.
+ * @param {import("axios").AxiosResponse} response - The axios response to inspect for a redirect Location header.
+ * @param {string} currentUrl - The URL used to resolve relative redirect locations.
+ * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when a redirect Location header is present and validated; `{ shouldContinue: false }` otherwise.
+ * @throws {Error} If the redirect Location is invalid or resolves to an unsafe address.
+ */
 async function handleRedirectResponse(response, currentUrl) {
 	if (response.status >= 300 && response.status < 400 && response.headers.location) {
 		const { url: nextUrl, safeAddresses: nextSafeAddresses } = await validateRedirectLocation(
