@@ -15,6 +15,7 @@ const ImageCropper = () => {
 	const [loading, setLoading] = useState(false);
 	const imageRef = useRef(null);
 	const canvasRef = useRef(null);
+	const cropOpIdRef = useRef(0);
 
 	// Cleanup object URLs to prevent memory leaks
 	useEffect(() => {
@@ -77,6 +78,7 @@ const ImageCropper = () => {
 
 		try {
 			trackToolUsage("ImageCropper", "image");
+			const currentOpId = ++cropOpIdRef.current;
 			const image = imageRef.current;
 			const canvas = canvasRef.current;
 
@@ -111,6 +113,11 @@ const ImageCropper = () => {
 
 			// Use toBlob for better performance and memory efficiency
 			canvas.toBlob((blob) => {
+				// Verify this callback is for the current crop operation
+				if (currentOpId !== cropOpIdRef.current) {
+					return; // Stale callback, ignore
+				}
+
 				if (!blob) {
 					toast.error("Failed to create image blob.");
 					setLoading(false);
@@ -160,6 +167,7 @@ const ImageCropper = () => {
 					type="file"
 					accept="image/*"
 					onChange={handleFileChange}
+					disabled={loading}
 				/>
 			</div>
 
