@@ -216,9 +216,7 @@ router.post(
 			}
 
 			for (const page of pdfDoc.getPages()) {
-				const currentRotation = page.getRotation().angle;
-				const newRotation = Number(angle);
-				page.setRotation(degrees(newRotation));
+			page.setRotation(degrees(Number(angle)));
 			}
 
 			const modifiedPdfBytes = await pdfDoc.save();
