@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";

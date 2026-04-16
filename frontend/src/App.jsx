@@ -29,10 +29,14 @@ const PrivateRoute = ({ children }) => {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!state.isAuthenticated) {
+		if (state.isInitialized && !state.isAuthenticated) {
 			navigate("/login");
 		}
-	}, [state.isAuthenticated, navigate]);
+	}, [state.isInitialized, state.isAuthenticated, navigate]);
+
+	if (!state.isInitialized) {
+		return null;
+	}
 
 	return state.isAuthenticated ? children : null;
 };
@@ -53,13 +57,14 @@ function App() {
 				const decoded = jwtDecode(token);
 				const currentTime = Date.now() / 1000;
 
-				if (decoded.exp < currentTime) {
+				// Verify exp field is present and a number
+				if (typeof decoded.exp === "number" && decoded.exp >= currentTime) {
+					setAuthToken(token);
+					dispatch({ type: "LOGIN", payload: { token, user: decoded.user } });
+				} else {
 					setAuthToken(null);
 					localStorage.removeItem("token");
 					dispatch({ type: "LOGOUT" });
-				} else {
-					setAuthToken(token);
-					dispatch({ type: "LOGIN", payload: { token, user: decoded.user } });
 				}
 			} catch (error) {
 				console.error("Error decoding token:", error);
@@ -68,6 +73,7 @@ function App() {
 				dispatch({ type: "LOGOUT" });
 			}
 		}
+		dispatch({ type: "SET_INITIALIZED" });
 	}, [dispatch]);
 
 	return (

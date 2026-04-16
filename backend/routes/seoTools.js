@@ -16,7 +16,10 @@ const validateDomain = async (domain) => {
 		}
 
 		// Resolve DNS to check IP addresses (dual-stack support)
-		const addresses = await dns.promises.lookup(domain, { all: true, verbatim: true });
+		const addresses = await dns.promises.lookup(domain, {
+			all: true,
+			verbatim: true,
+		});
 		if (addresses.length === 0) {
 			throw new Error("DNS resolution failed");
 		}
@@ -40,6 +43,20 @@ const fetchContent = async (url, validatedAddresses) => {
 		const pinnedLookup = (hostname, options, callback) => {
 			if (hostname !== parsedUrl.hostname) {
 				return dns.lookup(hostname, options, callback);
+			}
+
+			// Handle options.all === true case
+			if (options && options.all === true) {
+				const family = options?.family;
+				const mappedArray = family
+					? validatedAddresses.filter((entry) => entry.family === family)
+					: validatedAddresses;
+
+				if (mappedArray.length === 0) {
+					return callback(new Error("No validated DNS records available"));
+				}
+
+				return callback(null, mappedArray);
 			}
 
 			const family = typeof options === "number" ? options : options?.family;
@@ -66,78 +83,109 @@ const fetchContent = async (url, validatedAddresses) => {
 		});
 		return { content: response.data, exists: true };
 	} catch (error) {
-		if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
-			return { content: "", exists: false, error: "File not found (404)" };
+		if (axios.isAxiosError(error)) {
+			if (error.response?.status === 404) {
+				return { content: "", exists: false, error: "File not found (404)" };
+			}
+			if ([301, 302, 307, 308].includes(error.response?.status)) {
+				return {
+					content: "",
+					exists: false,
+					error: "redirect",
+					redirectStatus: error.response.status,
+				};
+			}
+			if (error.code === "ERR_FR_TOO_MANY_REDIRECTS") {
+				return { content: "", exists: false, error: "too_many_redirects" };
+			}
 		}
-		if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
-			return { content: "", exists: false, error: "Request timed out" };
-		}
-		console.error(`Error fetching ${url}:`, error.message);
-		return {
-			content: "",
-			exists: false,
-			error: `Failed to fetch: ${error.message}`,
-		};
+		return { content: "", exists: false, error: error.message };
 	}
 };
 
-// @route   POST /api/seo/robots-txt
-// @desc    Fetch and return robots.txt content for a given domain
+// @route   GET /api/seo/robots-txt
+// @desc    Fetch and validate robots.txt from a domain
 // @access  Public
-router.post("/robots-txt", async (req, res) => {
-	const { domain } = req.body;
+router.get("/robots-txt", async (req, res) => {
+	const { url } = req.query;
 
-	if (!domain) {
-		return res.status(400).json({ msg: "Domain is required." });
+	if (!url) {
+		return res.status(400).json({ msg: "URL is required" });
 	}
 
 	try {
-		const validatedAddresses = await validateDomain(domain);
-		const url = `http://${domain}/robots.txt`;
-		const httpsUrl = `https://${domain}/robots.txt`;
-		let result = await fetchContent(httpsUrl, validatedAddresses);
-		if (
-			!result.exists &&
-			(result.error === "File not found (404)" ||
-				result.error?.includes("redirect") ||
-				result.error?.includes("302") ||
-				result.error?.includes("301"))
-		) {
-			result = await fetchContent(url, validatedAddresses);
+		const robotsUrl = new URL("/robots.txt", url);
+
+		let validatedAddresses;
+		try {
+			const validation = await validateDomain(robotsUrl.hostname);
+			validatedAddresses = validation;
+		} catch (validationError) {
+			return res.status(400).json({ msg: validationError.message });
 		}
-		return res.status(200).json(result);
-	} catch (error) {
-		return res.status(400).json({ msg: error.message });
+
+		let result = await fetchContent(robotsUrl.href, validatedAddresses);
+
+		if (!result.exists) {
+			// Try HTTP if HTTPS fails
+			const httpUrl = robotsUrl.href.replace(/^https:/, "http:");
+			result = await fetchContent(httpUrl, validatedAddresses);
+		}
+
+		if (result.exists) {
+			return res.json({
+				content: result.content,
+				url: robotsUrl.href,
+			});
+		}
+
+		return res.status(404).json({ msg: result.error || "robots.txt not found" });
+	} catch (err) {
+		console.error("Error fetching robots.txt:", err);
+		return res.status(500).json({ msg: "Server Error" });
 	}
 });
 
-// @route   POST /api/seo/sitemap-xml
-// @desc    Fetch and return sitemap.xml content for a given domain
+// @route   GET /api/seo/sitemap-xml
+// @desc    Fetch and validate sitemap.xml from a domain
 // @access  Public
-router.post("/sitemap-xml", async (req, res) => {
-	const { domain } = req.body;
+router.get("/sitemap-xml", async (req, res) => {
+	const { url } = req.query;
 
-	if (!domain) {
-		return res.status(400).json({ msg: "Domain is required." });
+	if (!url) {
+		return res.status(400).json({ msg: "URL is required" });
 	}
 
 	try {
-		const validatedAddresses = await validateDomain(domain);
-		const url = `http://${domain}/sitemap.xml`;
-		const httpsUrl = `https://${domain}/sitemap.xml`;
-		let result = await fetchContent(httpsUrl, validatedAddresses);
-		if (
-			!result.exists &&
-			(result.error === "File not found (404)" ||
-				result.error?.includes("redirect") ||
-				result.error?.includes("302") ||
-				result.error?.includes("301"))
-		) {
-			result = await fetchContent(url, validatedAddresses);
+		const sitemapUrl = new URL("/sitemap.xml", url);
+
+		let validatedAddresses;
+		try {
+			const validation = await validateDomain(sitemapUrl.hostname);
+			validatedAddresses = validation;
+		} catch (validationError) {
+			return res.status(400).json({ msg: validationError.message });
 		}
-		return res.status(200).json(result);
-	} catch (error) {
-		return res.status(400).json({ msg: error.message });
+
+		let result = await fetchContent(sitemapUrl.href, validatedAddresses);
+
+		if (!result.exists) {
+			// Try HTTP if HTTPS fails
+			const httpUrl = sitemapUrl.href.replace(/^https:/, "http:");
+			result = await fetchContent(httpUrl, validatedAddresses);
+		}
+
+		if (result.exists) {
+			return res.json({
+				content: result.content,
+				url: sitemapUrl.href,
+			});
+		}
+
+		return res.status(404).json({ msg: result.error || "sitemap.xml not found" });
+	} catch (err) {
+		console.error("Error fetching sitemap.xml:", err);
+		return res.status(500).json({ msg: "Server Error" });
 	}
 });
 

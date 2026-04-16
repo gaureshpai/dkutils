@@ -7,28 +7,29 @@ const { TotalUsage } = require("@backend/models/ServiceUsage");
 const GLOBAL_KEY = "global";
 
 const migrateTotalUsageKey = async () => {
-	const matchingDocs = await TotalUsage.find({
-		$or: [{ key: GLOBAL_KEY }, { key: { $exists: false } }, { key: null }],
-	})
-		.sort({ _id: 1 })
-		.lean();
-
-	const totalCount = matchingDocs.reduce(
-		(sum, doc) => sum + (typeof doc.totalCount === "number" ? doc.totalCount : 0),
-		0,
-	);
-
-	const canonicalDoc =
-		matchingDocs.find((doc) => doc.key === GLOBAL_KEY) ?? matchingDocs[0] ?? null;
-	const duplicateIds = matchingDocs
-		.filter((doc) => canonicalDoc && String(doc._id) !== String(canonicalDoc._id))
-		.map((doc) => doc._id);
-
-	// Perform merge and delete in a transaction to ensure atomicity
+	// Perform read-and-aggregate step inside the same transaction
 	const session = await mongoose.startSession();
 	session.startTransaction();
 
 	try {
+		const matchingDocs = await TotalUsage.find({
+			$or: [{ key: GLOBAL_KEY }, { key: { $exists: false } }, { key: null }],
+		})
+			.sort({ _id: 1 })
+			.lean()
+			.session(session);
+
+		const totalCount = matchingDocs.reduce(
+			(sum, doc) => sum + (typeof doc.totalCount === "number" ? doc.totalCount : 0),
+			0,
+		);
+
+		const canonicalDoc =
+			matchingDocs.find((doc) => doc.key === GLOBAL_KEY) ?? matchingDocs[0] ?? null;
+		const duplicateIds = matchingDocs
+			.filter((doc) => canonicalDoc && String(doc._id) !== String(canonicalDoc._id))
+			.map((doc) => doc._id);
+
 		if (canonicalDoc) {
 			await TotalUsage.updateOne(
 				{ _id: canonicalDoc._id },

@@ -8,7 +8,8 @@ const path = require("node:path");
  */
 const sanitizeFilename = (filename, fallback = `file_${Date.now()}`) => {
 	if (!filename || typeof filename !== "string") {
-		return fallback;
+		// Sanitize fallback before returning
+		return sanitizeFallback(fallback);
 	}
 
 	// 1. Get the base name to remove any path segments (e.g., ../, /)
@@ -41,10 +42,25 @@ const sanitizeFilename = (filename, fallback = `file_${Date.now()}`) => {
 
 	// 9. Provide a deterministic fallback if the sanitized name is empty
 	if (!sanitized || sanitized === "." || sanitized === "..") {
-		return fallback;
+		return sanitizeFallback(fallback);
 	}
 
 	return sanitized;
+};
+
+// Helper function to sanitize fallback value
+const sanitizeFallback = (fallback) => {
+	if (!fallback || typeof fallback !== "string") {
+		return `file_${Date.now()}`;
+	}
+
+	// Apply basic sanitization to fallback
+	let sanitized = fallback.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+	sanitized = sanitized.replace(/\.\./g, ".");
+	sanitized = sanitized.replace(/[_-]{2,}/g, "_");
+	sanitized = sanitized.replace(/^[.\-_]+|[.\-_]+$/g, "");
+
+	return sanitized || `file_${Date.now()}`;
 };
 
 module.exports = { sanitizeFilename };

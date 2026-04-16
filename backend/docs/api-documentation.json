@@ -954,12 +954,12 @@
 						}
 					}
 				],
-				"middleware": []
+				"middleware": ["requireAuth"]
 			}
 		},
 		"/api/clean-supabase/trigger": {
-			"get": {
-				"summary": "GET /api/clean-supabase/trigger",
+			"post": {
+				"summary": "POST /api/clean-supabase/trigger",
 				"responses": [
 					{
 						"status": 200,
@@ -979,7 +979,7 @@
 						}
 					}
 				],
-				"middleware": []
+				"middleware": ["requireSecret"]
 			}
 		},
 		"/api/screenshot": {

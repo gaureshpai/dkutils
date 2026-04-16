@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
@@ -15,10 +15,20 @@ const Base64TextConverter = () => {
 
 	const encodeBase64 = () => {
 		setLoading(true);
-		trackToolUsage("Base64TextConverter", "text");
 		setTimeout(() => {
 			try {
-				setConvertedText(btoa(text));
+				// UTF-8 safe encoding using TextEncoder
+				const encoder = new TextEncoder();
+				const data = encoder.encode(text);
+				// Convert byte array to binary string
+				let binaryString = "";
+				for (let i = 0; i < data.length; i++) {
+					binaryString += String.fromCharCode(data[i]);
+				}
+				// Convert to base64
+				const encoded = btoa(binaryString);
+				trackToolUsage("Base64TextConverter", "text");
+				setConvertedText(encoded);
 			} catch (error) {
 				setConvertedText("");
 				toast.error("Failed to encode text.");
@@ -30,10 +40,21 @@ const Base64TextConverter = () => {
 
 	const decodeBase64 = () => {
 		setLoading(true);
-		trackToolUsage("Base64TextConverter", "text");
 		setTimeout(() => {
 			try {
-				setConvertedText(atob(text));
+				// UTF-8 safe decoding using TextDecoder
+				// First, decode base64 to binary string
+				const binaryString = atob(text);
+				// Convert binary string to byte array
+				const bytes = new Uint8Array(binaryString.length);
+				for (let i = 0; i < binaryString.length; i++) {
+					bytes[i] = binaryString.charCodeAt(i);
+				}
+				// Decode UTF-8 bytes to string
+				const decoder = new TextDecoder("utf-8");
+				const decoded = decoder.decode(bytes);
+				trackToolUsage("Base64TextConverter", "text");
+				setConvertedText(decoded);
 			} catch (error) {
 				setConvertedText("");
 				toast.error("Failed to decode text.");

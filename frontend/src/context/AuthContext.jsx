@@ -15,6 +15,8 @@ const authReducer = (state, action) => {
 			localStorage.removeItem("token");
 			setAuthToken(null);
 			return { ...state, isAuthenticated: false, user: null };
+		case "SET_INITIALIZED":
+			return { ...state, isInitialized: true };
 		default:
 			return state;
 	}
@@ -24,6 +26,7 @@ const AuthProvider = ({ children }) => {
 	const [state, dispatch] = useReducer(authReducer, {
 		isAuthenticated: false,
 		user: null,
+		isInitialized: false,
 	});
 
 	useEffect(() => {

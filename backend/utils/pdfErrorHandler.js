@@ -67,16 +67,29 @@ const validatePdfFile = (file) => {
 		throw new Error("The uploaded file is too small to be a valid PDF.");
 	}
 
-	// Magic bytes validation for PDF files
+	// Find PDF header within the first 1KB
+	const headerSearchLimit = Math.min(file.buffer.length, 1024);
+	const headerSearchBuffer = file.buffer
+		.slice(0, headerSearchLimit)
+		.toString("utf8", 0, headerSearchLimit);
+	const headerIndex = headerSearchBuffer.indexOf("%PDF-");
+
+	if (headerIndex === -1) {
+		throw new Error("Invalid PDF file signature. The file is not a valid PDF.");
+	}
+
+	// Magic bytes validation for PDF files (relative to found header)
 	const pdfSignature = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
-	const fileSignature = file.buffer.slice(0, 5);
+	const fileSignature = file.buffer.slice(headerIndex, headerIndex + 5);
 
 	if (!pdfSignature.equals(fileSignature)) {
 		throw new Error("Invalid PDF file signature. The file is not a valid PDF.");
 	}
 
-	// Additional validation: check for PDF version
-	const pdfVersion = file.buffer.slice(5, 8).toString();
+	// Additional validation: check for PDF version (relative to found header)
+	const pdfVersionStart = headerIndex + 5;
+	const pdfVersionEnd = headerIndex + 8;
+	const pdfVersion = file.buffer.slice(pdfVersionStart, pdfVersionEnd).toString();
 	const validVersions = ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"];
 
 	if (!validVersions.includes(pdfVersion)) {
@@ -88,7 +101,7 @@ const validatePdfFile = (file) => {
 	// Check for common PDF structure indicators with relaxed validation
 	const bufferStr = file.buffer.toString("utf8", 0, Math.min(file.buffer.length, 1024));
 
-	// First validate PDF header
+	// Validate PDF header
 	if (!bufferStr.includes("%PDF")) {
 		throw new Error("Invalid PDF file. Missing PDF header.");
 	}

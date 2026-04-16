@@ -73,46 +73,12 @@ const APPROVED_TOOL_CATEGORY_PAIRS = {
 };
 
 // Public tools only - excludes internal events like Login, Register, SeoTools:*, etc.
-const APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS = {
-	Base64TextConverter: "text",
-	CsvToJsonConverter: "web",
-	ExcelToPdfConverter: "pdf",
-	FaviconExtractor: "web",
-	HashGenerator: "web",
-	HtmlToMarkdownConverter: "web",
-	ImageBackgroundRemover: "image",
-	ImageCompressor: "image",
-	ImageCropper: "image",
-	ImageFlipper: "image",
-	ImageFormatConverter: "image",
-	ImageGrayscaler: "image",
-	ImageResizer: "image",
-	ImageToBase64Converter: "image",
-	ImageToPdfConverter: "image",
-	JsonFormatterValidator: "web",
-	JsonToCsvConverter: "web",
-	JsonXmlConverter: "web",
-	"Link Shortener": "web",
-	MarkdownToHtmlConverter: "web",
-	PasswordGenerator: "web",
-	PasswordStrengthChecker: "web",
-	PdfCompressor: "pdf",
-	PdfMerger: "pdf",
-	PdfPageDeleter: "pdf",
-	PdfRotator: "pdf",
-	PdfSplitter: "pdf",
-	PdfToExcelConverter: "pdf",
-	PdfToTextConverter: "pdf",
-	PdfToWordConverter: "pdf",
-	PngToJpgConverter: "image",
-	QrCodeGenerator: "web",
-	QrCodeScanner: "web",
-	TextCaseConverter: "text",
-	TextDifferenceChecker: "text",
-	TextToPdfGenerator: "pdf",
-	UrlRedirectChecker: "web",
-	WebsiteScreenshotGenerator: "web",
-};
+// Derived from APPROVED_TOOL_CATEGORY_PAIRS by filtering out internal keys
+const APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS = Object.fromEntries(
+	Object.entries(APPROVED_TOOL_CATEGORY_PAIRS).filter(
+		([key]) => !key.startsWith("SeoTools:") && !["Login", "Register"].includes(key),
+	),
+);
 
 const isApprovedToolCategoryPair = (toolName, category) => {
 	return APPROVED_TOOL_CATEGORY_PAIRS[toolName] === category;

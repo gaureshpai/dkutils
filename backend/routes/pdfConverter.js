@@ -42,16 +42,11 @@ router.post(
 			const PDFMerger = (await import("pdf-merger-js")).default;
 			const merger = new PDFMerger();
 
-			try {
-				await Promise.all(files.map((file) => merger.add(file.buffer)));
-			} catch (err) {
-				throw new Error(
-					"Failed to merge PDFs. One or more files may be corrupted or password-protected.",
-				);
+			for (const file of files) {
+				await merger.add(file.buffer);
 			}
 
 			const mergedPdfBuffer = await merger.saveAsBuffer();
-
 			const outputFileName = `merged_dkutils_${Date.now()}.pdf`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
@@ -216,7 +211,7 @@ router.post(
 			}
 
 			for (const page of pdfDoc.getPages()) {
-			page.setRotation(degrees(Number(angle)));
+				page.setRotation(degrees(Number(angle)));
 			}
 
 			const modifiedPdfBytes = await pdfDoc.save();

@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
@@ -16,18 +16,33 @@ const ImageCropper = () => {
 	const imageRef = useRef(null);
 	const canvasRef = useRef(null);
 	const cropOpIdRef = useRef(0);
+	const isMountedRef = useRef(true);
 
-	// Cleanup object URLs to prevent memory leaks
+	// Cleanup imageSrc object URL to prevent memory leaks
 	useEffect(() => {
 		return () => {
 			if (imageSrc?.startsWith("blob:")) {
 				URL.revokeObjectURL(imageSrc);
 			}
+		};
+	}, [imageSrc]);
+
+	// Cleanup croppedImageSrc object URL to prevent memory leaks
+	useEffect(() => {
+		return () => {
 			if (croppedImageSrc?.startsWith("blob:")) {
 				URL.revokeObjectURL(croppedImageSrc);
 			}
 		};
-	}, [imageSrc, croppedImageSrc]);
+	}, [croppedImageSrc]);
+
+	// Track mount status
+	useEffect(() => {
+		isMountedRef.current = true;
+		return () => {
+			isMountedRef.current = false;
+		};
+	}, []);
 
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
@@ -113,9 +128,14 @@ const ImageCropper = () => {
 
 			// Use toBlob for better performance and memory efficiency
 			canvas.toBlob((blob) => {
-				// Verify this callback is for the current crop operation
-				if (currentOpId !== cropOpIdRef.current) {
-					return; // Stale callback, ignore
+				// Verify this callback is for the current crop operation and component is still mounted
+				if (currentOpId !== cropOpIdRef.current || !isMountedRef.current) {
+					// Stale or unmounted, revoke blob URL immediately and skip updates
+					if (blob) {
+						const tempUrl = URL.createObjectURL(blob);
+						URL.revokeObjectURL(tempUrl);
+					}
+					return;
 				}
 
 				if (!blob) {
@@ -132,7 +152,7 @@ const ImageCropper = () => {
 				const objectUrl = URL.createObjectURL(blob);
 				setCroppedImageSrc(objectUrl);
 
-				const extension = mimeType.split("/")[1] || "png";
+				const extension = (blob.type || "image/png").split("/")[1] || "png";
 				handleDownload(objectUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
 				setLoading(false);
 			}, mimeType);

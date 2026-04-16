@@ -49,7 +49,7 @@ const checkPasswordStrength = (password) => {
 router.post("/", (req, res) => {
 	const { password } = req.body;
 
-	if (typeof password !== "string" || password.length === 0) {
+	if (typeof password !== "string" || password.length === 0 || password.trim().length === 0) {
 		return res.status(400).json({ msg: "Password is required." });
 	}
 

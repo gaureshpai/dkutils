@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
@@ -67,16 +67,28 @@ const ImageResizer = () => {
 			return;
 		}
 
-		const width = Number.parseInt(newWidth);
-		const height = Number.parseInt(newHeight);
+		const MAX_DIMENSION = 10000;
+		const MAX_PIXELS = 25000000;
+
+		const width = Number.parseInt(newWidth, 10);
+		const height = Number.parseInt(newHeight, 10);
 
 		if (Number.isNaN(width) || Number.isNaN(height) || width <= 0 || height <= 0) {
 			toast.error("Please enter valid positive numbers for width and height.");
 			return;
 		}
 
+		if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+			toast.error(`Dimensions exceed maximum allowed (${MAX_DIMENSION}px).`);
+			return;
+		}
+
+		if (width * height > MAX_PIXELS) {
+			toast.error(`Image size exceeds maximum allowed (${MAX_PIXELS} pixels).`);
+			return;
+		}
+
 		setLoading(true);
-		trackToolUsage("ImageResizer", "image");
 
 		const reader = new FileReader();
 		reader.onerror = () => {
@@ -91,6 +103,11 @@ const ImageResizer = () => {
 				setLoading(false);
 			};
 			img.onload = () => {
+				if (width > MAX_DIMENSION || height > MAX_DIMENSION || width * height > MAX_PIXELS) {
+					toast.error("Dimensions exceed maximum allowed limits.");
+					setLoading(false);
+					return;
+				}
 				const canvas = document.createElement("canvas");
 				canvas.width = width;
 				canvas.height = height;
@@ -101,10 +118,21 @@ const ImageResizer = () => {
 					return;
 				}
 				ctx.drawImage(img, 0, 0, width, height);
-				const dataUrl = canvas.toDataURL(originalImage.type);
+				// Use a fixed output MIME type for canvas
+				const outputMime = "image/png";
+				const dataUrl = canvas.toDataURL(outputMime);
 				setResizedImageSrc(dataUrl);
+				trackToolUsage("ImageResizer", "image");
 
-				handleDownload(dataUrl, `resized-${originalImage ? originalImage.name : "image"}`);
+				// Extract MIME type from dataUrl and derive extension
+				const mimeMatch = dataUrl.match(/data:([^;]+)/);
+				const derivedMime = mimeMatch ? mimeMatch[1] : outputMime;
+				const extension = derivedMime.split("/")[1] || "png";
+
+				// Build filename from original name (without extension) + derived extension
+				const originalNameWithoutExt = originalImage.name.split(".").slice(0, -1).join(".");
+				const baseName = originalNameWithoutExt || "resized-image";
+				handleDownload(dataUrl, `${baseName}-${Date.now()}.${extension}`);
 				setLoading(false);
 			};
 			img.src = event.target.result;

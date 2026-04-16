@@ -97,6 +97,8 @@ const PdfSplitter = () => {
 					if (
 						Number.isNaN(start) ||
 						Number.isNaN(end) ||
+						!Number.isInteger(start) ||
+						!Number.isInteger(end) ||
 						start <= 0 ||
 						end > totalPages ||
 						start > end
@@ -109,7 +111,12 @@ const PdfSplitter = () => {
 					}
 				} else {
 					const pageNum = Number(part);
-					if (Number.isNaN(pageNum) || pageNum <= 0 || pageNum > totalPages) {
+					if (
+						Number.isNaN(pageNum) ||
+						!Number.isInteger(pageNum) ||
+						pageNum <= 0 ||
+						pageNum > totalPages
+					) {
 						isValidRange = false;
 						break;
 					}
@@ -126,7 +133,6 @@ const PdfSplitter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("PdfSplitter", "pdf");
 
 		const formData = new FormData();
 		formData.append("pdf", selectedFile);
@@ -145,6 +151,7 @@ const PdfSplitter = () => {
 
 			handleDownload(res.data.path, res.data.originalname);
 			toast.success("PDF split successfully!");
+			trackToolUsage("PdfSplitter", "pdf");
 			setSelectedFile(null);
 			setRanges("");
 			setTotalPages(0);

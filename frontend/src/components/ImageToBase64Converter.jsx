@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useContext, useState } from "react";
@@ -41,14 +41,15 @@ const ImageToBase64Converter = () => {
 
 	const onSubmit = async (e) => {
 		e.preventDefault();
-		if (!selectedFile) {
-			toast.error("Please select an image file first.");
+		if (!selectedFile || loading) {
 			return;
 		}
 
+		const file = selectedFile;
+
 		setLoading(true);
 		const formData = new FormData();
-		formData.append("image", selectedFile);
+		formData.append("image", file);
 
 		try {
 			const res = await axios.post(
@@ -60,6 +61,9 @@ const ImageToBase64Converter = () => {
 					},
 				},
 			);
+			if (file !== selectedFile) {
+				return;
+			}
 			const base64 = res.data.base64;
 			setBase64String(base64);
 
@@ -99,6 +103,7 @@ const ImageToBase64Converter = () => {
 						type="file"
 						onChange={onFileChange}
 						accept="image/*"
+						disabled={loading}
 					/>
 				</div>
 				<button

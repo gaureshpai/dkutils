@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useContext, useRef, useState } from "react";
@@ -12,8 +12,8 @@ const PdfMerger = () => {
 	const auth = useContext(AuthContext);
 	const isAuthenticated = auth.state?.isAuthenticated ?? false;
 	const maxUploadSize =
-		auth.limits?.maxUploadSizeBytes ??
-		auth.uploadLimit ??
+		auth.state?.limits?.maxUploadSizeBytes ??
+		auth.state?.uploadLimit ??
 		(isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024);
 	const [convertedFile, setConvertedFile] = useState(null);
 	const fileInputRef = useRef(null);

@@ -8,6 +8,7 @@ const QrCodeScanner = () => {
 
 	const [qrData, setQrData] = useState("");
 	const lastTrackedQrDataRef = useRef("");
+	const scanCounterRef = useRef(0);
 
 	const copyToClipboard = async (textToCopy) => {
 		try {
@@ -31,6 +32,10 @@ const QrCodeScanner = () => {
 		}
 
 		setQrData("Scanning...");
+
+		// Increment scan counter to track this specific scan
+		scanCounterRef.current += 1;
+		const currentScanId = scanCounterRef.current;
 
 		const reader = new FileReader();
 		reader.onload = (event) => {
@@ -56,8 +61,11 @@ const QrCodeScanner = () => {
 				const canvas = document.createElement("canvas");
 				const ctx = canvas.getContext("2d");
 				if (!ctx) {
-					setQrData("");
-					toast.error("Unable to process the uploaded image.");
+					// Only update state if this is still the current scan
+					if (currentScanId === scanCounterRef.current) {
+						setQrData("");
+						toast.error("Unable to process the uploaded image.");
+					}
 					return;
 				}
 				canvas.width = width;
@@ -67,20 +75,35 @@ const QrCodeScanner = () => {
 				const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 				const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-				if (code?.data) {
-					const decodedValue = String(code.data);
-					setQrData(decodedValue);
-					if (decodedValue && decodedValue !== lastTrackedQrDataRef.current) {
-						lastTrackedQrDataRef.current = decodedValue;
-						trackToolUsage("QrCodeScanner", "web");
+				// Only accept result if this is still the current scan
+				if (currentScanId === scanCounterRef.current) {
+					if (code?.data) {
+						const decodedValue = String(code.data);
+						setQrData(decodedValue);
+						if (decodedValue && decodedValue !== lastTrackedQrDataRef.current) {
+							lastTrackedQrDataRef.current = decodedValue;
+							trackToolUsage("QrCodeScanner", "web");
+						}
+						toast.success("QR Code detected!");
+					} else {
+						setQrData("No QR code found.");
+						toast.info("No QR code found in the image.");
 					}
-					toast.success("QR Code detected!");
-				} else {
-					setQrData("No QR code found.");
-					toast.info("No QR code found in the image.");
+				}
+			};
+			img.onerror = () => {
+				if (currentScanId === scanCounterRef.current) {
+					setQrData("");
+					toast.error("Failed to decode image.");
 				}
 			};
 			img.src = event.target.result;
+		};
+		reader.onerror = () => {
+			if (currentScanId === scanCounterRef.current) {
+				setQrData("");
+				toast.error("Failed to read file.");
+			}
 		};
 		reader.readAsDataURL(file);
 	};

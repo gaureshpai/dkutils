@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useContext, useRef, useState } from "react";
@@ -15,7 +15,7 @@ const PdfCompressor = () => {
 
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
-		const maxFileSize = state.isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+		const maxFileSize = (state?.isAuthenticated ?? false) ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
 		if (!file || e.target.files.length === 0) {
 			setSelectedFile(null);
@@ -26,7 +26,9 @@ const PdfCompressor = () => {
 		if (file.type === "application/pdf") {
 			if (file.size > maxFileSize) {
 				toast.error(
-					`File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
+					isAuthenticated
+						? `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB.`
+						: `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
 				);
 				setSelectedFile(null);
 				e.target.value = null;

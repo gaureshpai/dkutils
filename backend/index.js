@@ -31,6 +31,7 @@ const testSupabaseConnection = async () => {
 		console.log(`Supabase Storage connected!\nBucket '${bucket.name}' found.`);
 	} catch (error) {
 		console.error("Supabase Storage connection failed:", error.message);
+		throw error;
 	}
 };
 
@@ -124,7 +125,20 @@ app.get("/health", (req, res) => {
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-	console.error(err);
+	// Sanitize error logging - don't dump the full error object
+	const logObj = {
+		message: err.message,
+		status: err.status || 500,
+		method: req.method,
+		path: req.path,
+	};
+
+	// Only include stack in non-production
+	if (process.env.NODE_ENV !== "production") {
+		logObj.stack = err.stack;
+	}
+
+	console.error("Error:", logObj);
 	res.status(err.status || 500).json({
 		msg: err.message || "Server error",
 	});

@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import Papa from "papaparse";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -56,7 +56,7 @@ const CsvToJsonConverter = () => {
 
 	const convertJsonToCsv = () => {
 		setLoading(true);
-		trackToolUsage("JsonToCsvConverter", "web");
+		trackToolUsage("CsvToJsonConverter", "web");
 		try {
 			const jsonData = JSON.parse(jsonInput);
 			const csv = Papa.unparse(jsonData);

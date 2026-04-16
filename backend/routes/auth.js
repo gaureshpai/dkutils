@@ -111,7 +111,19 @@ router.post(
 		try {
 			const errors = validationResult(req);
 			if (!errors.isEmpty()) {
-				return res.status(400).json({ errors: errors.array() });
+				// Sanitize errors before logging to prevent password exposure
+				const sanitizedErrors = errors.array().map((error) => {
+					const { value, ...sanitizedError } = error;
+					if (error.path === "password") {
+						return { ...sanitizedError, value: "[REDACTED]" };
+					}
+					return sanitizedError;
+				});
+
+				if (process.env.NODE_ENV !== "production") {
+					console.log("Validation errors:", sanitizedErrors);
+				}
+				return res.status(400).json({ errors: sanitizedErrors });
 			}
 
 			const { email, password } = req.body;

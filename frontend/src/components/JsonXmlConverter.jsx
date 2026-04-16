@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -29,10 +29,14 @@ const JsonXmlConverter = () => {
 
 	const convertJsonToXml = async () => {
 		setLoading(true);
-		trackToolUsage("JsonXmlConverter", "web");
 		setOutputData("");
 		setError(null);
 		try {
+			void Promise.resolve()
+				.then(() => trackToolUsage("JsonXmlConverter", "web"))
+				.catch((analyticsError) => {
+					console.error("Failed to track tool usage", analyticsError);
+				});
 			const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/convert/json-to-xml`, {
 				jsonString: inputData,
 			});
@@ -51,10 +55,14 @@ const JsonXmlConverter = () => {
 
 	const convertXmlToJson = async () => {
 		setLoading(true);
-		trackToolUsage("JsonXmlConverter", "web");
 		setOutputData("");
 		setError(null);
 		try {
+			void Promise.resolve()
+				.then(() => trackToolUsage("JsonXmlConverter", "web"))
+				.catch((analyticsError) => {
+					console.error("Failed to track tool usage", analyticsError);
+				});
 			const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/convert/xml-to-json`, {
 				xmlString: inputData,
 			});
@@ -81,7 +89,7 @@ const JsonXmlConverter = () => {
 					</label>
 					<textarea
 						id="inputData"
-						className="w-full px-3 py-2 placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm bg-background min-h-50 overflow-auto"
+						className="w-full px-3 py-2 placeholder:text-muted-foreground border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm bg-background min-h-[200px] overflow-auto"
 						placeholder="Enter JSON or XML data for web services, APIs, etc."
 						value={inputData}
 						onChange={handleInputChange}
@@ -130,7 +138,7 @@ const JsonXmlConverter = () => {
 					</label>
 					<textarea
 						id="outputData"
-						className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm min-h-50 overflow-auto"
+						className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm min-h-[200px] overflow-auto"
 						readOnly
 						value={outputData}
 					/>

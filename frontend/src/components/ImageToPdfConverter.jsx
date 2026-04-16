@@ -17,6 +17,8 @@ const ImageToPdfConverter = () => {
 
 	const onFileChange = (e) => {
 		setConvertedFile(null);
+		// Increment conversion ID to invalidate any pending requests when files change
+		conversionIdRef.current += 1;
 		const files = Array.from(e.target.files);
 		const allowedTypes = [
 			"image/jpeg",
@@ -69,7 +71,6 @@ const ImageToPdfConverter = () => {
 
 		setConvertedFile(null);
 		setLoading(true);
-		trackToolUsage("ImageToPdfConverter", "image");
 		const formData = new FormData();
 		for (const file of filesSnapshot) {
 			formData.append("images", file);
@@ -91,6 +92,7 @@ const ImageToPdfConverter = () => {
 				setConvertedFile(res.data);
 				handleDownload(res.data.path, res.data.originalname);
 				toast.success("Images converted to PDF successfully!");
+				trackToolUsage("ImageToPdfConverter", "image");
 			}
 		} catch (err) {
 			console.error(err);

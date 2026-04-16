@@ -440,13 +440,9 @@ curl -X POST https://your-domain.com/api/clean-supabase/trigger \
 
         ```json
         {
-
-    "msg": "Invalid or missing cron secret"
-    }
-
-    ```
-
-    ```
+          "msg": "Invalid or missing cron secret"
+        }
+        ```
 
 - **200** - OK
   - Content-Type: `application/json`

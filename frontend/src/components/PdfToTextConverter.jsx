@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useContext, useRef, useState } from "react";
@@ -19,7 +19,13 @@ const PdfToTextConverter = () => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
-		if (file && file.type === "application/pdf") {
+		if (!file) {
+			setSelectedFile(null);
+			e.target.value = "";
+			return;
+		}
+
+		if (file.type === "application/pdf") {
 			if (file.size > maxFileSize) {
 				toast.error(
 					`File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
@@ -46,7 +52,6 @@ const PdfToTextConverter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("PdfToTextConverter", "pdf");
 		const formData = new FormData();
 		formData.append("pdf", selectedFile);
 
@@ -61,6 +66,7 @@ const PdfToTextConverter = () => {
 				},
 			);
 			const extractedTextContent = res.data;
+			trackToolUsage("PdfToTextConverter", "pdf");
 			setExtractedText(extractedTextContent);
 
 			handleDownload(extractedTextContent, `extracted-text-${Date.now()}.txt`);

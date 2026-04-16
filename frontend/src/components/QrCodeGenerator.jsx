@@ -1,6 +1,6 @@
 ﻿import useAnalytics from "@frontend/utils/useAnalytics";
 import * as domToImage from "dom-to-image";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";

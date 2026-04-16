@@ -32,10 +32,9 @@ router.post("/", async (req, res) => {
 			});
 
 		if (error) {
-			console.error("Supabase upload error:", error);
+			console.error("Supabase upload failed", { code: error.code, message: "Upload failed" });
 			return res.status(500).json({
-				msg: "Failed to upload screenshot to Supabase",
-				error: error.message,
+				msg: "Failed to upload screenshot to storage",
 			});
 		}
 
@@ -43,19 +42,17 @@ router.post("/", async (req, res) => {
 
 		return res.status(200).json({ path: downloadUrl, originalname: outputFileName });
 	} catch (err) {
-		console.error("Error generating screenshot:", err);
+		console.error("Error generating screenshot", { message: err.code || "Unknown error" });
 
 		// Handle timeout errors specifically
 		if (err.code === "ECONNABORTED") {
 			return res.status(408).json({
 				msg: "Request timeout. The screenshot API took too long to respond.",
-				error: err.message,
 			});
 		}
 
 		return res.status(500).json({
-			msg: "Failed to generate screenshot. Please check the URL and API key.",
-			error: err.message,
+			msg: "Failed to generate screenshot. Please try again.",
 		});
 	}
 });

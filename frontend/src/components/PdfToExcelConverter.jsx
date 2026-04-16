@@ -50,7 +50,6 @@ const PdfToExcelConverter = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("PdfToExcelConverter", "pdf");
 		const formData = new FormData();
 		formData.append("pdf", selectedFile);
 
@@ -60,6 +59,7 @@ const PdfToExcelConverter = () => {
 				formData,
 			);
 
+			trackToolUsage("PdfToExcelConverter", "pdf");
 			handleDownload(res.data.path, res.data.originalname);
 			setSelectedFile(null);
 			if (fileInputRef.current) {

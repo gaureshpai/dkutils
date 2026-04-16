@@ -117,7 +117,10 @@ async function checkIPSafety(hostname) {
 	}
 
 	try {
-		const addresses = await dns.promises.lookup(hostname, { all: true, verbatim: true });
+		const addresses = await dns.promises.lookup(hostname, {
+			all: true,
+			verbatim: true,
+		});
 		for (const { address: ip } of addresses) {
 			if (isPrivateIP(ip) || isLinkLocal(ip) || isLoopback(ip) || isMulticast(ip)) {
 				throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
@@ -155,6 +158,9 @@ async function validateUrl(targetUrl) {
 	}
 
 	const safeAddresses = await checkIPSafety(parsed.hostname);
+	if (safeAddresses === null) {
+		throw new Error("DNS validation failed - unable to verify address safety");
+	}
 	return { hostname: parsed.hostname, safeAddresses };
 }
 
@@ -211,6 +217,9 @@ async function handleRedirectResponse(response, currentUrl) {
  * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the custom lookup.
  */
 function createPinnedAgents(hostname, validatedAddresses) {
+	if (validatedAddresses === null) {
+		throw new Error("Cannot create pinned agents: DNS validation was suppressed");
+	}
 	const lookupFunction = (requestHostname, options, callback) => {
 		// If we have validated addresses and the request is for our target hostname, use a pinned IP
 		if (validatedAddresses && requestHostname === hostname) {
@@ -232,7 +241,10 @@ function createPinnedAgents(hostname, validatedAddresses) {
 				// Return array of {address, family} objects
 				return callback(
 					null,
-					validatedAddressesFiltered.map((e) => ({ address: e.address, family: e.family })),
+					validatedAddressesFiltered.map((e) => ({
+						address: e.address,
+						family: e.family,
+					})),
 				);
 			}
 			// Prefer a record matching the request's family, or fall back to any validated record

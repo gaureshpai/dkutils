@@ -61,18 +61,34 @@ jobs:
         id: get_versions
         run: |
           WEBSITE_VERSION=$(node -p "require('./package.json').version")
+          FRONTEND_VERSION=$(node -p "require('./frontend/package.json').version")
+          BACKEND_VERSION=$(node -p "require('./backend/package.json').version")
           PACKAGE_VERSION=$(node -p "require('./package/package.json').version")
+
+          # Fail if versions diverge
+          if [ "$WEBSITE_VERSION" != "$FRONTEND_VERSION" ] || [ "$WEBSITE_VERSION" != "$BACKEND_VERSION" ]; then
+            echo "Error: Version mismatch detected!"
+            echo "Website: $WEBSITE_VERSION, Frontend: $FRONTEND_VERSION, Backend: $BACKEND_VERSION"
+            exit 1
+          fi
+
           echo "website_version=$WEBSITE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "frontend_version=$FRONTEND_VERSION" >> "$GITHUB_OUTPUT"
+          echo "backend_version=$BACKEND_VERSION" >> "$GITHUB_OUTPUT"
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Update docs and READMEs
         run: |
           W_VERSION=${{ steps.get_versions.outputs.website_version }}
+          F_VERSION=${{ steps.get_versions.outputs.frontend_version }}
+          B_VERSION=${{ steps.get_versions.outputs.backend_version }}
           P_VERSION=${{ steps.get_versions.outputs.package_version }}
-          export W_VERSION P_VERSION
+          export W_VERSION F_VERSION B_VERSION P_VERSION
           node - <<'EOF'
           const fs = require('fs');
           const wVersion = process.env.W_VERSION;
+          const fVersion = process.env.F_VERSION;
+          const bVersion = process.env.B_VERSION;
           const pVersion = process.env.P_VERSION;
 
           // update backend api JSON docs with website version
@@ -104,8 +120,8 @@ jobs:
           // Update READMEs with appropriate versions
           updateReadme('package/README.md', pVersion);
           updateReadme('README.md', wVersion);
-          updateReadme('frontend/README.md', wVersion);
-          updateReadme('backend/docs/README.md', wVersion);
+          updateReadme('frontend/README.md', fVersion);
+          updateReadme('backend/docs/README.md', bVersion);
           EOF
 
       - name: Commit version changes

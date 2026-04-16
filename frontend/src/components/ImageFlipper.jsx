@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useContext, useState } from "react";
@@ -17,6 +17,12 @@ const ImageFlipper = () => {
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+
+		if (!file) {
+			setSelectedFile(null);
+			e.target.value = "";
+			return;
+		}
 
 		if (file?.type.startsWith("image/")) {
 			if (file.size > maxFileSize) {

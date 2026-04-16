@@ -11,17 +11,18 @@ const apiActivityTracker = async (req, res, next) => {
 		});
 		await apiActivity.save();
 
-		await TotalUsage.findOneAndUpdate(
-			{ key: "global" },
-			{ $inc: { totalCount: 1 }, $setOnInsert: { key: "global" } },
-			{ upsert: true, new: true },
-		);
-
-		await ServiceUsage.findOneAndUpdate(
-			{ endpoint: req.path },
-			{ $inc: { count: 1 } },
-			{ upsert: true, new: true },
-		);
+		await Promise.all([
+			TotalUsage.findOneAndUpdate(
+				{ key: "global" },
+				{ $inc: { totalCount: 1 }, $setOnInsert: { key: "global" } },
+				{ upsert: true, new: true },
+			),
+			ServiceUsage.findOneAndUpdate(
+				{ endpoint: req.path },
+				{ $inc: { count: 1 } },
+				{ upsert: true, new: true },
+			),
+		]);
 	} catch (err) {
 		console.error("Error saving API activity:", err.message);
 	}

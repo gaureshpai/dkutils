@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
@@ -42,9 +42,14 @@ const JsonFormatterValidator = () => {
 		setLoading(false);
 	};
 
-	const copyToClipboard = (textToCopy) => {
-		navigator.clipboard.writeText(textToCopy);
-		toast.success("Copied to clipboard!");
+	const copyToClipboard = async (textToCopy) => {
+		try {
+			await navigator.clipboard.writeText(textToCopy);
+			toast.success("Copied to clipboard!");
+		} catch (err) {
+			console.error("Failed to copy to clipboard:", err);
+			toast.error("Failed to copy to clipboard. Please try again.");
+		}
 	};
 
 	const downloadJson = () => {

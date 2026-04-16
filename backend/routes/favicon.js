@@ -136,12 +136,16 @@ router.post("/", async (req, res) => {
 			faviconUrls.push(defaultFavicon);
 		}
 
+		// Deduplicate and cap the number of favicon URLs to prevent abuse
+		const MAX_FAVICONS = 10;
+		const uniqueFaviconUrls = [...new Set(faviconUrls)].slice(0, MAX_FAVICONS);
+
 		const archive = archiver("zip", {
 			zlib: { level: 9 },
 		});
 
 		// Collect all file data first to avoid race conditions
-		const downloadPromises = faviconUrls.map(async (faviconUrl) => {
+		const downloadPromises = uniqueFaviconUrls.map(async (faviconUrl) => {
 			const fileData = await downloadFile(faviconUrl);
 			if (fileData?.buffer) {
 				const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;

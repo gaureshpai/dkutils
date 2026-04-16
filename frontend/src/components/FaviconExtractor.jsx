@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -13,12 +13,12 @@ const FaviconExtractor = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-		trackToolUsage("FaviconExtractor", "web");
 		setError(null);
 
 		try {
 			const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/favicon`, { url });
 			const { path, originalname } = res.data;
+			trackToolUsage("FaviconExtractor", "web");
 			handleDownload(path, originalname);
 		} catch (err) {
 			console.error("Error extracting favicons:", err);

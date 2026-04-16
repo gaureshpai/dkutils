@@ -141,7 +141,7 @@ router.get("/download", async (req, res) => {
 		if (
 			filename.includes("..") ||
 			(!allowedPrefixes.some((prefix) => filename.startsWith(prefix)) &&
-				!baseName.includes("_dkutils_"))
+				!(filename === baseName && baseName.includes("_dkutils_")))
 		) {
 			return res.status(403).json({ msg: "Invalid filename." });
 		}
@@ -663,12 +663,22 @@ router.post(
 					return res.status(400).json({ msg: "No base64 string provided for decoding." });
 				}
 				const buffer = Buffer.from(base64String, "base64");
-				const outputFileName = `decoded_dkutils_${Date.now()}.png`;
+
+				// Validate that the decoded buffer is a valid image
+				const imageType = await import("image-type");
+				const detected = imageType.default(buffer);
+				if (!detected) {
+					return res.status(400).json({ msg: "Invalid image data in base64 string." });
+				}
+
+				const contentType = detected.mime;
+				const extension = detected.ext;
+				const outputFileName = `decoded_dkutils_${Date.now()}.${extension}`;
 
 				const { error: uploadError } = await supabase.storage
 					.from("utilityhub")
 					.upload(outputFileName, buffer, {
-						contentType: "image/png",
+						contentType: contentType,
 					});
 
 				if (uploadError) {

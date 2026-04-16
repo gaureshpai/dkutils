@@ -19,12 +19,10 @@ router.post(
 				return res.status(400).json({ msg: "No PDF file uploaded." });
 			}
 
-			console.log("PDF to Word (text extraction) conversion requested for:", file.originalname);
-
-			const pdfBuffer = file.buffer;
-
-			const data = await pdf(pdfBuffer);
-			let extractedText = data.text;
+			// Validate file is a PDF
+			if (file.mimetype !== "application/pdf") {
+				return res.status(400).json({ msg: "Uploaded file must be a PDF." });
+			}
 
 			const splitTextIntoSentences = (text) => {
 				if (!text || typeof text !== "string") return [];
@@ -126,12 +124,10 @@ router.post(
 				return res.status(400).json({ msg: "No PDF file uploaded." });
 			}
 
-			console.log("PDF to Excel (text extraction) conversion requested for:", file.originalname);
-
-			const pdfBuffer = file.buffer;
-
-			const data = await pdf(pdfBuffer);
-			const extractedText = data.text;
+			// Validate file is a PDF
+			if (file.mimetype !== "application/pdf") {
+				return res.status(400).json({ msg: "Uploaded file must be a PDF." });
+			}
 
 			// Split text into lines and create proper Excel structure
 			const lines = extractedText.split("\n").filter((line) => line.trim());

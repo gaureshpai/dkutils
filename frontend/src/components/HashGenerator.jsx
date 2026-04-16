@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import md5 from "js-md5";
 import { useState } from "react";
 import { toast } from "react-toastify";

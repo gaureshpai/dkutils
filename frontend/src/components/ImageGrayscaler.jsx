@@ -1,4 +1,4 @@
-﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useContext, useState } from "react";
@@ -16,6 +16,12 @@ const ImageGrayscaler = () => {
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+
+		if (!file) {
+			setSelectedFile(null);
+			e.target.value = "";
+			return;
+		}
 
 		if (file?.type.startsWith("image/")) {
 			if (file.size > maxFileSize) {
@@ -42,7 +48,6 @@ const ImageGrayscaler = () => {
 		}
 
 		setLoading(true);
-		trackToolUsage("ImageGrayscaler", "image");
 		const formData = new FormData();
 		formData.append("image", selectedFile);
 
@@ -54,6 +59,7 @@ const ImageGrayscaler = () => {
 			);
 
 			const { path, originalname } = res.data;
+			trackToolUsage("ImageGrayscaler", "image");
 
 			const link = document.createElement("a");
 			link.href = path;

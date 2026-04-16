@@ -1,6 +1,9 @@
 const router = require("express").Router();
 const PDFDocument = require("pdfkit");
 
+// Maximum text length to prevent memory spikes (100KB of characters)
+const MAX_TEXT_LENGTH = 100000;
+
 // @route   POST /api/convert/text-to-pdf
 // @desc    Convert text to PDF and send for direct download
 // @access  Public
@@ -11,6 +14,13 @@ router.post("/text-to-pdf", async (req, res) => {
 	if (typeof text !== "string" || text.trim().length === 0) {
 		return res.status(400).json({
 			msg: "Text is required and must be a non-empty string",
+		});
+	}
+
+	// Validate text length to prevent large memory spikes
+	if (text.length > MAX_TEXT_LENGTH) {
+		return res.status(413).json({
+			msg: `Text is too large. Maximum allowed length is ${MAX_TEXT_LENGTH} characters.`,
 		});
 	}
 
@@ -40,7 +50,7 @@ router.post("/text-to-pdf", async (req, res) => {
 		res.end(pdfBuffer);
 	} catch (err) {
 		console.error(err.message);
-		res.status(500).send("Server Error");
+		res.status(500).json({ error: err.message || "Server Error" });
 	}
 });
 

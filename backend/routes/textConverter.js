@@ -1,5 +1,14 @@
 const router = require("express").Router();
 
+// Helper function to validate Base64 string
+const isValidBase64 = (str) => {
+	try {
+		return Buffer.from(str, "base64").toString("base64") === str.trim();
+	} catch {
+		return false;
+	}
+};
+
 // @route   POST /api/convert/base64-text
 // @desc    Encode/Decode text to/from Base64
 // @access  Public
@@ -15,6 +24,9 @@ router.post("/base64-text", (req, res) => {
 		if (type === "encode") {
 			result = Buffer.from(text).toString("base64");
 		} else if (type === "decode") {
+			if (!isValidBase64(text)) {
+				return res.status(400).json({ msg: "Invalid Base64 input." });
+			}
 			result = Buffer.from(text, "base64").toString("utf8");
 		} else {
 			return res.status(400).json({ msg: "Invalid type. Must be 'encode' or 'decode'." });

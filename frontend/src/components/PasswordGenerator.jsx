@@ -18,13 +18,49 @@ const PasswordGenerator = () => {
 		setLoading(true);
 		setTimeout(() => {
 			try {
-				let charset = "";
-				let newPassword = "";
+				const charsets = {
+					uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+					lowercase: "abcdefghijklmnopqrstuvwxyz",
+					numbers: "0123456789",
+					symbols: "!@#$%^&*()_+-=[]{};:,.<>?",
+				};
 
-				if (includeUppercase) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-				if (includeLowercase) charset += "abcdefghijklmnopqrstuvwxyz";
-				if (includeNumbers) charset += "0123456789";
-				if (includeSymbols) charset += "!@#$%^&*()_+-=[]{};:,.<>?";
+				let charset = "";
+				const requiredChars = [];
+
+				// Add one character from each selected class
+				if (includeUppercase) {
+					charset += charsets.uppercase;
+					requiredChars.push(
+						charsets.uppercase.charAt(
+							crypto.getRandomValues(new Uint32Array(1))[0] % charsets.uppercase.length,
+						),
+					);
+				}
+				if (includeLowercase) {
+					charset += charsets.lowercase;
+					requiredChars.push(
+						charsets.lowercase.charAt(
+							crypto.getRandomValues(new Uint32Array(1))[0] % charsets.lowercase.length,
+						),
+					);
+				}
+				if (includeNumbers) {
+					charset += charsets.numbers;
+					requiredChars.push(
+						charsets.numbers.charAt(
+							crypto.getRandomValues(new Uint32Array(1))[0] % charsets.numbers.length,
+						),
+					);
+				}
+				if (includeSymbols) {
+					charset += charsets.symbols;
+					requiredChars.push(
+						charsets.symbols.charAt(
+							crypto.getRandomValues(new Uint32Array(1))[0] % charsets.symbols.length,
+						),
+					);
+				}
 
 				if (charset === "") {
 					setPassword("");
@@ -33,13 +69,23 @@ const PasswordGenerator = () => {
 				}
 
 				const validLength = Number.isNaN(length) || length < 4 ? 4 : Math.min(length, 32);
-				const randomValues = new Uint32Array(validLength);
+
+				// Fill remaining characters from the combined charset
+				const randomValues = new Uint32Array(validLength - requiredChars.length);
 				crypto.getRandomValues(randomValues);
 
-				for (let i = 0; i < validLength; i++) {
-					newPassword += charset.charAt(randomValues[i] % charset.length);
+				const newPassword = [...requiredChars];
+				for (let i = 0; i < validLength - requiredChars.length; i++) {
+					newPassword.push(charset.charAt(randomValues[i] % charset.length));
 				}
-				setPassword(newPassword);
+
+				// Shuffle the password array
+				for (let i = newPassword.length - 1; i > 0; i--) {
+					const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+					[newPassword[i], newPassword[j]] = [newPassword[j], newPassword[i]];
+				}
+
+				setPassword(newPassword.join(""));
 				setError("");
 				trackToolUsage("PasswordGenerator", "web");
 			} catch {

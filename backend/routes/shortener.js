@@ -24,8 +24,14 @@ router.post("/shorten", async (req, res) => {
 		return res.status(400).json({ msg: "Please enter a valid URL." });
 	}
 
+	// Normalize originalUrl by prepending http:// if no protocol is present
+	let normalizedUrl = originalUrl;
+	if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
+		normalizedUrl = `http://${originalUrl}`;
+	}
+
 	try {
-		let url = await Url.findOne({ originalUrl });
+		let url = await Url.findOne({ originalUrl: normalizedUrl });
 
 		if (url) {
 			return res.json(url);
@@ -44,7 +50,7 @@ router.post("/shorten", async (req, res) => {
 		}
 
 		url = new Url({
-			originalUrl,
+			originalUrl: normalizedUrl,
 			shortUrl,
 			urlCode,
 			date: new Date(),

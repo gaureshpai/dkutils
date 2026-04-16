@@ -1,4 +1,4 @@
-﻿import useAnalytics from "@frontend/utils/useAnalytics";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
@@ -9,6 +9,9 @@ const PasswordStrengthChecker = () => {
 	const [feedback, setFeedback] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const { trackToolUsage } = useAnalytics();
+	const requestIdRef = useRef(0);
+	const currentAbortControllerRef = useRef(null);
+	const debounceTimeoutRef = useRef(null);
 
 	const checkStrength = useCallback(async (pwd) => {
 		if (pwd.length === 0) {
@@ -17,20 +20,45 @@ const PasswordStrengthChecker = () => {
 			return;
 		}
 
+		// Cancel previous request if it exists
+		if (currentAbortControllerRef.current) {
+			currentAbortControllerRef.current.abort();
+		}
+
+		// Create new AbortController for this request
+		const abortController = new AbortController();
+		currentAbortControllerRef.current = abortController;
+
+		// Increment request ID to track this specific request
+		requestIdRef.current += 1;
+		const currentRequestId = requestIdRef.current;
+
 		setLoading(true);
 		try {
-			const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/password-strength`, {
-				password: pwd,
-			});
-			setStrengthScore(res.data.score);
-			setFeedback(res.data.feedback);
+			const res = await axios.post(
+				`${import.meta.env.VITE_API_BASE_URL}/api/password-strength`,
+				{ password: pwd },
+				{ signal: abortController.signal },
+			);
+
+			// Only update state if this is still the current request
+			if (currentRequestId === requestIdRef.current) {
+				setStrengthScore(res.data.score);
+				setFeedback(res.data.feedback);
+			}
 		} catch (err) {
-			console.error("Error checking password strength:", err);
-			setStrengthScore(0);
-			setFeedback(["Error checking strength."]);
-			toast.error("Failed to check password strength.");
+			// Only show error if this is still the current request and it wasn't aborted
+			if (currentRequestId === requestIdRef.current && !axios.isCancel(err)) {
+				console.error("Error checking password strength:", err);
+				setStrengthScore(0);
+				setFeedback(["Error checking strength."]);
+				toast.error("Failed to check password strength.");
+			}
 		} finally {
-			setLoading(false);
+			// Only clear loading if this is still the current request
+			if (currentRequestId === requestIdRef.current) {
+				setLoading(false);
+			}
 		}
 	}, []);
 
@@ -42,10 +70,16 @@ const PasswordStrengthChecker = () => {
 
 	const debouncedCheckStrengthRef = useRef(
 		((delay) => {
-			let timeout;
 			return (...args) => {
-				clearTimeout(timeout);
-				timeout = setTimeout(() => checkStrengthRef.current(...args), delay);
+				// Clear previous timeout
+				if (debounceTimeoutRef.current) {
+					clearTimeout(debounceTimeoutRef.current);
+				}
+				// Set new timeout and store its ID
+				debounceTimeoutRef.current = setTimeout(() => {
+					checkStrengthRef.current(...args);
+					debounceTimeoutRef.current = null;
+				}, delay);
 			};
 		})(500),
 	);
@@ -54,6 +88,18 @@ const PasswordStrengthChecker = () => {
 	useEffect(() => {
 		trackToolUsage("PasswordStrengthChecker", "web");
 	}, [trackToolUsage]);
+
+	// Cleanup: cancel pending requests and clear debounce timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (debounceTimeoutRef.current) {
+				clearTimeout(debounceTimeoutRef.current);
+			}
+			if (currentAbortControllerRef.current) {
+				currentAbortControllerRef.current.abort();
+			}
+		};
+	}, []);
 
 	useEffect(() => {
 		debouncedCheckStrengthRef.current(password);
@@ -104,8 +150,8 @@ const PasswordStrengthChecker = () => {
 					{loading && <p className="text-muted-foreground">Checking strength...</p>}
 					{feedback.length > 0 && (
 						<ul className="list-disc list-inside text-muted-foreground mt-2">
-							{feedback.map((msg) => (
-								<li key={msg}>{msg}</li>
+							{feedback.map((msg, index) => (
+								<li key={`${index}-${msg}`}>{msg}</li>
 							))}
 						</ul>
 					)}
