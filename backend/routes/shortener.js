@@ -6,11 +6,12 @@ const { isPrivateIP } = require("@backend/utils/ipValidation");
 const { isIP } = require("node:net");
 
 /**
- * Validate that a URL's hostname does not resolve to private or reserved IP addresses.
- * Performs DNS resolution and checks all resolved IP addresses.
- * @param {string} url - URL to validate
- * @returns {Array<{address: string, family: number}>|null} Validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS errors were suppressed.
- * @throws {Error} If the URL resolves to a private or reserved IP address.
+ * Ensure a URL's hostname does not resolve to private or reserved IP addresses.
+ *
+ * @param {string} url - Absolute URL string whose hostname will be validated.
+ * @returns {Array<{address: string, family?: number}>|null} An array of resolved address records (`address` and optional numeric `family`) when one or more addresses are found; `null` if no addresses were returned by DNS lookup.
+ * @throws {Error} If any resolved address is a private or reserved IP address.
+ * Note: DNS resolution errors from the underlying lookup are not caught and will propagate to the caller.
  */
 async function validateUrlHost(url) {
 	const urlObj = new URL(url);

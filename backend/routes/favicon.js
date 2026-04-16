@@ -45,10 +45,10 @@ async function checkIPSafety(hostname) {
 }
 
 /**
- * Validate that a URL uses the `http` or `https` scheme and that its hostname and resolved IP addresses are safe for network requests.
+ * Ensures a URL uses http(s) and that its hostname resolves to safe IP addresses for connection pinning.
  * @param {string} url - The URL to validate.
- * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>}} The parsed hostname and a list of validated IP addresses suitable for connection pinning.
- * @throws {Error} If the scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), if DNS validation could not verify address safety (message: `DNS validation failed - unable to verify address safety`), or if the hostname/resolved IPs are rejected for being private, link-local, loopback, or multicast (messages like `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
+ * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>}} The parsed hostname and validated IP address records suitable for pinning.
+ * @throws {Error} If the URL scheme is not `http:` or `https:` (message: `"Only HTTP and HTTPS protocols are allowed"`), if DNS validation cannot verify address safety (message: `"DNS validation failed - unable to verify address safety"`), or if resolved addresses are rejected as unsafe (messages like `"Rejected unsafe IP address: <ip>"` or `"Rejected unsafe IP address: <ip> (resolved from <hostname>)"`).
  */
 async function validateUrl(url) {
 	const urlObj = new URL(url);

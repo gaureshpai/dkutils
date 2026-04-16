@@ -94,14 +94,14 @@ function isMulticast(ip) {
 }
 
 /**
- * Ensure a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
- * For an IP literal the function validates that single address; for a domain name it resolves A/AAAA records
- * and validates each resolved address. If DNS resolution produced no addresses or was suppressed for certain
- * transient/no-data errors it returns `null`.
+ * For an IP literal the function validates that single address; for a hostname it resolves A/AAAA records
+ * and validates each resolved address. Returns `null` when resolution produced no addresses or when DNS
+ * resolution was suppressed for certain transient/no-data errors.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS errors were suppressed.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS resolution was suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
  * @see Suppressed DNS error codes that result in `null`: `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, `ENOTIMP`.
  */
@@ -184,12 +184,14 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Detects and validate an HTTP redirect and returns the next request state.
+ * Determine whether the response represents an HTTP redirect and, if so, resolve and validate the redirect target and return the next request state.
  *
- * @param {import("axios").AxiosResponse} response - The axios response to inspect for a `Location` header.
+ * If the response status is in the 3xx range and a `Location` header is present, resolves the `Location` against `currentUrl`, validates the resulting URL (including its hostname/IP safety) and returns the next URL, hostname, and the validated addresses. Otherwise indicates that no redirect-following should occur.
+ *
+ * @param {import("axios").AxiosResponse} response - Axios response to inspect for a `Location` header and status code.
  * @param {string} currentUrl - Base URL used to resolve relative `Location` values.
- * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when the response contains a redirect `Location` that was validated; `{ shouldContinue: false }` otherwise.
- * @throws {Error} If the `Location` cannot be resolved to a valid URL or resolves to an unsafe IP address.
+ * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when the response contains a validated redirect target; `{ shouldContinue: false }` otherwise.
+ * @throws {Error} If the `Location` header cannot be resolved to a valid URL or resolves to an unsafe IP address.
  */
 async function handleRedirectResponse(response, currentUrl) {
 	if (response.status >= 300 && response.status < 400 && response.headers.location) {
