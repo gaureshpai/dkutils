@@ -39,6 +39,11 @@ const CsvToJsonConverter = () => {
 		Papa.parse(csvInput, {
 			header: true,
 			complete: (results) => {
+				if (results.errors?.length) {
+					setConvertedOutput(`Error parsing CSV: ${results.errors[0].message}`);
+					setLoading(false);
+					return;
+				}
 				setConvertedOutput(JSON.stringify(results.data, null, 2));
 				setLoading(false);
 			},
