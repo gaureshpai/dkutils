@@ -36,7 +36,6 @@ const ImageBackgroundRemover = () => {
 
 		setLoading(true);
 		try {
-			trackToolUsage("ImageBackgroundRemover", "image");
 			const blob = await removeBackground(selectedFile);
 			const objectUrl = URL.createObjectURL(blob);
 			const link = document.createElement("a");
@@ -46,6 +45,7 @@ const ImageBackgroundRemover = () => {
 			link.click();
 			document.body.removeChild(link);
 			URL.revokeObjectURL(objectUrl);
+			void trackToolUsage("ImageBackgroundRemover", "image");
 			toast.success("Background removed successfully.");
 		} catch (error) {
 			console.error(error);
