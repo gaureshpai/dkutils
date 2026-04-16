@@ -94,14 +94,14 @@ function isMulticast(ip) {
 }
 
 /**
- * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ * Ensure a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
- * If `hostname` is an IP literal, the function checks that IP and throws if it is unsafe. If `hostname` is a domain name,
- * it resolves A/AAAA records and throws if any resolved address is unsafe. Certain transient or empty-DNS errors are
- * suppressed and cause the function to return `null`.
+ * For an IP literal the function validates that single address; for a domain name it resolves A/AAAA records
+ * and validates each resolved address. If DNS resolution produced no addresses or was suppressed for certain
+ * transient/no-data errors it returns `null`.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`) or `null` when no addresses were found or DNS errors were suppressed.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS errors were suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
  * @see Suppressed DNS error codes that result in `null`: `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, `ENOTIMP`.
  */
@@ -184,11 +184,12 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Detects and validates an HTTP redirect from an axios response and provides the next request state.
- * @param {import("axios").AxiosResponse} response - The axios response to inspect for a redirect Location header.
- * @param {string} currentUrl - The URL used to resolve relative redirect locations.
- * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when a redirect Location header is present and validated; `{ shouldContinue: false }` otherwise.
- * @throws {Error} If the redirect Location is invalid or resolves to an unsafe address.
+ * Detects and validate an HTTP redirect and returns the next request state.
+ *
+ * @param {import("axios").AxiosResponse} response - The axios response to inspect for a `Location` header.
+ * @param {string} currentUrl - Base URL used to resolve relative `Location` values.
+ * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when the response contains a redirect `Location` that was validated; `{ shouldContinue: false }` otherwise.
+ * @throws {Error} If the `Location` cannot be resolved to a valid URL or resolves to an unsafe IP address.
  */
 async function handleRedirectResponse(response, currentUrl) {
 	if (response.status >= 300 && response.status < 400 && response.headers.location) {
@@ -208,13 +209,12 @@ async function handleRedirectResponse(response, currentUrl) {
 }
 
 /**
- * Creates HTTP and HTTPS agents whose DNS lookup can be pinned to a provided set of validated IP addresses for a specific hostname.
+ * Create HTTP and HTTPS agents that pin DNS resolution for a specific hostname to a provided set of validated IP addresses.
  *
- * When `validatedAddresses` is provided and the request hostname equals `hostname`, the agents return the pinned address(es) (respecting the requested IP family and the `all` option); otherwise the agents fall back to the normal DNS lookup.
- *
- * @param {string} hostname - Hostname whose resolution may be pinned to `validatedAddresses`.
- * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated `{address, family}` records to use for `hostname`, or `null` to disable pinning.
- * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the custom lookup.
+ * @param {string} hostname - Hostname whose DNS resolution will be pinned when the request hostname matches.
+ * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated `{address, family}` records to use for `hostname`, or `null` to indicate DNS validation was suppressed.
+ * @throws {Error} If `validatedAddresses` is `null`.
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the custom lookup that returns the pinned address(es) for `hostname`.
  */
 function createPinnedAgents(hostname, validatedAddresses) {
 	if (validatedAddresses === null) {
