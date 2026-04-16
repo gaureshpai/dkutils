@@ -61,7 +61,6 @@ const runCleanup = async (req, res) => {
 		console.error("Error triggering Supabase cleanup:", error);
 		res.status(500).json({
 			msg: "Failed to trigger Supabase cleanup.",
-			error: error.message,
 		});
 	}
 };

@@ -33,6 +33,7 @@ const ImageToPdfConverter = () => {
 	 */
 	const onFileChange = (e) => {
 		setConvertedFile(null);
+		setLoading(false);
 		// Increment conversion ID to invalidate any pending requests when files change
 		conversionIdRef.current += 1;
 		const files = Array.from(e.target.files);
@@ -82,7 +83,7 @@ const ImageToPdfConverter = () => {
 
 		// Increment conversion ID to track this specific conversion
 		conversionIdRef.current += 1;
-		const currentConversionId = conversionIdRef.current;
+		const myId = conversionIdRef.current;
 		const filesSnapshot = [...selectedFiles];
 
 		setConvertedFile(null);
@@ -104,7 +105,7 @@ const ImageToPdfConverter = () => {
 			);
 
 			// Only apply results if this is still the current conversion
-			if (currentConversionId === conversionIdRef.current) {
+			if (myId === conversionIdRef.current) {
 				setConvertedFile(res.data);
 				handleDownload(res.data.path, res.data.originalname);
 				toast.success("Images converted to PDF successfully!");
@@ -113,13 +114,13 @@ const ImageToPdfConverter = () => {
 		} catch (err) {
 			console.error(err);
 			// Only show error if this is still the current conversion
-			if (currentConversionId === conversionIdRef.current) {
+			if (myId === conversionIdRef.current) {
 				setConvertedFile(null);
 				toast.error(err.response?.data?.msg || "Error converting images to PDF. Please try again.");
 			}
 		} finally {
 			// Only update loading state if this is still the current conversion
-			if (currentConversionId === conversionIdRef.current) {
+			if (myId === conversionIdRef.current) {
 				setLoading(false);
 			}
 		}

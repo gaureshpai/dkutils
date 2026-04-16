@@ -29,7 +29,8 @@ const PdfCompressor = () => {
 	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
-		const maxFileSize = (state?.isAuthenticated ?? false) ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+		const isAuth = state?.isAuthenticated ?? false;
+		const maxFileSize = isAuth ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
 		if (!file || e.target.files.length === 0) {
 			setSelectedFile(null);
@@ -40,7 +41,7 @@ const PdfCompressor = () => {
 		if (file.type === "application/pdf") {
 			if (file.size > maxFileSize) {
 				toast.error(
-					isAuthenticated
+					isAuth
 						? `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB.`
 						: `File too large: ${file.name}. Maximum size is ${maxFileSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
 				);
