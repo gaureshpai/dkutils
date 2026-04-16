@@ -36,7 +36,7 @@ router.post(
 			if (process.env.NODE_ENV !== "production") {
 				console.log("Validation errors:", sanitizedErrors);
 			}
-			return res.status(400).json({ errors: errors.array() });
+			return res.status(400).json({ errors: sanitizedErrors });
 		}
 
 		const { username, email, password } = req.body;
