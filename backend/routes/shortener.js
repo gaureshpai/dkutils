@@ -1,6 +1,39 @@
 const router = require("express").Router();
 const shortid = require("shortid");
 const Url = require("@backend/models/Url");
+const dns = require("node:dns");
+const { isPrivateIP } = require("@backend/utils/ipValidation");
+const { isIP } = require("node:net");
+
+/**
+ * Validate that a URL's hostname does not resolve to private or reserved IP addresses.
+ * Performs DNS resolution and checks all resolved IP addresses.
+ * @param {string} url - URL to validate
+ * @returns {Array<{address: string, family: number}>|null} Validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS errors were suppressed.
+ * @throws {Error} If the URL resolves to a private or reserved IP address.
+ */
+async function validateUrlHost(url) {
+	const urlObj = new URL(url);
+	const hostname = urlObj.hostname;
+
+	if (isIP(hostname)) {
+		if (isPrivateIP(hostname)) {
+			throw new Error("URL resolves to a private or reserved IP address");
+		}
+		return [{ address: hostname }];
+	}
+
+	const addresses = await dns.promises.lookup(hostname, {
+		all: true,
+		verbatim: true,
+	});
+	for (const { address: ip } of addresses) {
+		if (isPrivateIP(ip)) {
+			throw new Error(`URL resolves to a private or reserved IP address (${ip})`);
+		}
+	}
+	return addresses.length > 0 ? addresses : null;
+}
 
 router.post("/shorten", async (req, res) => {
 	const { originalUrl } = req.body;
@@ -28,6 +61,12 @@ router.post("/shorten", async (req, res) => {
 	let normalizedUrl = originalUrl;
 	if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
 		normalizedUrl = `http://${originalUrl}`;
+	}
+
+	try {
+		await validateUrlHost(normalizedUrl);
+	} catch (err) {
+		return res.status(400).json({ msg: err.message });
 	}
 
 	try {

@@ -14,19 +14,23 @@ const GLOBAL_KEY = "global";
  * @returns {migrated: boolean, processed: number, totalCount: number}
  */
 const migrateTotalUsageKey = async () => {
+	// Declare variables before try block so they remain in scope for the return
+	let matchingDocs;
+	let totalCount;
+
 	// Perform read-and-aggregate step inside the same transaction
 	const session = await mongoose.startSession();
 	session.startTransaction();
 
 	try {
-		const matchingDocs = await TotalUsage.find({
+		matchingDocs = await TotalUsage.find({
 			$or: [{ key: GLOBAL_KEY }, { key: { $exists: false } }, { key: null }],
 		})
 			.sort({ _id: 1 })
 			.lean()
 			.session(session);
 
-		const totalCount = matchingDocs.reduce(
+		totalCount = matchingDocs.reduce(
 			(sum, doc) => sum + (typeof doc.totalCount === "number" ? doc.totalCount : 0),
 			0,
 		);

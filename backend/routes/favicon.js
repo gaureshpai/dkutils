@@ -3,47 +3,116 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const path = require("node:path");
 const archiver = require("archiver");
+const http = require("node:http");
+const https = require("node:https");
+const dns = require("node:dns");
 const { supabase } = require("@backend/utils/supabaseClient");
-const { promises: dns } = require("node:dns");
-const { isPrivateIP } = require("@backend/utils/ipValidation");
+const { isPrivateIP, normalizeIPv4Mapped } = require("@backend/utils/ipValidation");
 
 /**
- * Validate a given URL and check if its hostname/IP addresses are not private.
- * @param {string} url - The URL to validate.
- * @returns {boolean} True if the URL's protocol is http or https and its hostname/IP addresses are not private; false otherwise.
- * @throws {Error} If the URL's protocol is not http or https, or if its hostname/IP fails safety checks.
+ * Ensures a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ *
+ * For an IP literal the function validates that single address; for a domain name it resolves A/AAAA records
+ * and validates each resolved address. If DNS resolution produced no addresses or was suppressed for certain
+ * transient/no-data errors it returns `null`.
+ *
+ * @param {string} hostname - Hostname or IP literal to validate.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS errors were suppressed.
+ * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
+ * @see Suppressed DNS error codes that result in `null`: `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, `ENOTIMP`.
  */
-const validateUrl = async (url) => {
-	try {
-		const urlObj = new URL(url);
+async function checkIPSafety(hostname) {
+	const { isIP } = require("node:net");
 
-		// Only allow http and https protocols
-		if (!["http:", "https:"].includes(urlObj.protocol)) {
-			throw new Error("Only HTTP and HTTPS protocols are allowed");
+	if (isIP(hostname)) {
+		const ip = hostname;
+		if (isPrivateIP(ip)) {
+			throw new Error(`Rejected unsafe IP address: ${ip}`);
 		}
-
-		// Extract hostname and resolve to check IP addresses using system resolver
-		const hostname = urlObj.hostname;
-		const lookupResults = await dns.lookup(hostname, { all: true });
-
-		if (!lookupResults || lookupResults.length === 0) {
-			throw new Error("DNS resolution failed - no addresses returned");
-		}
-
-		const addresses = lookupResults.map((result) => result.address);
-
-		// Check if any resolved IP is private
-		for (const ip of addresses) {
-			if (isPrivateIP(ip)) {
-				throw new Error("Private IP ranges not allowed");
-			}
-		}
-
-		return true;
-	} catch (error) {
-		throw new Error(`URL validation failed: ${error.message}`);
+		return [{ address: ip, family: isIP(ip) }];
 	}
-};
+
+	const addresses = await dns.promises.lookup(hostname, {
+		all: true,
+		verbatim: true,
+	});
+	for (const { address: ip } of addresses) {
+		if (isPrivateIP(ip)) {
+			throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
+		}
+	}
+	return addresses.length > 0 ? addresses : null;
+}
+
+/**
+ * Validate that a URL uses the `http` or `https` scheme and that its hostname and resolved IP addresses are safe for network requests.
+ * @param {string} url - The URL to validate.
+ * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>}} The parsed hostname and a list of validated IP addresses suitable for connection pinning.
+ * @throws {Error} If the scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), if DNS validation could not verify address safety (message: `DNS validation failed - unable to verify address safety`), or if the hostname/resolved IPs are rejected for being private, link-local, loopback, or multicast (messages like `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
+ */
+async function validateUrl(url) {
+	const urlObj = new URL(url);
+	if (!["http:", "https:"].includes(urlObj.protocol)) {
+		throw new Error("Only HTTP and HTTPS protocols are allowed");
+	}
+
+	const safeAddresses = await checkIPSafety(urlObj.hostname);
+	if (safeAddresses === null) {
+		throw new Error("DNS validation failed - unable to verify address safety");
+	}
+	return { hostname: urlObj.hostname, safeAddresses };
+}
+
+/**
+ * Creates pinned HTTP and HTTPS agents for a specific hostname and validated IP addresses.
+ *
+ * When a request is made for the target hostname, the agents will use the custom DNS lookup function
+ * to return the validated IP addresses for the given hostname. If no family is specified, the agents will
+ * return all validated IP addresses. Otherwise, the agents will return the validated IP addresses that match
+ * the requested family.
+ * @param {string} hostname - The hostname for which the pinned agents will use the custom DNS lookup.
+ * @param {Array<{address: string, family: number}>} validatedAddresses - The validated IP addresses to use for the custom DNS lookup.
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object containing the pinned HTTP and HTTPS agents.
+ */
+function createPinnedAgents(hostname, validatedAddresses) {
+	const lookupFunction = (requestHostname, options, callback) => {
+		if (validatedAddresses && requestHostname === hostname) {
+			const family = typeof options === "number" ? options : options?.family;
+			const returnAll = typeof options === "object" && options?.all === true;
+
+			if (returnAll) {
+				const validatedAddressesFiltered = family
+					? validatedAddresses.filter((entry) => entry.family === family)
+					: validatedAddresses;
+
+				if (validatedAddressesFiltered.length === 0) {
+					return callback(new Error("No validated DNS records available"));
+				}
+				return callback(
+					null,
+					validatedAddressesFiltered.map((e) => ({
+						address: e.address,
+						family: e.family,
+					})),
+				);
+			}
+			const candidate =
+				validatedAddresses.find((entry) => !family || entry.family === family) ??
+				validatedAddresses[0];
+
+			if (!candidate) {
+				return callback(new Error("No validated DNS records available"));
+			}
+			return callback(null, candidate.address, candidate.family);
+		}
+		dns.lookup(requestHostname, options, callback);
+	};
+
+	return {
+		httpAgent: new http.Agent({ lookup: lookupFunction }),
+		httpsAgent: new https.Agent({ lookup: lookupFunction }),
+	};
+}
 
 /**
  * Downloads a file from a given URL and returns its contents and content type.
@@ -53,13 +122,16 @@ const validateUrl = async (url) => {
  */
 const downloadFile = async (fileUrl) => {
 	try {
-		// Validate the URL before making the request
-		await validateUrl(fileUrl);
+		// Validate the URL and get pinned agents to prevent DNS rebinding
+		const { hostname, safeAddresses } = await validateUrl(fileUrl);
+		const agents = createPinnedAgents(hostname, safeAddresses);
 
 		const response = await axios.get(fileUrl, {
 			responseType: "arraybuffer",
-			maxRedirects: 0, // Disable redirects to prevent SSRF chains
+			maxRedirects: 0,
 			timeout: 5000,
+			httpAgent: agents.httpAgent,
+			httpsAgent: agents.httpsAgent,
 		});
 		return {
 			success: true,
@@ -112,13 +184,16 @@ router.post("/", async (req, res) => {
 	}
 
 	try {
-		// Validate the main URL before processing
-		await validateUrl(url);
+		// Validate the main URL and get pinned agents to prevent DNS rebinding
+		const { hostname, safeAddresses } = await validateUrl(url);
+		const agents = createPinnedAgents(hostname, safeAddresses);
 
 		const response = await axios.get(url, {
-			maxRedirects: 0, // Disable redirects to prevent SSRF chains
+			maxRedirects: 0,
 			timeout: 5000,
-			validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
+			validateStatus: (status) => status >= 200 && status < 300,
+			httpAgent: agents.httpAgent,
+			httpsAgent: agents.httpsAgent,
 		});
 		const $ = cheerio.load(response.data);
 		const faviconUrls = [];

@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
+const crypto = require("node:crypto");
 const { cleanSupabaseStorage } = require("@backend/utils/supabaseCleaner");
 
 /**
@@ -36,7 +37,20 @@ const requireSecret = (req, res, next) => {
 	const secret = req.header("x-cron-secret");
 	const expectedSecret = process.env.SUPABASE_CLEANUP_CRON_SECRET;
 
-	if (!secret || !expectedSecret || secret !== expectedSecret) {
+	if (!secret || !expectedSecret) {
+		return res.status(401).json({ msg: "Invalid or missing cron secret" });
+	}
+
+	const secretBuffer = Buffer.from(secret);
+	const expectedBuffer = Buffer.from(expectedSecret);
+
+	if (secretBuffer.length !== expectedBuffer.length) {
+		return res.status(401).json({ msg: "Invalid or missing cron secret" });
+	}
+
+	try {
+		crypto.timingSafeEqual(secretBuffer, expectedBuffer);
+	} catch {
 		return res.status(401).json({ msg: "Invalid or missing cron secret" });
 	}
 
