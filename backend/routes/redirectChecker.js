@@ -94,16 +94,16 @@ function isMulticast(ip) {
 }
 
 /**
- * Validate that a hostname or IP literal does not refer to private, link-local, loopback, or multicast addresses.
+ * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
- * If `hostname` is an IP literal, the function checks that IP and throws on unsafe addresses. If `hostname` is a domain name,
- * it resolves A/AAAA records and throws if any resolved address is unsafe. Certain DNS failures are suppressed and cause the
- * function to return `null`.
+ * If `hostname` is an IP literal, the function checks that IP and throws if it is unsafe. If `hostname` is a domain name,
+ * it resolves A/AAAA records and throws if any resolved address is unsafe. Certain transient or empty-DNS errors are
+ * suppressed and cause the function to return `null`.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Array<{address: string, family: number}>|null} Array of validated IP records with their families, or `null` when no addresses were found or DNS errors were suppressed.
- * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast.
- * @see ENOTFOUND, ENODATA, EAI_AGAIN, ENOTIMP - these DNS error codes are suppressed and result in `null` being returned.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`) or `null` when no addresses were found or DNS errors were suppressed.
+ * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
+ * @see Suppressed DNS error codes that result in `null`: `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, `ENOTIMP`.
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
@@ -145,10 +145,10 @@ async function checkIPSafety(hostname) {
 }
 
 /**
- * Ensure the given URL uses the `http` or `https` scheme and that its hostname and any resolved IP addresses are not private, link-local, loopback, or multicast.
+ * Validate that a URL uses the `http` or `https` scheme and that its hostname and resolved IP addresses are safe for network requests.
  * @param {string} targetUrl - The URL to validate.
- * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>|null}} Parsed hostname and validated IP addresses for connection pinning, or `null` if DNS lookup returned no records.
- * @throws {Error} If the URL scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), or if the hostname or any resolved address is rejected for being private, link-local, loopback, or multicast (messages: `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
+ * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>}} The parsed hostname and a list of validated IP addresses suitable for connection pinning.
+ * @throws {Error} If the scheme is not `http:` or `https:` (message: `Invalid scheme: ${protocol}. Only http and https are allowed.`), if DNS validation could not verify address safety (message: `DNS validation failed - unable to verify address safety`), or if the hostname/resolved IPs are rejected for being private, link-local, loopback, or multicast (messages like `Rejected unsafe IP address: ${ip}` or `Rejected unsafe IP address: ${ip} (resolved from ${hostname})`).
  */
 async function validateUrl(targetUrl) {
 	const parsed = new URL(targetUrl);

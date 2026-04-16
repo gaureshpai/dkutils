@@ -41,9 +41,9 @@ const PrivateRoute = ({ children }) => {
 };
 
 /**
- * Renders the themed application shell with routes, global UI, and authentication initialization.
+ * Render the application's themed shell, global layout, and route tree.
  *
- * On mount, reads a JWT from localStorage and initializes authentication: if a token is present and decodes with an unexpired `exp`, the token is applied and a `LOGIN` action with `{ token, user }` is dispatched; if the token is expired or cannot be decoded, the token and auth header are cleared and a `LOGOUT` action is dispatched.
+ * On mount, initializes authentication from a JWT stored in localStorage: if a token exists and decodes to an unexpired token, the token is applied and a `LOGIN` action with `{ token, user }` is dispatched; if the token is expired or cannot be decoded, the token and auth header are cleared and a `LOGOUT` action is dispatched. After this check the component dispatches `SET_INITIALIZED`.
  * @returns {JSX.Element} The root React element containing the theme provider, navbar, routes, footer, and toast container.
  */
 function App() {
