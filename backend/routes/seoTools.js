@@ -147,7 +147,7 @@ router.get("/robots-txt", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "robots.txt not found", exists: false });
+		return res.status(404).json({ msg: result.error || "robots.txt not found", error: result.error || "robots.txt not found", exists: false });
 	} catch (err) {
 		console.error("Error fetching robots.txt:", err);
 		return res.status(500).json({ msg: "Server Error" });
@@ -191,7 +191,7 @@ router.post("/robots-txt", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "robots.txt not found", exists: false });
+		return res.status(404).json({ msg: result.error || "robots.txt not found", error: result.error || "robots.txt not found", exists: false });
 	} catch (err) {
 		console.error("Error fetching robots.txt:", err);
 		return res.status(500).json({ msg: "Server Error" });
@@ -235,7 +235,7 @@ router.get("/sitemap-xml", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "sitemap.xml not found", exists: false });
+		return res.status(404).json({ msg: result.error || "sitemap.xml not found", error: result.error || "sitemap.xml not found", exists: false });
 	} catch (err) {
 		console.error("Error fetching sitemap.xml:", err);
 		return res.status(500).json({ msg: "Server Error" });
@@ -279,7 +279,7 @@ router.post("/sitemap-xml", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "sitemap.xml not found", exists: false });
+		return res.status(404).json({ msg: result.error || "sitemap.xml not found", error: result.error || "sitemap.xml not found", exists: false });
 	} catch (err) {
 		console.error("Error fetching sitemap.xml:", err);
 		return res.status(500).json({ msg: "Server Error" });

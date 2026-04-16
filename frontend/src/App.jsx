@@ -12,16 +12,15 @@ import ImageToolsPage from "@frontend/pages/ImageToolsPage.jsx";
 import PdfToolsPage from "@frontend/pages/PdfToolsPage.jsx";
 import TextToolsPage from "@frontend/pages/TextToolsPage.jsx";
 import WebToolsPage from "@frontend/pages/WebToolsPage.jsx";
-import setAuthToken from "@frontend/utils/setAuthToken";
-import { jwtDecode } from "jwt-decode";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 /**
- * A private route that will redirect to /login if not authenticated and navigate to homepage if authenticated.
- * @param {{ children }} React nodes to render inside the provider.
- * @returns {JSX.Element} A Context Provider that supplies { state, navigate } to its children.
+ * PrivateRoute conditionally renders its children when the user is authenticated
+ * and redirects to "/login" when not authenticated.
+ * @param {{ children }} children - React nodes to render when authenticated.
+ * @returns {JSX.Element} A JSX.Element that either renders children or a Navigate to "/login".
  */
 const PrivateRoute = ({ children }) => {
 	const { state } = useContext(AuthContext);
@@ -42,38 +41,9 @@ const PrivateRoute = ({ children }) => {
 
 /**
  * Renders the app shell with theme, global layout, routing, and UI containers.
- *
- * On mount, initializes authentication from a JWT stored in localStorage: if a token decodes and is not expired, applies the token and dispatches `LOGIN` with `{ token, user }`; otherwise clears the token and auth header and dispatches `LOGOUT`. Dispatches `SET_INITIALIZED` after the token check completes.
  * @returns {JSX.Element} The root React element containing the ThemeProvider, navbar, route tree, footer, and toast container.
  */
 function App() {
-	const { dispatch } = useContext(AuthContext);
-
-	useEffect(() => {
-		const token = localStorage.getItem("token");
-		if (token) {
-			try {
-				const decoded = jwtDecode(token);
-				const currentTime = Date.now() / 1000;
-
-				// Verify exp field is present and a number
-				if (typeof decoded.exp === "number" && decoded.exp >= currentTime) {
-					setAuthToken(token);
-					dispatch({ type: "LOGIN", payload: { token, user: decoded.user } });
-				} else {
-					setAuthToken(null);
-					localStorage.removeItem("token");
-					dispatch({ type: "LOGOUT" });
-				}
-			} catch (error) {
-				console.error("Error decoding token:", error);
-				setAuthToken(null);
-				localStorage.removeItem("token");
-				dispatch({ type: "LOGOUT" });
-			}
-		}
-		dispatch({ type: "SET_INITIALIZED" });
-	}, [dispatch]);
 
 	return (
 		<ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">

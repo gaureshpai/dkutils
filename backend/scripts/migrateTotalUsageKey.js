@@ -7,11 +7,11 @@ const { TotalUsage } = require("@backend/models/ServiceUsage");
 const GLOBAL_KEY = "global";
 
 /**
- * Migrate the TotalUsage model to ensure that only one document
- * has key = "global", and that all other documents have key = null.
- * Aggregate the totalCount field of all matching documents into this
- * one document. Remove any duplicate documents.
- * @returns {migrated: boolean, processed: number, totalCount: number}
+ * Migrate the TotalUsage model to ensure that only one document has key = "global".
+ * Duplicate documents are deleted (not set to null). The document with key = "global"
+ * is ensured to exist, and all other matching documents are removed while their
+ * totalCount is aggregated into the canonical document.
+ * @returns {{migrated: boolean, processed: number, totalCount: number}} An object containing migration status, number of documents processed, and the aggregated total count.
  */
 const migrateTotalUsageKey = async () => {
 	// Declare variables before try block so they remain in scope for the return
