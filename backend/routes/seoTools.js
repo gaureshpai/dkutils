@@ -37,9 +37,24 @@ const validateDomain = async (domain) => {
 	}
 };
 
+/**
+ * Fetches the content of a URL and checks if the content exists.
+ * It uses a custom DNS lookup function to pin the resolution of the hostname to the validated IP addresses.
+ * @param {string} url - The URL to fetch.
+ * @param {Array<{address: string, family: number}>} validatedAddresses - Validated DNS records for the hostname.
+ * @returns {Promise<{content: string, exists: boolean, error?: string, redirectStatus?: number}>} A promise that resolves to an object containing the fetched content, whether the content exists, and an optional error string and redirect status.
+ */
 const fetchContent = async (url, validatedAddresses) => {
 	try {
 		const parsedUrl = new URL(url);
+		/**
+		 * Custom DNS lookup function that pins the resolution of the hostname to the validated IP addresses.
+		 * If the request hostname does not equal the target hostname, the function falls back to the normal DNS lookup.
+		 * If the request hostname equals the target hostname, the function returns the validated IP address(es) that match the requested family (or all addresses if no family is specified).
+		 * @param {string} hostname - The hostname being resolved.
+		 * @param {Object|number} options - Options for the DNS lookup (family and all).
+		 * @param {Function} callback - The callback function to receive the DNS lookup result.
+		 */
 		const pinnedLookup = (hostname, options, callback) => {
 			if (hostname !== parsedUrl.hostname) {
 				return dns.lookup(hostname, options, callback);

@@ -4,6 +4,25 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * ImageFlipper is a component that allows users to flip their images horizontally or vertically.
+ *
+ * Props:
+ * None
+ *
+ * Context:
+ * AuthContext
+ *
+ * State:
+ * selectedFile: The currently selected image file.
+ * flipDirection: The direction of image flip.
+ * loading: Whether the image is being flipped or not.
+ *
+ * Functions:
+ * onSubmit: Handles the image flip submission.
+ * onFileChange: Handles the image file change event.
+ * trackToolUsage: Tracks the tool usage for analytics.
+ */
 const ImageFlipper = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -14,6 +33,13 @@ const ImageFlipper = () => {
 	const [flipDirection, setFlipDirection] = useState("horizontal");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles the image file change event.
+	 * Checks if the selected file is an image file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -41,6 +67,13 @@ const ImageFlipper = () => {
 		}
 	};
 
+	/**
+	 * Handles the form submission event.
+	 * Checks if a selected file is available and if it is an image file.
+	 * If the file is valid, sends a POST request to the API to flip the image.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.FormEvent} e The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		if (!selectedFile) {

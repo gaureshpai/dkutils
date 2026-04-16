@@ -4,6 +4,13 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for merging multiple PDF files.
+ * The component takes care of handling the file selection event, validating the selected files, submitting the selected files to the server for merging, and downloading the merged PDF file.
+ * @prop trackToolUsage {function} - A function to track the usage of the component.
+ * @prop {React.ChangeEvent<HTMLInputElement>} onFileChange - The file selection event.
+ * @prop {React.FormEvent} onSubmit - The form submission event.
+ */
 const PdfMerger = () => {
 	const { trackToolUsage } = useAnalytics();
 	const [selectedFiles, setSelectedFiles] = useState([]);
@@ -18,6 +25,13 @@ const PdfMerger = () => {
 	const [convertedFile, setConvertedFile] = useState(null);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file selection event for PDF merger.
+	 * Checks if the selected files are valid PDF files and if they are within the allowed file size limit.
+	 * If the files are valid, sets the selectedFiles state to the valid files.
+	 * If the files are invalid, displays an error message and resets the selectedFiles state.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const files = Array.from(e.target.files);
 		const validFiles = [];
@@ -51,6 +65,10 @@ const PdfMerger = () => {
 		}
 	};
 
+	/**
+	 * Submits the selected PDF files to the server for merging.
+	 * @param {React.FormEvent} e The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 
@@ -92,6 +110,11 @@ const PdfMerger = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

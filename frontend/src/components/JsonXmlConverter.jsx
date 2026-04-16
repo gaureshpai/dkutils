@@ -3,6 +3,11 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A utility component that allows users to convert JSON data to XML and vice versa.
+ * It includes input fields for JSON and XML data, and buttons to convert the data in either direction.
+ * The converted output is displayed in a read-only textarea below the input fields.
+ */
 const JsonXmlConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -11,12 +16,22 @@ const JsonXmlConverter = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
+	/**
+	 * Handles input change event for JSON/XML converter.
+	 * Sets the input data state to the new value, and resets the output data and error states.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The input change event.
+	 */
 	const handleInputChange = (e) => {
 		setInputData(e.target.value);
 		setOutputData("");
 		setError(null);
 	};
 
+	/**
+	 * Copies the provided text to the user's clipboard.
+	 * @param {string} textToCopy - The text to copy to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);
@@ -27,6 +42,10 @@ const JsonXmlConverter = () => {
 		}
 	};
 
+	/**
+	 * Converts JSON data to XML and tracks tool usage.
+	 * @throws {Error} - If there is an error while converting the JSON to XML.
+	 */
 	const convertJsonToXml = async () => {
 		setLoading(true);
 		setOutputData("");
@@ -53,6 +72,10 @@ const JsonXmlConverter = () => {
 		}
 	};
 
+	/**
+	 * Converts XML data to JSON and tracks tool usage.
+	 * @throws {Error} - If there is an error while converting the XML to JSON.
+	 */
 	const convertXmlToJson = async () => {
 		setLoading(true);
 		setOutputData("");

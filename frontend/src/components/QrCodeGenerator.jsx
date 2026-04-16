@@ -5,18 +5,36 @@ import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that generates a QR code based on user input.
+ * The component provides a form that allows users to enter text or a link.
+ * The component also provides a button to generate the QR code and buttons to download the QR code as a PNG and a PDF.
+ * The component tracks the usage of the tool with the `useAnalytics` hook.
+ *
+ * @returns {JSX.Element} A JSX element representing the QR Code Generator tool.
+ */
 const QrCodeGenerator = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [text, setText] = useState("");
 	const [qrValue, setQrValue] = useState("");
 	const [loading, setLoading] = useState(false);
 	const qrCodeRef = useRef(null);
 
+	/**
+	 * Handles changes to the text input field.
+	 * Sets the text state to the new value.
+	 * @param {React.ChangeEvent} e - The event object passed from the onChange event.
+	 */
 	const handleChange = (e) => {
 		setText(e.target.value);
 	};
 
+	/**
+	 * Generates a QR code based on the current text state.
+	 * If the text state is empty, displays an error message and returns.
+	 * Otherwise, sets the loading state to true, tracks the usage of the tool with the `useAnalytics` hook,
+	 * and sets the QR value state to the current text state after a 500ms delay.
+	 */
 	const generateQrCode = () => {
 		if (!text.trim()) {
 			toast.error("Please enter some text to generate a QR code.");
@@ -32,6 +50,12 @@ const QrCodeGenerator = () => {
 		}, 500);
 	};
 
+	/**
+	 * Downloads the current QR code as a PNG image.
+	 * If the QR code element is not available (i.e. the QR code has not been generated),
+	 * displays an error message and returns. Otherwise, downloads the QR code as a PNG image
+	 * and displays a success message.
+	 */
 	const downloadPng = () => {
 		if (qrCodeRef.current) {
 			domToImage
@@ -54,6 +78,12 @@ const QrCodeGenerator = () => {
 		}
 	};
 
+	/**
+	 * Downloads the current QR code as a PDF document.
+	 * If the QR code element is not available (i.e. the QR code has not been generated),
+	 * displays an error message and returns. Otherwise, downloads the QR code as a PDF document
+	 * and displays a success message.
+	 */
 	const downloadPdf = () => {
 		if (qrCodeRef.current) {
 			domToImage

@@ -18,6 +18,11 @@ import { AlertCircle } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+/**
+ * A login form for users to sign in to their account.
+ *
+ * @return {JSX.Element} A JSX element containing the login form.
+ */
 const Login = () => {
 	const { trackToolUsage } = useAnalytics();
 	const [formData, setFormData] = useState({
@@ -33,6 +38,11 @@ const Login = () => {
 
 	const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+	/**
+	 * Submits the login form to the server, and on success, dispatches a 'LOGIN' action to the reducer with the user's token and user data.
+	 * @param {object} formData The form data to submit.
+	 * @return {Promise} A promise that resolves when the submission is successful.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);

@@ -3,12 +3,29 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that generates a screenshot of a given website URL.
+ * The component provides a form that allows users to enter the website URL.
+ * The component also provides a button to generate the screenshot, which is disabled while the screenshot is being generated.
+ * The component tracks the usage of the tool with the `useAnalytics` hook.
+ * The component also displays an error message if the screenshot generation fails.
+ * @returns {JSX.Element} A JSX element representing the Website Screenshot Generator tool.
+ */
 const WebsiteScreenshotGenerator = () => {
 	const { trackToolUsage } = useAnalytics();
 	const [url, setUrl] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
+	/**
+	 * Handles the submission of the website screenshot generator form.
+	 * The function prevents the default form submission event, tracks the usage of the tool with the `useAnalytics` hook,
+	 * and sets the loading state to true.
+	 * The function then generates a screenshot of the given website URL by making a POST request to the `/api/screenshot` endpoint.
+	 * If the request is successful, the function downloads the screenshot as a file with the original filename.
+	 * If the request fails, the function sets the error state to an error message and displays a toast error message.
+	 * The function finally sets the loading state to false.
+	 */
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);

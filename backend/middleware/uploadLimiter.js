@@ -2,6 +2,13 @@ const multer = require("multer");
 
 const storage = multer.memoryStorage();
 
+/**
+ * A middleware to limit the size of uploaded files.
+ * @param {object} req - The incoming HTTP request.
+ * @param {object} res - The outgoing HTTP response.
+ * @param {function} next - The next middleware function to call.
+ */
+// Docstring for uploadLimiter
 const uploadLimiter = (req, res, next) => {
 	let fileSizeLimit = 10 * 1024 * 1024;
 

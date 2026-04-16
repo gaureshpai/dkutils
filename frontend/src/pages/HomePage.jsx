@@ -20,6 +20,13 @@ import {
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 
+/**
+ * HomePage
+ *
+ * The homepage of the dkutils website, providing a summary of the available tools and features.
+ *
+ * @returns {JSX.Element} The JSX element representing the homepage.
+ */
 const HomePage = () => {
 	const siteUrl = import.meta.env.VITE_SITE_URL || "https://dkutils.vercel.app";
 	const categories = [

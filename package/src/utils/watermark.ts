@@ -1,8 +1,14 @@
+import { DKU_WATERMARK } from "@package/branding.js";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import sharp from "sharp";
 
-import { DKU_WATERMARK } from "@package/branding.js";
-
+/**
+ * Applies the DKU watermark to an image buffer.
+ * @param buffer The image buffer to apply the watermark to.
+ * @param format The format of the image (jpeg, png, etc.).
+ * @param enabled Whether to apply the watermark or not (defaults to true).
+ * @returns A promise that resolves with the watermarked image buffer.
+ */
 export async function applyImageWatermark(
 	buffer: Buffer,
 	format: string,
@@ -26,6 +32,12 @@ export async function applyImageWatermark(
 	return pipeline.toBuffer();
 }
 
+/**
+ * Applies the DKU watermark to a PDF document.
+ * @param pdfBytes The PDF document bytes to apply the watermark to.
+ * @param enabled Whether to apply the watermark or not (defaults to true).
+ * @returns A promise that resolves with the watermarked PDF document bytes.
+ */
 export async function applyPdfWatermark(pdfBytes: Uint8Array, enabled = true): Promise<Uint8Array> {
 	if (!enabled) {
 		return pdfBytes;

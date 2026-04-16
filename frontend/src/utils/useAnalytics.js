@@ -4,7 +4,17 @@ import { useCallback } from "react";
 const toolStatsCache = new Map();
 const popularToolsCache = new Map();
 
+/**
+ * Hook providing analytics tracking functionality
+ *
+ * @returns {{ trackToolUsage: (toolName: string, category: string) => Promise<void>, getToolStats: (category: string) => Promise<ToolStats[]>, getPopularTools: () => Promise<{ [category: string]: ToolStats[] }> }}
+ */
 const useAnalytics = () => {
+	/**
+	 * Checks if a given string is a valid URL.
+	 * @param {string} url - The string to check for validity.
+	 * @returns {boolean} true if the string is a valid URL, false otherwise.
+	 */
 	const isValidUrl = (url) => {
 		try {
 			new URL(url);
@@ -14,6 +24,11 @@ const useAnalytics = () => {
 		}
 	};
 
+	/**
+	 * Returns the base URL for API requests, or null if the VITE_API_BASE_URL environment variable is invalid or missing.
+	 * If the variable is invalid or missing, a warning will be logged to the console.
+	 * @returns {string|null} The base URL for API requests, or null if analytics is disabled.
+	 */
 	const getApiBaseUrl = () => {
 		const baseUrl = import.meta.env.VITE_API_BASE_URL;
 		if (!baseUrl || !isValidUrl(baseUrl)) {

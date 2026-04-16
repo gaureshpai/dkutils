@@ -1,29 +1,28 @@
-import { jwtDecode } from "jwt-decode";
-import { useContext, useEffect, useState } from "react";
-import "@frontend/App.css";
-import Navbar from "@frontend/components/Navbar.jsx";
-import { AuthContext } from "@frontend/context/AuthContext.jsx";
-import setAuthToken from "@frontend/utils/setAuthToken";
-import { Route, Routes, useNavigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-
-// Components
 import Base64TextConverter from "@frontend/components/Base64TextConverter.jsx";
+import Footer from "@frontend/components/Footer.jsx";
 import ImageFlipper from "@frontend/components/ImageFlipper.jsx";
 import ImageToBase64Converter from "@frontend/components/ImageToBase64Converter.jsx";
+import Navbar from "@frontend/components/Navbar.jsx";
 import Login from "@frontend/components/auth/Login.jsx";
 import Register from "@frontend/components/auth/Register.jsx";
-
-import Footer from "@frontend/components/Footer.jsx";
-// Pages
+import { ThemeProvider } from "@frontend/components/theme-provider";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
 import HomePage from "@frontend/pages/HomePage.jsx";
 import ImageToolsPage from "@frontend/pages/ImageToolsPage.jsx";
 import PdfToolsPage from "@frontend/pages/PdfToolsPage.jsx";
 import TextToolsPage from "@frontend/pages/TextToolsPage.jsx";
 import WebToolsPage from "@frontend/pages/WebToolsPage.jsx";
+import setAuthToken from "@frontend/utils/setAuthToken";
+import { jwtDecode } from "jwt-decode";
+import { useContext, useEffect, useState } from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
-import { ThemeProvider } from "@frontend/components/theme-provider";
-
+/**
+ * A private route that will redirect to /login if not authenticated and navigate to homepage if authenticated.
+ * @param {{ children }} React nodes to render inside the provider.
+ * @returns {JSX.Element} A Context Provider that supplies { state, navigate } to its children.
+ */
 const PrivateRoute = ({ children }) => {
 	const { state } = useContext(AuthContext);
 	const navigate = useNavigate();

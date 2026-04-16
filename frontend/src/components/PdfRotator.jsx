@@ -4,6 +4,13 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * PdfRotator is a component that allows users to rotate a PDF file by a specified angle.
+ *
+ * It takes in a PDF file and an optional rotation angle (default is 90 degrees) and returns the rotated PDF file.
+ *
+ * @returns A JSX element containing a form with input fields for the PDF file and rotation angle, and a button to submit the form and rotate the PDF.
+ */
 const PdfRotator = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -15,6 +22,13 @@ const PdfRotator = () => {
 	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file selection event.
+	 * Checks if the selected file is a PDF file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -42,6 +56,14 @@ const PdfRotator = () => {
 		}
 	};
 
+	/**
+	 * Handles the form submission event.
+	 * Checks if a PDF file is selected first. If not, displays an error message.
+	 * If a PDF file is selected, sends a POST request to the backend to rotate the PDF.
+	 * If the request is successful, downloads the rotated PDF file and displays a success message.
+	 * If the request fails, displays an error message.
+	 * @param {React.FormEvent} e The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		if (!selectedFile) {

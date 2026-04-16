@@ -4,6 +4,14 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * Component for converting images to PDF.
+ *
+ * It takes in a list of image files, and uploads them to the API to convert the images to PDF.
+ * It then downloads the converted PDF.
+ *
+ * @return {JSX.Element} The component.
+ */
 const ImageToPdfConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -15,6 +23,14 @@ const ImageToPdfConverter = () => {
 	const [convertedFile, setConvertedFile] = useState(null);
 	const conversionIdRef = useRef(0);
 
+	/**
+	 * Handles file change event for image to PDF converter.
+	 * Checks if the selected files are valid image files (JPEG, PNG, GIF, WebP, TIFF, AVIF)
+	 * and if they are within the allowed file size limit.
+	 * If the files are valid, sets the selectedFiles state to the valid files.
+	 * If the files are invalid, displays an error message and resets the selectedFiles state.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file change event.
+	 */
 	const onFileChange = (e) => {
 		setConvertedFile(null);
 		// Increment conversion ID to invalidate any pending requests when files change
@@ -109,6 +125,11 @@ const ImageToPdfConverter = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = async (fileUrl, fileName) => {
 		try {
 			const downloadRes = await axios.get(fileUrl, { responseType: "blob" });

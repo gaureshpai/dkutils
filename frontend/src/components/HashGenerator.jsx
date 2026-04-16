@@ -3,6 +3,10 @@ import md5 from "js-md5";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A tool for generating hashes of input text using various algorithms, such as MD5 and SHA-256.
+ * @returns {JSX.Element} A JSX element representing the Hash Generator tool.
+ */
 const HashGenerator = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -11,12 +15,22 @@ const HashGenerator = () => {
 	const [hashSha256, setHashSha256] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles text change event in the text area, resets the hash values for MD5 and SHA-256.
+	 * @param {React.ChangeEvent} e - The event object.
+	 */
 	const handleTextChange = (e) => {
 		setText(e.target.value);
 		setHashMd5("");
 		setHashSha256("");
 	};
 
+	/**
+	 * Generates a hash of the input text using the provided algorithm.
+	 * @param {string} algorithm One of "MD5" or "SHA-256".
+	 * @param {string} text The text to generate a hash of.
+	 * @returns {Promise<void>} A promise that resolves when the hash is generated.
+	 */
 	const generateHash = async (algorithm) => {
 		// Validate input: check if text is empty (trimmed)
 		const trimmedText = text.trim();
@@ -49,6 +63,11 @@ const HashGenerator = () => {
 		}
 	};
 
+	/**
+	 * Copies the provided text to the user's clipboard.
+	 * @param {string} textToCopy - The text to copy to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);

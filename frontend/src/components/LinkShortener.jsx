@@ -3,16 +3,31 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A tool to shorten URLs.
+ *
+ * @returns A React component that shortens URLs and copies the shortened URL to the clipboard.
+ */
 const LinkShortener = () => {
 	const [originalUrl, setOriginalUrl] = useState("");
 	const [shortUrl, setShortUrl] = useState("");
 	const [loading, setLoading] = useState(false);
 	const { trackToolUsage } = useAnalytics();
 
+	/**
+	 * Updates the originalUrl state with the new value from the input field.
+	 * @param {React.ChangeEvent} e - The event object from the input field.
+	 */
 	const onChange = (e) => {
 		setOriginalUrl(e.target.value);
 	};
 
+	/**
+	 * Submits the link shortener form.
+	 * Shortens the given URL and copies the shortened URL to the clipboard.
+	 * Tracks usage with Google Analytics after successful shorten.
+	 * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -31,6 +46,13 @@ const LinkShortener = () => {
 		}
 	};
 
+	/**
+	 * Copies the given text to the user's clipboard.
+	 *
+	 * @param {string} textToCopy - The text to copy to the clipboard.
+	 *
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);

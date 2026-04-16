@@ -7,7 +7,12 @@ const { supabase } = require("@backend/utils/supabaseClient");
 const { promises: dns } = require("node:dns");
 const { isPrivateIP } = require("@backend/utils/ipValidation");
 
-// Function to validate URL and check for private IPs
+/**
+ * Validate a given URL and check if its hostname/IP addresses are not private.
+ * @param {string} url - The URL to validate.
+ * @returns {boolean} True if the URL's protocol is http or https and its hostname/IP addresses are not private; false otherwise.
+ * @throws {Error} If the URL's protocol is not http or https, or if its hostname/IP fails safety checks.
+ */
 const validateUrl = async (url) => {
 	try {
 		const urlObj = new URL(url);
@@ -40,6 +45,12 @@ const validateUrl = async (url) => {
 	}
 };
 
+/**
+ * Downloads a file from a given URL and returns its contents and content type.
+ * @param {string} fileUrl - The URL of the file to download.
+ * @returns {Promise<object>} A promise that resolves to an object containing the file contents, content type, and success status.
+ * @throws {Error} If the download fails due to a non-404 error, or if the URL is blocked due to validation failure.
+ */
 const downloadFile = async (fileUrl) => {
 	try {
 		// Validate the URL before making the request

@@ -3,6 +3,16 @@ import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A component to check the strength of a given password.
+ *
+ * It uses the VITE API to check the strength and displays the result
+ * in a colored label.
+ *
+ * It also provides feedback in the form of a bulleted list.
+ *
+ * @returns {JSX.Element} The component to render
+ */
 const PasswordStrengthChecker = () => {
 	const [password, setPassword] = useState("");
 	const [strengthScore, setStrengthScore] = useState(0);
@@ -105,6 +115,12 @@ const PasswordStrengthChecker = () => {
 		debouncedCheckStrengthRef.current(password);
 	}, [password]);
 
+	/**
+	 * Returns a color class based on the password strength score.
+	 *
+	 * @param {number} score - The password strength score.
+	 * @return {string} - A color class.
+	 */
 	const getStrengthColor = (score) => {
 		if (score === 0) return "text-muted-foreground";
 		if (score <= 2) return "text-destructive";
@@ -113,6 +129,11 @@ const PasswordStrengthChecker = () => {
 		return "text-muted-foreground";
 	};
 
+	/**
+	 * Returns a text representation of the password strength score.
+	 * @param {number} score - The password strength score.
+	 * @return {string} - A text representation of the password strength score.
+	 */
 	const getStrengthText = (score) => {
 		if (score === 0) return "Very Weak";
 		if (score === 1) return "Weak";

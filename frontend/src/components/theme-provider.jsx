@@ -45,6 +45,11 @@ export function ThemeProvider({
 
 	const value = {
 		theme,
+		/**
+		 * Sets the theme to the given value and persists it to localStorage.
+		 * If saving to localStorage fails, logs a warning to the console.
+		 * @param {string} newTheme - The theme to set. Must be either "light", "dark", or "system".
+		 */
 		setTheme: (newTheme) => {
 			try {
 				localStorage.setItem(storageKey, newTheme);
@@ -62,6 +67,15 @@ export function ThemeProvider({
 	);
 }
 
+/**
+ * Hook that provides the current theme and a function to set the theme.
+ * Throws an error if used outside of a ThemeProvider.
+ * @returns {Object} An object with the current theme and a function to set the theme.
+ * @property {string} theme - The current theme. Must be either "light", "dark", or "system".
+ * @property {function} setTheme - Sets the theme to the given value and persists it to localStorage.
+ * If saving to localStorage fails, logs a warning to the console.
+ * @param {string} newTheme - The theme to set. Must be either "light", "dark", or "system".
+ */
 export const useTheme = () => {
 	const context = useContext(ThemeProviderContext);
 

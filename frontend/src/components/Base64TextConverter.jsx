@@ -2,6 +2,10 @@ import useAnalytics from "@frontend/utils/useAnalytics";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that provides a text area for encoding/decoding text to/from Base64
+ * @returns {JSX.Element} A JSX element containing a text area and buttons for encoding/decoding to/from Base64
+ */
 const Base64TextConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -9,10 +13,18 @@ const Base64TextConverter = () => {
 	const [convertedText, setConvertedText] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handle text change event in the text area
+	 * @param {React.ChangeEvent} e - The event object
+	 */
 	const handleTextChange = (e) => {
 		setText(e.target.value);
 	};
 
+	/**
+	 * Encode text to Base64 using TextEncoder and btoa
+	 * @throws {Error} - If there is an error while encoding the text
+	 */
 	const encodeBase64 = () => {
 		setLoading(true);
 		setTimeout(() => {
@@ -38,6 +50,10 @@ const Base64TextConverter = () => {
 		}, 500);
 	};
 
+	/**
+	 * Decode Base64 text to original text using TextDecoder and atob
+	 * @throws {Error} - If there is an error while decoding the text
+	 */
 	const decodeBase64 = () => {
 		setLoading(true);
 		setTimeout(() => {
@@ -64,6 +80,10 @@ const Base64TextConverter = () => {
 		}, 500);
 	};
 
+	/**
+	 * Copies the converted text to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text
+	 */
 	const handleCopyToClipboard = async () => {
 		try {
 			await navigator.clipboard.writeText(convertedText);
@@ -86,6 +106,10 @@ const Base64TextConverter = () => {
 		}
 	};
 
+	/**
+	 * Downloads the converted text as a plain text file.
+	 * @returns {void} - No return value
+	 */
 	const downloadAsTxt = () => {
 		const blob = new Blob([convertedText], { type: "text/plain" });
 		const url = URL.createObjectURL(blob);

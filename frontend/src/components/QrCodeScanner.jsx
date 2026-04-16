@@ -3,13 +3,23 @@ import jsQR from "jsqr";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that scans a QR code from an image and displays the result.
+ * @component
+ * @example
+ * <QrCodeScanner />
+ */
 const QrCodeScanner = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [qrData, setQrData] = useState("");
 	const lastTrackedQrDataRef = useRef("");
 	const scanCounterRef = useRef(0);
 
+	/**
+	 * Copies the given text to the clipboard.
+	 * @param {string} textToCopy
+	 * @returns {Promise<void>}
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);
@@ -20,10 +30,18 @@ const QrCodeScanner = () => {
 		}
 	};
 
+	/**
+	 * Copies the QR code data to the clipboard.
+	 */
 	const handleCopyToClipboard = () => {
 		copyToClipboard(qrData);
 	};
 
+	/**
+	 * Handles an image upload event.
+	 * Reads the uploaded image, decodes the QR code if present, and updates the state with the decoded value.
+	 * @param {object} e - The event object passed from the onChange event.
+	 */
 	const handleImageUpload = async (e) => {
 		const file = e.target.files[0];
 		if (!file) {
@@ -38,8 +56,22 @@ const QrCodeScanner = () => {
 		const currentScanId = scanCounterRef.current;
 
 		const reader = new FileReader();
+		/**
+		 * Handles the onload event triggered by the FileReader.
+		 * Creates a new Image object from the uploaded image data, decodes the QR code if present, and updates the state with the decoded value.
+		 * If the image is too large, scales it down while maintaining its aspect ratio.
+		 * If the image is unable to be processed, resets the state and displays an error message.
+		 * @param {object} event - The event object passed from the onload event.
+		 */
 		reader.onload = (event) => {
 			const img = new Image();
+			/**
+			 * Handles the onload event triggered by the FileReader.
+			 * Creates a new Image object from the uploaded image data, decodes the QR code if present, and updates the state with the decoded value.
+			 * If the image is too large, scales it down while maintaining its aspect ratio.
+			 * If the image is unable to be processed, resets the state and displays an error message.
+			 * @param {object} event - The event object passed from the onload event.
+			 */
 			img.onload = () => {
 				const MAX_DIMENSION = 1000;
 
@@ -91,6 +123,10 @@ const QrCodeScanner = () => {
 					}
 				}
 			};
+			/**
+			 * Handles an error event triggered by the Image object.
+			 * Resets the state to its original value and displays an error message.
+			 */
 			img.onerror = () => {
 				if (currentScanId === scanCounterRef.current) {
 					setQrData("");
@@ -99,6 +135,10 @@ const QrCodeScanner = () => {
 			};
 			img.src = event.target.result;
 		};
+		/**
+		 * Handles an error event triggered by the FileReader.
+		 * Resets the state to its original value and displays an error message if the error occurred during the current scan.
+		 */
 		reader.onerror = () => {
 			if (currentScanId === scanCounterRef.current) {
 				setQrData("");

@@ -2,9 +2,18 @@ import useAnalytics from "@frontend/utils/useAnalytics";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that generates a password based on user input.
+ *
+ * The component provides a form that allows users to select the length and character types of the password.
+ * The component also provides a button to copy the generated password to the clipboard.
+ *
+ * The component tracks the usage of the tool with the `useAnalytics` hook.
+ *
+ * @returns {JSX.Element} A JSX element representing the Password Generator tool.
+ */
 const PasswordGenerator = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [length, setLength] = useState(12);
 	const [includeUppercase, setIncludeUppercase] = useState(true);
 	const [includeLowercase, setIncludeLowercase] = useState(true);
@@ -14,6 +23,13 @@ const PasswordGenerator = () => {
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Generates a password based on user input.
+	 * The function sets the `password` state to the generated password and the `error` state to an empty string.
+	 * If the function fails to generate a password, it sets the `password` state to an empty string and the `error` state to an error message.
+	 * The function also sets the `loading` state to `true` while it is generating the password and sets it to `false` when it is done.
+	 * The function tracks the usage of the tool with the `useAnalytics` hook.
+	 */
 	const generatePassword = () => {
 		setLoading(true);
 		setTimeout(() => {
@@ -97,6 +113,11 @@ const PasswordGenerator = () => {
 		}, 500);
 	};
 
+	/**
+	 * Copies the current password to the clipboard.
+	 *
+	 * @throws {Error} - If there is an error while copying the text
+	 */
 	const copyToClipboard = async () => {
 		try {
 			await navigator.clipboard.writeText(password);

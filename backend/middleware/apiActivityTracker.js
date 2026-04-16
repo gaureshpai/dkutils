@@ -1,6 +1,18 @@
 const ApiActivity = require("@backend/models/ApiActivity");
 const { ServiceUsage, TotalUsage } = require("@backend/models/ServiceUsage");
 
+/**
+ * Middleware to track API activity.
+ *
+ * Saves an ApiActivity document for each request.
+ * Increments the totalCount field of a TotalUsage document for the global key.
+ * Increments the count field of a ServiceUsage document for the current endpoint.
+ *
+ * @function
+ * @param {express.Request} req - The express request object.
+ * @param {express.Response} res - The express response object.
+ * @param {express.NextFunction} next - The next middleware function.
+ */
 const apiActivityTracker = async (req, res, next) => {
 	try {
 		const apiActivity = new ApiActivity({

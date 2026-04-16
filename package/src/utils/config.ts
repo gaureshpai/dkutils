@@ -8,6 +8,11 @@ interface Config {
 	watermark?: boolean;
 }
 
+/**
+ * Reads the configuration file at ${CONFIG_PATH} and returns its contents as a Promise.
+ * If the file does not exist, an empty object is returned.
+ * @returns {Promise<Config>}
+ */
 export async function readConfig(): Promise<Config> {
 	try {
 		const data = await readFile(CONFIG_PATH, "utf-8");
@@ -17,6 +22,13 @@ export async function readConfig(): Promise<Config> {
 	}
 }
 
+/**
+ * Writes a configuration file at ${CONFIG_PATH} with the provided config object.
+ * If the file does not exist, it will be created.
+ * If the file already exists, it will be overwritten with the new configuration.
+ * @param {Config} config - The configuration object to write to the file.
+ * @returns {Promise<void>} - A promise that resolves when the configuration file has been written successfully.
+ */
 export async function writeConfig(config: Config): Promise<void> {
 	try {
 		const currentConfig = await readConfig();

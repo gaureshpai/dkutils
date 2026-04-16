@@ -3,6 +3,17 @@ import useAnalytics from "@frontend/utils/useAnalytics";
 import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * ImageCropper component
+ *
+ * @description ImageCropper is a component that allows users to upload an image and crop it. It also allows users to download the cropped image.
+ *
+ * @param {Object} props - Component props
+ * @example
+ * <ImageCropper />
+ *
+ * @returns {React.ReactElement} - A React element
+ */
 const ImageCropper = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -44,6 +55,13 @@ const ImageCropper = () => {
 		};
 	}, []);
 
+	/**
+	 * Handles file change event from the input file element.
+	 * If the selected file is not an image, it will show an error message and reset the input file element.
+	 * If the selected file is an image, it will set the imageSrc state to the selected file as a blob URL.
+	 * If the selected file exceeds the maximum allowed size (50MB for authenticated users, 10MB for unauthenticated users), it will show an error message and reset the input file element.
+	 * @param {Event} e - The file change event from the input file element.
+	 */
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -85,6 +103,13 @@ const ImageCropper = () => {
 		setOriginalMimeType(file.type);
 	};
 
+	/**
+	 * Handles crop button click event.
+	 * If there is no image selected, it will show an error message and exit early.
+	 * If the selected image is still loading, it will show an error message and exit early.
+	 * If the selected image is successfully cropped, it will download the cropped image.
+	 * @throws {Error} If an error occurs during cropping or downloading the image.
+	 */
 	const handleCrop = () => {
 		if (!imageSrc) {
 			toast.error("Please upload an image first.");
@@ -164,6 +189,11 @@ const ImageCropper = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

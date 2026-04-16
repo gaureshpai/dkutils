@@ -3,6 +3,14 @@ import { marked } from "marked";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A Markdown to HTML converter component that takes Markdown input and displays the resulting HTML content.
+ *
+ * The component tracks usage on the first non-empty markdown input change and also tracks usage on copy action if not already tracked.
+ *
+ * @param {import("react").ChangeEvent} e - The Markdown input change event
+ * @returns {void}
+ */
 const MarkdownToHtmlConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -10,6 +18,12 @@ const MarkdownToHtmlConverter = () => {
 	const [html, setHtml] = useState("");
 	const [hasTracked, setHasTracked] = useState(false);
 
+	/**
+	 * Handles Markdown input change event.
+	 * Updates the markdown and html state variables with the new markdown content.
+	 * Also tracks usage on the first non-empty markdown input change.
+	 * @param {React.ChangeEvent} e - The Markdown input change event
+	 */
 	const handleMarkdownChange = (e) => {
 		const newMarkdown = e.target.value;
 		setMarkdown(newMarkdown);
@@ -22,6 +36,11 @@ const MarkdownToHtmlConverter = () => {
 		}
 	};
 
+	/**
+	 * Copies the HTML content to the clipboard.
+	 * Tracks usage on copy action if not already tracked.
+	 * @throws {Error} If the operation fails.
+	 */
 	const copyToClipboard = async () => {
 		try {
 			await navigator.clipboard.writeText(html);

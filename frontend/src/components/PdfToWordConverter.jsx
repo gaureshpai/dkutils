@@ -4,9 +4,16 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * Component for converting PDF files to Word (text extraction).
+ *
+ * It takes in a PDF file, and uploads it to the API to convert the PDF to Word.
+ * It then downloads the converted Word file.
+ *
+ * @return {JSX.Element} The component.
+ */
 const PdfToWordConverter = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [convertedFile, setConvertedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
@@ -15,6 +22,13 @@ const PdfToWordConverter = () => {
 	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file change event for PDF to Word converter.
+	 * Checks if the selected file is a valid PDF file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file change event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -42,6 +56,19 @@ const PdfToWordConverter = () => {
 		}
 	};
 
+	/**
+	 * Handles form submission for PDF to Word converter.
+	 * Prevents the form from reloading the page when submitted.
+	 * Checks if a PDF file is selected.
+	 * If no PDF file is selected, displays an error message.
+	 * If a PDF file is selected, uploads the file to the API to convert the PDF to Word.
+	 * Sets the convertedFile state to the API response data.
+	 * Tracks the tool usage.
+	 * Downloads the converted Word file.
+	 * Resets the selectedFile state after the download is completed.
+	 * Resets the file input value if the file input ref is available.
+	 * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 
@@ -75,6 +102,11 @@ const PdfToWordConverter = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from a given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the file with.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

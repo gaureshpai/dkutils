@@ -220,6 +220,14 @@ function createPinnedAgents(hostname, validatedAddresses) {
 	if (validatedAddresses === null) {
 		throw new Error("Cannot create pinned agents: DNS validation was suppressed");
 	}
+	/**
+	 * Custom DNS lookup function that pins the resolution of a specific hostname to a validated set of IP addresses.
+	 * If the request hostname equals the target hostname, the function returns the validated IP address(es) that match the requested family (or all addresses if no family is specified).
+	 * Otherwise, the function falls back to the normal DNS lookup.
+	 * @param {string} requestHostname - The hostname being resolved.
+	 * @param {Object|number} options - Options for the DNS lookup (family and all).
+	 * @param {Function} callback - The callback function to receive the DNS lookup result.
+	 */
 	const lookupFunction = (requestHostname, options, callback) => {
 		// If we have validated addresses and the request is for our target hostname, use a pinned IP
 		if (validatedAddresses && requestHostname === hostname) {

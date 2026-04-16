@@ -3,6 +3,12 @@
  * Provides user-friendly error messages and detailed logging
  */
 
+/**
+ * Handles errors that occur during PDF operations, providing user-friendly error messages and detailed logging.
+ * @param {Error} err The error object to handle
+ * @param {string} [operation="PDF operation"] The operation that triggered the error
+ * @returns An object containing the user-friendly error message, status code, and original error (in development mode only)
+ */
 const handlePdfError = (err, operation = "PDF operation") => {
 	console.error(`Error during ${operation}:`, err);
 	const msg = typeof err?.message === "string" ? err.message : String(err || "");

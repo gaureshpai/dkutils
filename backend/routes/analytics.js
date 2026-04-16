@@ -12,6 +12,12 @@ const trackLimiter = rateLimit({
 	skipFailedRequests: false,
 });
 
+/**
+ * Checks if the given category is one of the allowed categories
+ * in the ToolUsage model.
+ * @param {string} category The category to check
+ * @returns {boolean} True if the category is allowed, false otherwise
+ */
 const isValidCategory = (category) => {
 	if (!category) return false;
 	const allowedCategories = ToolUsage.schema.path("category").enumValues;
@@ -80,6 +86,13 @@ const APPROVED_PUBLIC_TOOL_CATEGORY_PAIRS = Object.fromEntries(
 	),
 );
 
+/**
+ * Check if a tool name and category pair is approved and publicly accessible.
+ *
+ * @param {string} toolName - The name of the tool.
+ * @param {string} category - The category of the tool.
+ * @returns {boolean} True if the tool name and category pair is approved, false otherwise.
+ */
 const isApprovedToolCategoryPair = (toolName, category) => {
 	return APPROVED_TOOL_CATEGORY_PAIRS[toolName] === category;
 };

@@ -7,12 +7,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import vm from "node:vm";
-import type {
-	BatchResult,
-	FileTaskOptions,
-	YouTubeFormat,
-	YouTubeVideoInfo,
-} from "@package/interfaces/index.js";
+import type { BatchResult, FileTaskOptions, YouTubeVideoInfo } from "@package/interfaces/index.js";
 import {
 	collectFiles,
 	defaultOutputDir,
@@ -30,9 +25,20 @@ type VMPrimative = Types.VMPrimative;
 
 class NodeCache {
 	persistent_directory: string;
-	constructor(persistent = false, persistent_directory?: string) {
+	/**
+	 * Constructor for NodeCache.
+	 * @param {string} [persistent_directory] - The directory where cached items are stored.
+	 * If not provided, defaults to a directory in the system's temporary directory.
+	 */
+	constructor(persistent_directory?: string) {
 		this.persistent_directory = persistent_directory || path.resolve(os.tmpdir(), "youtubei.js");
 	}
+	/**
+	 * Retrieve a cached item from the persistent directory.
+	 *
+	 * @param {string} key - The key of the item to retrieve.
+	 * @returns {Promise<Buffer | undefined>} The item's value, or undefined if not found.
+	 */
 	async get(key: string) {
 		const file = path.resolve(this.persistent_directory, key);
 		try {
@@ -42,11 +48,21 @@ class NodeCache {
 			return undefined;
 		}
 	}
+	/**
+	 * Set a cached item in the persistent directory.
+	 * @param {string} key - The key of the item to set.
+	 * @param {ArrayBuffer} value - The value of the item to set.
+	 */
 	async set(key: string, value: ArrayBuffer) {
 		await fs.mkdir(this.persistent_directory, { recursive: true });
 		const file = path.resolve(this.persistent_directory, key);
 		await fs.writeFile(file, new Uint8Array(value));
 	}
+	/**
+	 * Remove a cached item from the persistent directory.
+	 * Ignores any errors that occur during deletion.
+	 * @param {string} key - The key of the item to remove.
+	 */
 	async remove(key: string) {
 		const file = path.resolve(this.persistent_directory, key);
 		try {
@@ -66,6 +82,10 @@ Utils.Platform.load({
 	sha1Hash: async (data: string) => {
 		return crypto.createHash("sha1").update(data).digest("hex");
 	},
+	/**
+	 * Generates a random UUID using the v4 algorithm.
+	 * @returns {string} A UUID string in the format xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.
+	 */
 	uuidv4() {
 		return crypto.randomUUID();
 	},
@@ -88,6 +108,11 @@ Utils.Platform.load({
 	CustomEvent: globalThis.CustomEvent as unknown as typeof globalThis.CustomEvent,
 });
 
+/**
+ * Extracts the video ID from a given YouTube URL.
+ * @param {string} url - The YouTube URL to extract the video ID from.
+ * @returns {string} The extracted video ID.
+ */
 function extractVideoId(url: string): string {
 	const patterns = [
 		/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([^&\n?#]+)/,
@@ -100,6 +125,11 @@ function extractVideoId(url: string): string {
 	return url;
 }
 
+/**
+ * Validates if a file exists and is larger than 5000 bytes.
+ * @param {string} filePath - The path to the file to validate.
+ * @returns {Promise<boolean>} True if the file is valid, false otherwise.
+ */
 async function validateFile(filePath: string): Promise<boolean> {
 	try {
 		const stats = await fs.stat(filePath);
@@ -109,6 +139,15 @@ async function validateFile(filePath: string): Promise<boolean> {
 	}
 }
 
+/**
+ * Deletes temporary files generated during the video processing pipeline.
+ * This function takes an array of file paths, resolves the absolute paths,
+ * and deletes any files that start with the same name but have a different extension,
+ * or are temporary/part files, except the final .mp4 file.
+ * Errors during cleanup are ignored.
+ * @param {string[]} filePaths - An array of file paths to clean up.
+ * @returns {Promise<void>} A promise that resolves when all files have been cleaned up.
+ */
 async function cleanupFiles(filePaths: string[]): Promise<void> {
 	for (const basePath of filePaths) {
 		const absolutePath = path.resolve(basePath);
@@ -133,6 +172,14 @@ async function cleanupFiles(filePaths: string[]): Promise<void> {
 	}
 }
 
+/**
+ * Runs yt-dlp with the given video ID and format, and returns the expected filename
+ * of the output video file.
+ *
+ * @param {string} videoId - The YouTube video ID to use.
+ * @param {string} format - The format of the output video file (e.g. "mp4", "webm").
+ * @returns {Promise<string>} A promise that resolves with the expected filename.
+ */
 async function getExpectedFilename(videoId: string, format: string): Promise<string> {
 	const args = [
 		`https://youtube.com/watch?v=${videoId}`,
@@ -240,6 +287,13 @@ export async function removeVideoBackground(
 	return results;
 }
 
+/**
+ * Converts Apple QuickTime (.mov) videos to standard MP4 format.
+ * @param {FileTaskOptions} options - Options for batch video to MP4 conversion.
+ * @param {string} options.input - Path to a .mov file or directory.
+ * @param {string} [options.output] - Path to the output directory.
+ * @returns {Promise<BatchResult[]>} A promise that resolves with an array of batch results, each containing the input file and the output MP4 file.
+ */
 export async function convertMovToMp4(options: FileTaskOptions): Promise<BatchResult[]> {
 	const files = await collectFiles(options.input, [".mov"]);
 	const outputDir = path.resolve(options.output ?? defaultOutputDir(options.input));
@@ -267,6 +321,14 @@ export async function convertMovToMp4(options: FileTaskOptions): Promise<BatchRe
 	return results;
 }
 
+/**
+ * Compress video files using FFmpeg and x264.
+ * @param {FileTaskOptions & { quality?: number }} options - Options for batch video compression.
+ * @param {string} options.input - Path to a video file or directory.
+ * @param {string} [options.output] - Path to the output directory.
+ * @param {number} [options.quality] - Quality of the output video (18-28, default: 23).
+ * @returns {Promise<BatchResult[]>} A promise that resolves with an array of batch results, each containing the input file and the output compressed MP4 file.
+ */
 export async function compressVideo(
 	options: FileTaskOptions & { quality?: number },
 ): Promise<BatchResult[]> {
@@ -299,6 +361,11 @@ export async function compressVideo(
 	return results;
 }
 
+/**
+ * Extract YouTube video information using yt-dlp.
+ * @param {string} url - Full YouTube video URL.
+ * @returns {Promise<YouTubeVideoInfo>} A promise that resolves with an object containing YouTube video information.
+ */
 export async function getYouTubeInfo(url: string): Promise<YouTubeVideoInfo> {
 	const videoId = extractVideoId(url);
 	const ytdlpBin = ytDlpPath;
@@ -321,6 +388,14 @@ export async function getYouTubeInfo(url: string): Promise<YouTubeVideoInfo> {
 	});
 }
 
+/**
+ * Downloads a YouTube video using yt-dlp and falls back to youtubei.js if necessary.
+ * @param {string} url - Full YouTube video URL.
+ * @param {string} outputDir - Path to the output directory.
+ * @param {Object} options - Options for batch video download.
+ * @param {string} [options.format] - Format to download (best, webm, mp4, etc.). Default: best.
+ * @returns {Promise<string>} A promise that resolves with the path to the downloaded video file.
+ */
 export async function downloadYouTubeVideo(
 	url: string,
 	outputDir: string,
@@ -379,6 +454,11 @@ export async function downloadYouTubeVideo(
 	}
 }
 
+/**
+ * Runs a command with yt-dlp and returns the output as a string.
+ * @param {string[]} args - The arguments to pass to yt-dlp.
+ * @returns {Promise<string>} A promise that resolves with the output of the command.
+ */
 async function runYtDlpCommand(args: string[]): Promise<string> {
 	return new Promise((resolve, reject) => {
 		execFile(ytDlpPath, args, (err, stdout, stderr) => {
@@ -390,6 +470,13 @@ async function runYtDlpCommand(args: string[]): Promise<string> {
 	});
 }
 
+/**
+ * Downloads a YouTube video using youtubei.js
+ * @param {string} videoId - The ID of the YouTube video to download.
+ * @param {string} outputDir - The directory where the downloaded video will be saved.
+ * @returns {Promise<string>} A promise that resolves with the path of the downloaded video.
+ * @throws {Error} If the video is not found, or if the downloaded file is invalid or too small.
+ */
 async function downloadWithYoutubei(videoId: string, outputDir: string): Promise<string> {
 	const yt = await Innertube.create();
 	const info = await yt.getBasicInfo(videoId);
@@ -430,6 +517,15 @@ async function downloadWithYoutubei(videoId: string, outputDir: string): Promise
 	return outputPath;
 }
 
+/**
+ * Downloads a YouTube video using yt-dlp.
+ * @param {string} videoId - The ID of the YouTube video to download.
+ * @param {string} outputDir - The directory where the downloaded video will be saved.
+ * @param {Object} [options] - Additional options for yt-dlp.
+ * @param {string} [options.format] - The format for yt-dlp to use. If not provided, it will default to "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best".
+ * @returns {Promise<string>} A promise that resolves with the path of the downloaded video.
+ * @throws {Error} If the video is not found, or if the downloaded file is invalid or too small.
+ */
 async function downloadWithYtDlp(
 	videoId: string,
 	outputDir: string,
@@ -462,6 +558,14 @@ async function downloadWithYtDlp(
 	return outputPath;
 }
 
+/**
+ * Downloads a YouTube video using yt-dlp and returns a promise that resolves when the download is complete.
+ * @param {string} videoId - The ID of the YouTube video to download.
+ * @param {string} outputPath - The path where the downloaded video will be saved.
+ * @param {string} [format] - The format for yt-dlp to use. If not provided, it will default to "bestvideo+bestaudio/best".
+ * @returns {Promise<void>} A promise that resolves when the download is complete.
+ * @throws {Error} If yt-dlp exits with a non-zero code, or if an error occurs while spawning the process.
+ */
 async function runYtDlpWithProgress(
 	videoId: string,
 	outputPath: string,

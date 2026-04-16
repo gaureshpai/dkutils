@@ -16,6 +16,17 @@ const turndownService = new TurndownService({
 	preformattedCode: false,
 });
 
+/**
+ * A component for converting HTML content to Markdown format.
+ *
+ * @param {Object} props - React props
+ * @returns {JSX.Element} - The rendered component
+ *
+ * @example
+ * <HtmlToMarkdownConverter />
+ *
+ * @see turndownService for the configuration options
+ */
 const HtmlToMarkdownConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -48,6 +59,11 @@ const HtmlToMarkdownConverter = () => {
 		}
 	};
 
+	/**
+	 * Copies the markdown content to the clipboard.
+	 *
+	 * @throws {Error} If the operation fails.
+	 */
 	const copyToClipboard = async () => {
 		try {
 			await navigator.clipboard.writeText(markdown);
@@ -60,6 +76,9 @@ const HtmlToMarkdownConverter = () => {
 		}
 	};
 
+	/**
+	 * Clear all content in the HTML to Markdown converter.
+	 */
 	const clearAll = () => {
 		setHtml("");
 		setMarkdown("");

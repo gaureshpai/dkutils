@@ -2,6 +2,13 @@ const router = require("express").Router();
 const jwt = require("jsonwebtoken");
 const { cleanSupabaseStorage } = require("@backend/utils/supabaseCleaner");
 
+/**
+ * Middleware to require authentication and authorization.
+ * Verifies the presence of a valid token in the Authorization header,
+ * and checks if the user has the admin role.
+ * If the token is invalid or missing, returns a 401 error.
+ * If the user is not an admin, returns a 403 error.
+ */
 const requireAuth = (req, res, next) => {
 	const token = req.header("x-auth-token");
 
@@ -21,6 +28,10 @@ const requireAuth = (req, res, next) => {
 	}
 };
 
+/**
+ * Middleware to verify the presence of a valid cron secret in the Authorization header.
+ * Returns a 401 error if the secret is invalid or missing.
+ */
 const requireSecret = (req, res, next) => {
 	const secret = req.header("x-cron-secret");
 	const expectedSecret = process.env.SUPABASE_CLEANUP_CRON_SECRET;
@@ -32,6 +43,16 @@ const requireSecret = (req, res, next) => {
 	next();
 };
 
+/**
+ * Trigger Supabase storage cleanup.
+ * @function
+ * @name runCleanup
+ * @async
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves with no value when the Supabase cleanup is triggered successfully, or rejects with an error when the Supabase cleanup fails.
+ * @throws {Error} - When the Supabase cleanup fails.
+ */
 const runCleanup = async (req, res) => {
 	try {
 		await cleanSupabaseStorage();

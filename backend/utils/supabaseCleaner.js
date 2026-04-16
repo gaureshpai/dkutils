@@ -4,6 +4,14 @@ const { supabase } = require("@backend/utils/supabaseClient");
 const SUPABASE_BUCKET_NAME = "utilityhub";
 const DAYS_TO_KEEP = 7;
 
+/**
+ * Trigger Supabase storage cleanup.
+ * @function
+ * @name cleanSupabaseStorage
+ * @async
+ * @returns {Promise<void>} - Resolves with no value when the Supabase cleanup is triggered successfully, or rejects with an error when the Supabase cleanup fails.
+ * @throws {Error} - When the Supabase cleanup fails.
+ */
 const cleanSupabaseStorage = async () => {
 	console.log("Starting Supabase storage cleanup...");
 	const now = new Date();

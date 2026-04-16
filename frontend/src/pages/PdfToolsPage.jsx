@@ -59,6 +59,9 @@ const PDF_TOOL_DEFINITIONS = [
 	},
 ];
 
+/**
+ * A page containing various PDF tools, such as PDF merger, PDF splitter, PDF compressor, PDF password protector, PDF password remover, PDF to text converter, PDF rotator, and text to PDF generator.
+ */
 const PdfToolsPage = () => {
 	const { tools, isLoading } = useSortedTools("pdf", PDF_TOOL_DEFINITIONS);
 

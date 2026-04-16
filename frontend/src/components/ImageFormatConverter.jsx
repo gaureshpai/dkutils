@@ -4,6 +4,15 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * Component for converting image formats.
+ *
+ * It takes in a list of image files, and a target format.
+ * It then sends a POST request to the API to convert the images,
+ * and downloads the converted images.
+ *
+ * @return {JSX.Element} The component.
+ */
 const ImageFormatConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 	const {
@@ -13,6 +22,11 @@ const ImageFormatConverter = () => {
 	const [format, setFormat] = useState("jpeg");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;
@@ -22,6 +36,14 @@ const ImageFormatConverter = () => {
 		document.body.removeChild(link);
 	};
 
+	/**
+	 * Handles file change event for image format converter.
+	 * Checks if the selected files are valid image files (JPEG, PNG, GIF, WebP, TIFF, AVIF)
+	 * and if they are within the allowed file size limit.
+	 * If the files are valid, sets the selectedFiles state to the valid files.
+	 * If the files are invalid, displays an error message and resets the selectedFiles state.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file change event.
+	 */
 	const onFileChange = (e) => {
 		const files = Array.from(e.target.files);
 		const allowedTypes = [
@@ -62,10 +84,20 @@ const ImageFormatConverter = () => {
 		}
 	};
 
+	/**
+	 * Handles format change event for image format converter.
+	 * Sets the format state to the selected value.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The format change event.
+	 */
 	const onFormatChange = (e) => {
 		setFormat(e.target.value);
 	};
 
+	/**
+	 * Submits the image format converter form.
+	 * Converts the selected images to the chosen format, and downloads the converted images.
+	 * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 

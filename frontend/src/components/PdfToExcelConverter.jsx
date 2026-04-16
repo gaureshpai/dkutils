@@ -4,9 +4,14 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A utility component that allows users to upload a PDF file and
+ * convert it to an Excel file.
+ *
+ * @returns {JSX.Element} A JSX element representing the component.
+ */
 const PdfToExcelConverter = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const {
@@ -14,6 +19,13 @@ const PdfToExcelConverter = () => {
 	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file selection event for PDF to Excel converter.
+	 * Checks if the selected file is a PDF file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e - The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -41,6 +53,12 @@ const PdfToExcelConverter = () => {
 		}
 	};
 
+	/**
+	 * Handles form submission for PDF to Excel converter.
+	 * Submits the selected PDF file to the server for conversion and downloads the converted Excel file.
+	 * @param {React.FormEvent} e - The form submission event.
+	 * @throws {Error} If the file is invalid or if the conversion fails.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 
@@ -73,6 +91,11 @@ const PdfToExcelConverter = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from a given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The name to save the file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

@@ -5,6 +5,12 @@ import { createContext, useEffect, useReducer } from "react";
 
 const AuthContext = createContext();
 
+/**
+ * Reducer for the authentication state.
+ * @param {object} state The current state.
+ * @param {object} action The action to perform on the state.
+ * @returns {object} The new state after applying the action.
+ */
 const authReducer = (state, action) => {
 	switch (action.type) {
 		case "LOGIN":
@@ -22,6 +28,11 @@ const authReducer = (state, action) => {
 	}
 };
 
+/**
+ * Provides authentication context to descendants and synchronizes the current authentication state with the document root and localStorage.
+ * @param {JSX.Element} children - React nodes to render inside the provider.
+ * @returns {JSX.Element} A Context Provider that supplies `{ state, dispatch }` to its children.
+ */
 const AuthProvider = ({ children }) => {
 	const [state, dispatch] = useReducer(authReducer, {
 		isAuthenticated: false,

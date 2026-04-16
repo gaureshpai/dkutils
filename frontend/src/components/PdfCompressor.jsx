@@ -4,15 +4,29 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for compressing a PDF file.
+ *
+ * The component allows the user to select a PDF file, and then uploads the file to the server.
+ * The server then compresses the PDF file and returns a download link.
+ *
+ * The component tracks tool usage and displays a success message upon successful compression.
+ */
 const PdfCompressor = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [compressionLevel, setCompressionLevel] = useState("medium");
 	const { state } = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file selection event.
+	 * Checks if the selected file is a PDF file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = (state?.isAuthenticated ?? false) ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -42,6 +56,14 @@ const PdfCompressor = () => {
 		}
 	};
 
+	/**
+	 * Handles form submission event.
+	 * Checks if a PDF file is selected, and if so, sends a POST request to the server to compress the PDF file.
+	 * The server then returns a download link, which is used to download the compressed PDF file.
+	 * Tracks tool usage and displays a success message upon successful compression.
+	 * If an error occurs during compression, displays an error message.
+	 * @param {React.FormEvent} e The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 

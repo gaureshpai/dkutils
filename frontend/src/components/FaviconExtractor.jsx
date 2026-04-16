@@ -3,6 +3,13 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for extracting favicons from a given URL.
+ *
+ * @returns A React component that displays a form for inputting a website URL and
+ * a button to extract the favicons. The component also displays an error message if
+ * extracting the favicons fails.
+ */
 const FaviconExtractor = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -10,6 +17,11 @@ const FaviconExtractor = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
+	/**
+	 * Handles form submission by extracting favicons from the given URL.
+	 *
+	 * @param {Event} e - The form submission event.
+	 */
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -32,6 +44,12 @@ const FaviconExtractor = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 *
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

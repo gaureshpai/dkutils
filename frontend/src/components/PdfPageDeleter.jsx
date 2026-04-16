@@ -3,6 +3,16 @@ import { PDFDocument } from "pdf-lib";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for deleting pages from a PDF document.
+ *
+ * @param {Object} props - The props object passed to the component.
+ * @returns {JSX.Element} - The JSX element representing the component.
+ * @example
+ * <PdfPageDeleter />
+ *
+ * @see {@link https://github.com/gaureshpai/dkutils/blob/master/frontend/src/components/PdfPageDeleter.jsx}
+ */
 const PdfPageDeleter = () => {
 	const { trackToolUsage } = useAnalytics();
 	const [pdfFile, setPdfFile] = useState(null);
@@ -11,6 +21,15 @@ const PdfPageDeleter = () => {
 	const [loading, setLoading] = useState(false);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file change event for PDF page deleter.
+	 * Checks if the selected file is a valid PDF file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selected PDF file to the selected file and resets the pagesToDelete state to an empty string.
+	 * If the file is invalid, displays an error message and resets the selected PDF file and pagesToDelete states.
+	 * @param {React.ChangeEvent<HTMLInputElement>} event - The file change event.
+	 * @example
+	 * <input type="file" onChange={handleFileChange} />
+	 */
 	const handleFileChange = async (event) => {
 		const file = event.target.files[0];
 		if (file && file.type === "application/pdf") {
@@ -39,6 +58,12 @@ const PdfPageDeleter = () => {
 		}
 	};
 
+	/**
+	 * Deletes the specified pages from a PDF document and downloads the modified PDF file.
+	 * @example
+	 * <PdfPageDeleter />
+	 * @see {@link https://github.com/gaureshpai/dkutils/blob/master/frontend/src/components/PdfPageDeleter.jsx}
+	 */
 	const handleDeletePages = async () => {
 		if (!pdfFile) {
 			toast.error("Please upload a PDF file first.");

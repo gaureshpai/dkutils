@@ -1,5 +1,10 @@
 ﻿import { Github } from "lucide-react";
 
+/**
+ * A reusable footer component.
+ *
+ * @returns {JSX.Element} The JSX element of the footer component.
+ */
 const Footer = () => {
 	return (
 		<footer className="w-full border-t border-border/40 bg-background py-6 md:px-8 md:py-0 mt-auto">

@@ -3,13 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { confirm, input, select } from "@inquirer/prompts";
 import { DKU_BRAND, capabilityGroups } from "@package/constants/index.js";
-import {
-	type CompressionLevel,
-	type FlipDirection,
-	type ImageFormat,
-	type YouTubeFormat,
-	YouTubeVideoInfo,
-} from "@package/interfaces/index.js";
+import type { CompressionLevel, FlipDirection, ImageFormat } from "@package/interfaces/index.js";
 
 const imageFormatChoices: { name: ImageFormat; value: ImageFormat }[] = [
 	{ name: "jpeg", value: "jpeg" },
@@ -29,6 +23,12 @@ const compressionLevelChoices: {
 	{ name: "high", value: "high" },
 ];
 
+/**
+ * Starts an interactive CLI experience for dkutils.
+ * Prompts the user to select a tool group (image, pdf, video, youtube) and then runs the corresponding interactive wizard.
+ * @param {Function} print - A function to be used for printing output to the console.
+ * @returns {Promise<void>} A promise that resolves when the interactive CLI experience is complete.
+ */
 export async function startInteractiveCli(print: (value: unknown) => void): Promise<void> {
 	const group = await select({
 		message: `${DKU_BRAND}: choose a tool group`,
@@ -55,6 +55,12 @@ export async function startInteractiveCli(print: (value: unknown) => void): Prom
 	}
 }
 
+/**
+ * Runs an interactive wizard for performing image operations.
+ * The user is prompted to select an image operation, and then the corresponding wizard is run.
+ * @param {Function} print - A function to be used for printing output to the console.
+ * @returns {Promise<void>} A promise that resolves when the interactive wizard is complete.
+ */
 async function runImageWizard(print: (value: unknown) => void): Promise<void> {
 	const action = await select({
 		message: "Choose an image operation",
@@ -208,6 +214,10 @@ async function runImageWizard(print: (value: unknown) => void): Promise<void> {
 	}
 }
 
+/**
+ * Runs an interactive PDF wizard allowing the user to choose a PDF operation.
+ * @param {print: (value: unknown) => void} print - A function to print the result of the chosen PDF operation.
+ */
 async function runPdfWizard(print: (value: unknown) => void): Promise<void> {
 	const action = await select({
 		message: "Choose a PDF operation",
@@ -335,6 +345,13 @@ async function runPdfWizard(print: (value: unknown) => void): Promise<void> {
 	}
 }
 
+/**
+ * Interactively prompts the user to select a video operation from the list of available
+ * video features and runs the selected operation with the provided print function.
+ *
+ * @param {print: (value: unknown) => void} print - A function to print the result of the video operation.
+ * @returns {Promise<void>} A promise that resolves when the video operation is complete.
+ */
 async function runVideoWizard(print: (value: unknown) => void): Promise<void> {
 	const action = await select({
 		message: "Choose a video operation",
@@ -392,6 +409,11 @@ async function runVideoWizard(print: (value: unknown) => void): Promise<void> {
 	}
 }
 
+/**
+ * Interactively prompts the user to select a YouTube video URL and downloads the video in best available quality using yt-dlp.
+ * @param {print: (value: unknown) => void} print - A function to print the result of the video download.
+ * @returns {Promise<void>} A promise that resolves when the video download is complete.
+ */
 async function runYoutubeWizard(print: (value: unknown) => void): Promise<void> {
 	const module = await import("@package/video/index.js");
 	const url = await ask("YouTube URL");
@@ -409,10 +431,25 @@ async function runYoutubeWizard(print: (value: unknown) => void): Promise<void> 
 	}
 }
 
+/**
+ * Interactively prompts the user to input a value with a message and optional default value.
+ * If the user presses Enter without inputting a value, the default value will be used if provided.
+ * @param {string} message - The message to display when prompting the user.
+ * @param {string} [defaultValue] - The default value to use if the user does not input a value.
+ * @returns {Promise<string>} A promise that resolves with the user's input value or the default value if provided.
+ */
 async function ask(message: string, defaultValue?: string): Promise<string> {
 	return input({ message, default: defaultValue });
 }
 
+/**
+ * Interactively prompts the user to input a number with a message and optional default value.
+ * If the user presses Enter without inputting a value, the default value will be used if provided.
+ * If the user inputs an invalid number, an error message will be displayed, and the user will be prompted again.
+ * @param {string} message - The message to display when prompting the user.
+ * @param {number} [defaultValue] - The default value to use if the user does not input a value.
+ * @returns {Promise<number>} A promise that resolves with the user's input value or the default value if provided.
+ */
 async function askNumber(message: string, defaultValue?: number): Promise<number> {
 	const value = await input({
 		message,
@@ -424,6 +461,13 @@ async function askNumber(message: string, defaultValue?: number): Promise<number
 
 import { handleUserError, readConfig, writeConfig } from "@package/utils/index.js";
 
+/**
+ * Interactively prompts the user to input a boolean value for whether to keep the dkutils watermark on generated content.
+ * If the user has previously set a watermark preference in their global configuration, this function will return that value.
+ * Otherwise, it will display a confirmation dialog asking the user to keep the watermark.
+ * If the user decides to save their preference, it will be written to their global configuration.
+ * @returns {Promise<boolean>} A promise that resolves with the user's input value.
+ */
 async function askWatermark(): Promise<boolean> {
 	const config = await readConfig();
 	if (config.watermark !== undefined) {
@@ -447,6 +491,11 @@ async function askWatermark(): Promise<boolean> {
 	return result;
 }
 
+/**
+ * Checks if a given path is valid.
+ * @param {string} p - The path to check.
+ * @returns {Promise<boolean>} A promise that resolves to true if the path is valid, false otherwise.
+ */
 async function isValidPath(p: string): Promise<boolean> {
 	try {
 		await fs.access(path.resolve(p));
@@ -456,6 +505,14 @@ async function isValidPath(p: string): Promise<boolean> {
 	}
 }
 
+/**
+ * Generates an output path based on the given input path, suffix, and extension.
+ * The function will join the directory of the input path with the name of the input path, the given suffix, and the given extension.
+ * @param {string} inputPath - The input path to generate an output path from.
+ * @param {string} suffix - The suffix to append to the name of the input path.
+ * @param {string} ext - The extension to append to the name of the input path.
+ * @returns {string} The generated output path.
+ */
 function getAutoOutputPath(inputPath: string, suffix: string, ext: string): string {
 	const absoluteInput = path.resolve(inputPath);
 	const parsed = path.parse(absoluteInput);

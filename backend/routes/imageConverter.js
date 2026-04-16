@@ -16,6 +16,13 @@ const Jimp = createJimp({
 	plugins: defaultPlugins,
 });
 
+/**
+ * Remove control characters from a string.
+ *
+ * Control characters are characters with a code point <= 31 or equal to 127.
+ * @param {string} value - The string to strip control characters from.
+ * @returns {string} The string with all control characters removed.
+ */
 const stripControlCharacters = (value) =>
 	Array.from(value)
 		.filter((char) => {

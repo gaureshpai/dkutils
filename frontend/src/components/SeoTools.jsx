@@ -3,9 +3,13 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that provides tools for fetching and viewing robots.txt and sitemap.xml content from a given domain.
+ *
+ * @returns {JSX.Element} A JSX element representing the SeoTools component.
+ */
 const SeoTools = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [domain, setDomain] = useState("");
 	const [robotsTxtContent, setRobotsTxtContent] = useState("");
 	const [sitemapXmlContent, setSitemapXmlContent] = useState("");
@@ -14,6 +18,11 @@ const SeoTools = () => {
 	const [loadingRobots, setLoadingRobots] = useState(false);
 	const [loadingSitemap, setLoadingSitemap] = useState(false);
 
+	/**
+	 * Handles domain input change event.
+	 * Resets the domain, robots.txt content, sitemap.xml content, robots.txt error, and sitemap.xml error state variables.
+	 * @param {React.ChangeEvent} e - The domain input change event.
+	 */
 	const handleDomainChange = (e) => {
 		setDomain(e.target.value);
 		setRobotsTxtContent("");
@@ -22,6 +31,12 @@ const SeoTools = () => {
 		setSitemapXmlError(null);
 	};
 
+	/**
+	 * Copies the provided text to the user's clipboard.
+	 *
+	 * @param {string} textToCopy - The text to copy to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);
@@ -32,6 +47,14 @@ const SeoTools = () => {
 		}
 	};
 
+	/**
+	 * Fetches the robots.txt content from the given domain.
+	 * If the domain is empty, it will early return without making any API calls.
+	 * If the robots.txt content exists, it will be stored in the state and a success toast will be shown.
+	 * If the robots.txt content does not exist or is inaccessible, it will store an error message in the state and show an info toast.
+	 * If there is an error while fetching the robots.txt content, it will store the error message in the state and show an error toast.
+	 * Finally, it will set the loading state to false.
+	 */
 	const fetchRobotsTxt = async () => {
 		// Early return if domain is empty
 		if (!domain?.trim()) {
@@ -66,6 +89,10 @@ const SeoTools = () => {
 		}
 	};
 
+	/**
+	 * Fetches sitemap.xml from a given domain.
+	 * @returns {Promise<void>} A promise that resolves when the fetching is complete.
+	 */
 	const fetchSitemapXml = async () => {
 		// Early return if domain is empty
 		if (!domain?.trim()) {

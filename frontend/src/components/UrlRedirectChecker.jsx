@@ -4,14 +4,23 @@ import { Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A tool to check URL redirects.
+ *
+ * @returns A React component that checks URL redirects and displays the redirect chain.
+ */
 const UrlRedirectChecker = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [url, setUrl] = useState("");
 	const [redirectChain, setRedirectChain] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
+	/**
+	 * Copies the provided text to the user's clipboard.
+	 * @param {string} textToCopy - The text to copy to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);
@@ -22,6 +31,12 @@ const UrlRedirectChecker = () => {
 		}
 	};
 
+	/**
+	 * Submits the URL redirect checker form.
+	 * Checks URL redirects and displays the redirect chain.
+	 * Tracks usage with Google Analytics after successful check.
+	 * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+	 */
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);

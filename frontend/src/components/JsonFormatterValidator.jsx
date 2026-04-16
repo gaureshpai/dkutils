@@ -2,6 +2,15 @@ import useAnalytics from "@frontend/utils/useAnalytics";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that formats and validates JSON input.
+ *
+ * It provides a textarea for JSON input and buttons to format and validate the JSON.
+ * The formatted JSON is displayed in another textarea.
+ * The validation result is displayed below the input textarea.
+ *
+ * The component also provides a button to copy the formatted JSON to clipboard and a button to download the formatted JSON as a file.
+ */
 const JsonFormatterValidator = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -10,12 +19,22 @@ const JsonFormatterValidator = () => {
 	const [validationMessage, setValidationMessage] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles input change event for the JSON input textarea.
+	 * Resets the formatted JSON and validation message states to empty strings.
+	 * @param {React.ChangeEvent} e - The input change event.
+	 */
 	const handleInputChange = (e) => {
 		setJsonInput(e.target.value);
 		setFormattedJson("");
 		setValidationMessage("");
 	};
 
+	/**
+	 * Formats the JSON input string and updates the formatted JSON state.
+	 * If the JSON input is invalid, updates the formatted JSON state to an empty string and the validation message state to an error message.
+	 * Tracks the usage of the tool with the `useAnalytics` hook.
+	 */
 	const formatJson = () => {
 		setLoading(true);
 		trackToolUsage("JsonFormatterValidator", "web");
@@ -30,6 +49,12 @@ const JsonFormatterValidator = () => {
 		setLoading(false);
 	};
 
+	/**
+	 * Validates the JSON input string and updates the validation message state.
+	 * If the JSON input is valid, updates the validation message state to "Valid JSON".
+	 * If the JSON input is invalid, updates the validation message state to an error message.
+	 * Tracks the usage of the tool with the `useAnalytics` hook.
+	 */
 	const validateJson = () => {
 		setLoading(true);
 		trackToolUsage("JsonFormatterValidator", "web");
@@ -42,6 +67,11 @@ const JsonFormatterValidator = () => {
 		setLoading(false);
 	};
 
+	/**
+	 * Copies the provided text to the user's clipboard.
+	 * @param {string} textToCopy - The text to copy to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async (textToCopy) => {
 		try {
 			await navigator.clipboard.writeText(textToCopy);
@@ -52,6 +82,12 @@ const JsonFormatterValidator = () => {
 		}
 	};
 
+	/**
+	 * Downloads the formatted JSON as a file.
+	 * Creates a temporary anchor element to trigger the download of the file.
+	 * The file is named "formatted.json".
+	 * Cleans up: removes the element and revokes the URL to prevent memory leak.
+	 */
 	const downloadJson = () => {
 		const element = document.createElement("a");
 		const file = new Blob([formattedJson], { type: "application/json" });

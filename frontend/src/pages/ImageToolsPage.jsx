@@ -65,6 +65,12 @@ const IMAGE_TOOL_DEFINITIONS = [
 	// },
 ];
 
+/**
+ * A page containing a suite of online image manipulation tools: Image Background Remover (Make Transparent), Image Format Converter (JPG, PNG, WebP, TIFF, AVIF), Image Compressor, Image Resizer, Image to PDF Converter, PNG to JPG Converter, Image Cropper, Image Grayscaler, and Image Flipper. Optimize, transform, and enhance your images with ease.
+ */
+/**
+ * Keywords: image tools, image background removed, remove background, transparent background, image converter, image compressor, image resizer, image to PDF, PNG to JPG, image cropper, image grayscaler, image flipper, online image editor, photo editor, image optimization, convert image format, compress photos, resize images, crop images, grayscale image, free image tools
+ */
 const ImageToolsPage = () => {
 	const { tools, isLoading } = useSortedTools("image", IMAGE_TOOL_DEFINITIONS);
 

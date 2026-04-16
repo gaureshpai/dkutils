@@ -60,6 +60,11 @@ const INITIAL_TOOLS = [
 	},
 ];
 
+/**
+ * A page that displays a collection of text utilities: Text Case Converter, Text Difference Checker, Base64 Text Converter, HTML to Markdown Converter, Markdown to HTML Converter, JSON Formatter/Validator, Hash Generator, Password Generator, and CSV to JSON Converter. Manipulate, analyze, and transform text data with ease.
+ *
+ * @returns {JSX.Element} The page element.
+ */
 const TextToolsPage = () => {
 	const { tools, isLoading } = useSortedTools("text", INITIAL_TOOLS);
 

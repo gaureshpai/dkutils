@@ -1,13 +1,18 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-
-import { Command } from "commander";
-
 import { renderCliBanner } from "@package/branding.js";
 import { startInteractiveCli } from "@package/interactive.js";
-import { type CompressionLevel, FlipDirection, ImageFormat } from "@package/interfaces/index.js";
+import type { CompressionLevel } from "@package/interfaces/index.js";
 import { handleUserError, readConfig } from "@package/utils/index.js";
+import { Command } from "commander";
 
+/**
+ * Returns the user's preference for including a watermark in output files.
+ * If optionValue is false, it will return false.
+ * Otherwise, it will read the user's configuration and return the watermark preference.
+ * @param {boolean} [optionValue=false] - The value of the watermark preference.
+ * @returns {Promise<boolean>} - A promise that resolves to the user's watermark preference.
+ */
 async function getWatermarkPreference(optionValue?: boolean): Promise<boolean> {
 	if (optionValue === false) return false;
 	const config = await readConfig();

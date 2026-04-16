@@ -5,6 +5,15 @@ import { PDFDocument } from "pdf-lib";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A tool for splitting a PDF into multiple pages based on a given range of pages.
+ * Usage:
+ * 1. Upload a PDF file
+ * 2. Enter page ranges to split (e.g. 1, 3-5, 8)
+ * 3. Click "Split PDF" to split the PDF
+ * @example
+ * <PdfSplitter />
+ */
 const PdfSplitter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -18,6 +27,13 @@ const PdfSplitter = () => {
 	} = useContext(AuthContext);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles the file selection event.
+	 * Checks if the selected file is a PDF file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file and reads the PDF to get the total number of pages.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e The file selection event.
+	 */
 	const onFileChange = async (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -65,10 +81,21 @@ const PdfSplitter = () => {
 		}
 	};
 
+	/**
+	 * Handles the range input change event.
+	 * Sets the page ranges state to the input value.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e The range input change event.
+	 */
 	const onRangeChange = (e) => {
 		setRanges(e.target.value);
 	};
 
+	/**
+	 * Submits the form for splitting the PDF into multiple documents.
+	 * If the selected file is not a PDF or the ranges are invalid, it will display an error message.
+	 * If the selected file and ranges are valid, it will split the PDF into multiple documents and download them.
+	 * @param {React.FormEvent} e The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 
@@ -166,6 +193,11 @@ const PdfSplitter = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from a given URL with a given filename.
+	 * @param {string} fileUrl The URL of the file to download.
+	 * @param {string} fileName The filename to save the file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

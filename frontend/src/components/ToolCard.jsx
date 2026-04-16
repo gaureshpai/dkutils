@@ -7,6 +7,16 @@ import {
 } from "@frontend/components/ui/card";
 import PropTypes from "prop-types";
 
+/**
+ * @function ToolCard
+ *
+ * @param {title} String - Required title of the tool.
+ * @param {description} String - Required description of the tool.
+ * @param {children} Object - Required children of the tool.
+ *
+ * @returns {Object} - Required card component.
+ *
+ */
 const ToolCard = ({ title, description, children }) => {
 	return (
 		<Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-200">

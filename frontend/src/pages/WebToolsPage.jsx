@@ -60,6 +60,10 @@ const INITIAL_TOOLS = [
 	},
 ];
 
+/**
+ * A React component that displays a collection of web development tools.
+ * @returns {JSX.Element} A JSX element representing the WebToolsPage component.
+ */
 const WebToolsPage = () => {
 	const { tools, isLoading } = useSortedTools("web", INITIAL_TOOLS);
 

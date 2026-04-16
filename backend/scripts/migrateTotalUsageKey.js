@@ -6,6 +6,13 @@ const { TotalUsage } = require("@backend/models/ServiceUsage");
 
 const GLOBAL_KEY = "global";
 
+/**
+ * Migrate the TotalUsage model to ensure that only one document
+ * has key = "global", and that all other documents have key = null.
+ * Aggregate the totalCount field of all matching documents into this
+ * one document. Remove any duplicate documents.
+ * @returns {migrated: boolean, processed: number, totalCount: number}
+ */
 const migrateTotalUsageKey = async () => {
 	// Perform read-and-aggregate step inside the same transaction
 	const session = await mongoose.startSession();

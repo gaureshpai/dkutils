@@ -24,6 +24,11 @@ if (!process.env.SUPABASE_CLEANUP_CRON_SECRET) {
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+/**
+ * Tests the connection to Supabase Storage by attempting to get the specified bucket.
+ * Logs a success message if the bucket is found, or an error message if the connection fails.
+ * @throws {Error} If the connection fails
+ */
 const testSupabaseConnection = async () => {
 	try {
 		const { data: bucket, error: getBucketError } = await supabase.storage.getBucket("utilityhub");
@@ -144,6 +149,10 @@ app.use((err, req, res, next) => {
 	});
 });
 
+/**
+ * Starts the Express.js server and connects to MongoDB and Supabase.
+ * @throws {Error} If there is an error connecting to MongoDB or Supabase.
+ */
 const startServer = async () => {
 	try {
 		await mongoose.connect(process.env.MONGO_URI);

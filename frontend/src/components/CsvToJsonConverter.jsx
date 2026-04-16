@@ -3,6 +3,11 @@ import Papa from "papaparse";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that converts CSV data to JSON and vice versa.
+ * It consists of two input fields for CSV and JSON data, and two buttons to convert the data in either direction.
+ * The converted output is displayed in a read-only textarea below the input fields.
+ */
 const CsvToJsonConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -11,18 +16,32 @@ const CsvToJsonConverter = () => {
 	const [convertedOutput, setConvertedOutput] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles changes to the CSV input field.
+	 * Sets the CSV input state to the new value, and clears the JSON input and converted output states.
+	 * @param {React.ChangeEvent} e - The event object passed from the onChange event.
+	 */
 	const handleCsvChange = (e) => {
 		setCsvInput(e.target.value);
 		setJsonInput("");
 		setConvertedOutput("");
 	};
 
+	/**
+	 * Handles changes to the JSON input field.
+	 * Sets the JSON input state to the new value, and clears the CSV input and converted output states.
+	 * @param {React.ChangeEvent} e - The event object passed from the onChange event.
+	 */
 	const handleJsonChange = (e) => {
 		setJsonInput(e.target.value);
 		setCsvInput("");
 		setConvertedOutput("");
 	};
 
+	/**
+	 * Copies the converted CSV/JSON output to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text
+	 */
 	const copyToClipboard = async () => {
 		try {
 			await navigator.clipboard.writeText(convertedOutput);
@@ -33,11 +52,22 @@ const CsvToJsonConverter = () => {
 		}
 	};
 
+	/**
+	 * Converts CSV data to JSON.
+	 * Triggers when the user wants to convert CSV to JSON.
+	 * @returns {Promise<void>} Promise that resolves when the conversion is complete.
+	 */
 	const convertCsvToJson = () => {
 		setLoading(true);
 		trackToolUsage("CsvToJsonConverter", "web");
 		Papa.parse(csvInput, {
 			header: true,
+			/**
+			 * Callback function called when the CSV to JSON conversion is complete.
+			 * If there are errors parsing the CSV, the error message is set as the converted output.
+			 * If the conversion is successful, the converted JSON data is set as the converted output.
+			 * @param {Object} results - The result of the CSV to JSON conversion.
+			 */
 			complete: (results) => {
 				if (results.errors?.length) {
 					setConvertedOutput(`Error parsing CSV: ${results.errors[0].message}`);
@@ -47,6 +77,10 @@ const CsvToJsonConverter = () => {
 				setConvertedOutput(JSON.stringify(results.data, null, 2));
 				setLoading(false);
 			},
+			/**
+			 * Handles errors while parsing CSV data.
+			 * @param {Error} err Error object
+			 */
 			error: (err) => {
 				setConvertedOutput(`Error parsing CSV: ${err.message}`);
 				setLoading(false);
@@ -54,6 +88,11 @@ const CsvToJsonConverter = () => {
 		});
 	};
 
+	/**
+	 * Converts JSON data to CSV string.
+	 *
+	 * @returns {Promise<string>} Promise that resolves with a CSV string.
+	 */
 	const convertJsonToCsv = () => {
 		setLoading(true);
 		trackToolUsage("CsvToJsonConverter", "web");

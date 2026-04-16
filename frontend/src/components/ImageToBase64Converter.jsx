@@ -4,6 +4,14 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * ImageToBase64Converter
+ *
+ * A component that allows users to upload an image and get its Base64 representation.
+ *
+ * @param {Object} props - The component props.
+ * @returns {ReactElement} - The rendered component.
+ */
 const ImageToBase64Converter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -14,6 +22,13 @@ const ImageToBase64Converter = () => {
 	const [base64String, setBase64String] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles file change event for image to base64 converter.
+	 * Checks if the selected file is an image file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file and resets the base64String state.
+	 * If the file is invalid, displays an error message and resets the selectedFile and base64String states.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file change event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -39,6 +54,11 @@ const ImageToBase64Converter = () => {
 		}
 	};
 
+	/**
+	 * Submits the image to base64 converter form.
+	 * Converts the selected image to Base64, and downloads the converted image as a text file.
+	 * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		if (!selectedFile || loading) {
@@ -77,6 +97,11 @@ const ImageToBase64Converter = () => {
 		}
 	};
 
+	/**
+	 * Downloads the given content as a file with the given filename.
+	 * @param {string} content - The content to download as a file.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = (content, fileName) => {
 		const blob = new Blob([content], { type: "text/plain" });
 		const url = URL.createObjectURL(blob);

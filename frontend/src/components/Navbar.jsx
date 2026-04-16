@@ -1,9 +1,6 @@
-﻿import { Button } from "@frontend/components/ui/button";
-import { AuthContext } from "@frontend/context/AuthContext"; // Adjusted path
-import { useContext, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-
-import { ModeToggle } from "@frontend/components/mode-toggle";
+﻿import { ModeToggle } from "@frontend/components/mode-toggle";
+import { Button } from "@frontend/components/ui/button";
+import { AuthContext } from "@frontend/context/AuthContext";
 import { cn } from "@frontend/lib/utils";
 import {
 	FileText,
@@ -16,12 +13,22 @@ import {
 	Type,
 	X,
 } from "lucide-react";
+import { useContext, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
+/**
+ * A reusable navbar component.
+ *
+ * @returns {JSX.Element} The JSX element of the navbar component.
+ */
 const Navbar = () => {
 	const { state, dispatch } = useContext(AuthContext);
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const location = useLocation();
 
+	/**
+	 * Logs the user out by dispatching a 'LOGOUT' action to the reducer.
+	 */
 	const handleLogout = () => {
 		dispatch({ type: "LOGOUT" });
 	};

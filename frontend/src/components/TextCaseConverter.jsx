@@ -2,9 +2,14 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for converting text to different cases (uppercase, lowercase, title case).
+ * It takes in a text input, and allows users to select which case to convert to.
+ * It also tracks usage with the "TextCaseConverter" tool and "text" type.
+ * @returns {JSX.Element} The component.
+ */
 const TextCaseConverter = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [text, setText] = useState("");
 	const [convertedText, setConvertedText] = useState("");
 	const [loading, setLoading] = useState(false);
@@ -18,10 +23,17 @@ const TextCaseConverter = () => {
 		};
 	}, []);
 
+	/**
+	 * Handles text change event in the text area, updates the text state with the new value.
+	 */
 	const handleTextChange = (e) => {
 		setText(e.target.value);
 	};
 
+	/**
+	 * Converts the given text to uppercase with a 500ms delay.
+	 * Tracks usage with the "TextCaseConverter" tool and "text" type.
+	 */
 	const toUpperCase = () => {
 		setLoading(true);
 		trackToolUsage("TextCaseConverter", "text");
@@ -34,6 +46,11 @@ const TextCaseConverter = () => {
 		}, 500);
 	};
 
+	/**
+	 * Converts the input text to lowercase.
+	 * This function is debounced, meaning it will wait 500ms after the last call before executing the conversion.
+	 * The function also tracks usage with the "TextCaseConverter" and "text" arguments.
+	 */
 	const toLowerCase = () => {
 		setLoading(true);
 		trackToolUsage("TextCaseConverter", "text");
@@ -46,6 +63,11 @@ const TextCaseConverter = () => {
 		}, 500);
 	};
 
+	/**
+	 * Converts the input text to title case (first letter of each word capitalized, remaining letters in lowercase).
+	 * This function is debounced, meaning it will wait 500ms after the last call before executing the conversion.
+	 * The function also tracks usage with the "TextCaseConverter" and "text" arguments.
+	 */
 	const toTitleCase = () => {
 		setLoading(true);
 		trackToolUsage("TextCaseConverter", "text");
@@ -62,6 +84,10 @@ const TextCaseConverter = () => {
 		}, 500);
 	};
 
+	/**
+	 * Copies the converted text to the user's clipboard.
+	 * @throws {Error} - If there is an error while copying the text.
+	 */
 	const copyToClipboard = async () => {
 		try {
 			await navigator.clipboard.writeText(convertedText);

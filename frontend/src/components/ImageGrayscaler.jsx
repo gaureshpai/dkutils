@@ -4,6 +4,14 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component that converts an image to grayscale.
+ * It uses the `@imgly/background-removal` package to remove the background.
+ * The component accepts an image file as input and returns the image with the background removed as a PNG file.
+ * It also tracks the usage of the tool with the `useAnalytics` hook.
+ * @param {React.ChangeEvent} e The file selection event.
+ * @returns {JSX.Element} The JSX element for the component.
+ */
 const ImageGrayscaler = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -13,6 +21,13 @@ const ImageGrayscaler = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles file selection event.
+	 * Checks if the selected file is an image file and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		const maxFileSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -40,6 +55,14 @@ const ImageGrayscaler = () => {
 		}
 	};
 
+	/**
+	 * Handles form submission event.
+	 * Checks if a selected image file is available.
+	 * If a selected image file is available, sends a POST request to the API to convert the image to grayscale.
+	 * If the request is successful, downloads the image with the background removed as a PNG file and tracks the usage of the tool with the `useAnalytics` hook.
+	 * If the request fails, displays an error message.
+	 * @param {React.FormEvent} e The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		if (!selectedFile) {

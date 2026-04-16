@@ -4,6 +4,17 @@ import axios from "axios";
 import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A component for compressing images.
+ *
+ * It takes multiple image files as an input and returns the compressed images.
+ *
+ * The quality of the images can be adjusted between 1 and 100.
+ *
+ * The component uses the `api/convert/compress-image` endpoint to compress the images.
+ * @param {Object} props - The props object.
+ * @returns {JSX.Element} - The rendered component.
+ */
 const ImageCompressor = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -15,6 +26,10 @@ const ImageCompressor = () => {
 	const [loading, setLoading] = useState(false);
 	const fileInputRef = useRef(null);
 
+	/**
+	 * Handles file change event for image compressor.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file change event.
+	 */
 	const onFileChange = (e) => {
 		const files = Array.from(e.target.files);
 		const allowedTypes = [
@@ -59,7 +74,12 @@ const ImageCompressor = () => {
 		setQuality(value);
 	};
 
-	// fetch the file as a blob and trigger download
+	/**
+	 * Downloads a compressed image from the given URL.
+	 * @param {string} fileUrl - The URL of the compressed image.
+	 * @param {string} fileName - The name of the file to be downloaded.
+	 * @throws {Error} - If there is an error downloading the file.
+	 */
 	const handleDownload = async (fileUrl, fileName) => {
 		try {
 			const downloadRes = await axios.get(fileUrl, { responseType: "blob" });
@@ -81,6 +101,10 @@ const ImageCompressor = () => {
 		}
 	};
 
+	/**
+	 * Submits the selected image files to the server for compression.
+	 * @throws {Error} - If there is an error compressing the images.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 

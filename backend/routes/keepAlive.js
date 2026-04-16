@@ -1,6 +1,13 @@
 const router = require("express").Router();
 const { supabase } = require("@backend/utils/supabaseClient");
 
+/**
+ * Generates a random string of a given size in bytes.
+ * The string is generated from the following set of characters:
+ * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+ * @param {number} sizeInBytes - The size of the string in bytes.
+ * @returns {string} - A random string of the given size.
+ */
 const generateRandomString = (sizeInBytes) => {
 	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	let result = "";

@@ -4,14 +4,26 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for converting PNG images to JPG.
+ * It takes in a list of PNG images, and converts them to JPG using the API.
+ * It then downloads the converted images.
+ * @returns {JSX.Element} The component.
+ */
 const PngToJpgConverter = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [selectedFiles, setSelectedFiles] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const { state } = useContext(AuthContext);
 	const { isAuthenticated } = state;
 
+	/**
+	 * Handles the file change event for the PNG to JPG converter component.
+	 * Checks if the selected files are valid PNG images and if they are within the allowed file size limit.
+	 * If the files are valid, sets the selectedFiles state to the valid files.
+	 * If the files are invalid, displays an error message and resets the selectedFiles state.
+	 * @param {React.ChangeEvent} e - The file change event from the input file element.
+	 */
 	const onFileChange = (e) => {
 		const files = Array.from(e.target.files);
 		const allowedTypes = ["image/png"];
@@ -41,6 +53,11 @@ const PngToJpgConverter = () => {
 		setSelectedFiles(validFiles);
 	};
 
+	/**
+	 * Submits the PNG to JPG converter form.
+	 * Converts the selected PNG images to JPG, and downloads the converted images.
+	 * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 
@@ -71,6 +88,11 @@ const PngToJpgConverter = () => {
 		}
 	};
 
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
 	const handleDownload = (fileUrl, fileName) => {
 		const link = document.createElement("a");
 		link.href = fileUrl;

@@ -3,9 +3,20 @@ import { diff_match_patch } from "diff-match-patch";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A component that compares two texts and displays the differences between them.
+ * The differences are highlighted in HTML format, with deletions marked in red and insertions marked in green.
+ * This component also tracks the usage of the component with Google Analytics.
+ */
 const TextDifferenceChecker = () => {
 	const { trackToolUsage } = useAnalytics();
 
+	/**
+	 * Escapes special characters in a string for use in HTML.
+	 * Replaces "&" with "&amp;", "<" with "&lt;", ">" with "&gt;", "\"" with "&quot;", "/" with "&#39;", and "`" with "&#96;".
+	 * @param {string} value - The string to escape.
+	 * @returns {string} - The escaped string.
+	 */
 	const escapeHtml = (value) =>
 		String(value)
 			.replace(/&/g, "&amp;")
@@ -21,14 +32,29 @@ const TextDifferenceChecker = () => {
 	const [diffParts, setDiffParts] = useState([]);
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles text change event for the first text input.
+	 * Sets the first text state to the new value.
+	 * @param {React.ChangeEvent} e - The text change event.
+	 */
 	const handleText1Change = (e) => {
 		setText1(e.target.value);
 	};
 
+	/**
+	 * Handles text change event for the second text input.
+	 * Sets the second text state to the new value.
+	 * @param {React.ChangeEvent} e - The text change event.
+	 */
 	const handleText2Change = (e) => {
 		setText2(e.target.value);
 	};
 
+	/**
+	 * Compares two texts and displays the differences between them.
+	 * The differences are highlighted in HTML format, with deletions marked in red and insertions marked in green.
+	 * This function also tracks the usage of the component.
+	 */
 	const compareTexts = () => {
 		setLoading(true);
 		trackToolUsage("TextDifferenceChecker", "text");
@@ -63,6 +89,10 @@ const TextDifferenceChecker = () => {
 		}, 500);
 	};
 
+	/**
+	 * Copies the text difference result to the clipboard.
+	 * @throws {Error} If the operation fails.
+	 */
 	const copyToClipboard = async () => {
 		try {
 			const tempElement = document.createElement("div");

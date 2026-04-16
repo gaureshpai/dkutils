@@ -1,14 +1,24 @@
+import useAnalytics from "@frontend/utils/useAnalytics";
 import { removeBackground } from "@imgly/background-removal";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-import useAnalytics from "@frontend/utils/useAnalytics";
-
+/**
+ * A React component that removes the background from an image.
+ * It uses the `@imgly/background-removal` package to remove the background.
+ * The component accepts an image file as input and returns the image with the background removed.
+ * It also tracks the usage of the tool with the `useAnalytics` hook.
+ */
 const ImageBackgroundRemover = () => {
 	const { trackToolUsage } = useAnalytics();
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles file change event from the input file element.
+	 * If the selected file is not an image, it will show an error message and reset the input file element.
+	 * If the selected file is an image, it will set the selectedFile state to the selected file.
+	 */
 	const handleFileChange = (event) => {
 		const file = event.target.files?.[0];
 		if (!file) {
@@ -26,6 +36,13 @@ const ImageBackgroundRemover = () => {
 		setSelectedFile(file);
 	};
 
+	/**
+	 * Handles form submission event.
+	 * Removes the background from the selected image file using `@imgly/background-removal`.
+	 * Downloads the image with the background removed as a PNG file.
+	 * Tracks the usage of the tool with the `useAnalytics` hook.
+	 * Toasts success or error messages based on the outcome.
+	 */
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 

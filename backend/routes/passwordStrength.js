@@ -1,5 +1,17 @@
 const router = require("express").Router();
 
+/**
+ * Checks the strength of a given password.
+ * The strength is determined by the following rules:
+ * - The password must be at least 8 characters long.
+ * - The password must contain at least one uppercase letter, one lowercase letter, one number, and one symbol.
+ * - The strength is determined by the length of the password and the number of character types it contains.
+ * - If the password is too short, it is considered weak.
+ * - If the password is at least 8 characters long but contains only one or two types of characters, it is considered medium.
+ * - If the password is at least 12 characters long and contains at least three types of characters, it is considered strong.
+ * @param {string} password - The password to check.
+ * @returns {{score: number, feedback: Array<string>}} - An object containing the strength score and the feedback array.
+ */
 const checkPasswordStrength = (password) => {
 	let score = 0;
 	const feedback = [];

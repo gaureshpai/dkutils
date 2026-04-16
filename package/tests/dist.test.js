@@ -3,11 +3,10 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-
 import { DKUTILS } from "../dist/DKUTILS.js";
+const cliPath = path.resolve("dist/bin/dkutils.js");
 
 const execFileAsync = promisify(execFile);
-const cliPath = path.resolve("dist/bin/dkutils.js");
 
 test("dist export exposes the branded dkutils object", () => {
 	assert.equal(DKUTILS.branding.name, "dkutils");

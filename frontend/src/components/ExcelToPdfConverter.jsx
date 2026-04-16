@@ -4,6 +4,14 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * Excel to PDF Converter
+ *
+ * A utility component that allows users to upload an Excel file and
+ * convert it to a PDF file.
+ *
+ * @returns {JSX.Element} A JSX element representing the component.
+ */
 const ExcelToPdfConverter = () => {
 	const { trackToolUsage } = useAnalytics();
 
@@ -13,6 +21,14 @@ const ExcelToPdfConverter = () => {
 		state: { isAuthenticated },
 	} = useContext(AuthContext);
 
+	/**
+	 * Handles file selection event.
+	 * Checks if the selected file is an Excel file (.xlsx or .csv)
+	 * and if it is within the allowed file size limit.
+	 * If the file is valid, sets the selectedFile state to the selected file.
+	 * If the file is invalid, displays an error message and resets the selectedFile state.
+	 * @param {React.ChangeEvent} e The file selection event.
+	 */
 	const onFileChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -38,6 +54,12 @@ const ExcelToPdfConverter = () => {
 		}
 	};
 
+	/**
+	 * Converts an Excel file (.xlsx or .csv) to a PDF file.
+	 * Submits the file to the server for conversion and downloads the converted PDF.
+	 * @param {React.FormEvent} e The form submission event.
+	 * @throws {Error} If the file is invalid or if the conversion fails.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		if (!selectedFile) {

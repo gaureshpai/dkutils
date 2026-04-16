@@ -3,16 +3,32 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+/**
+ * A React component for generating a PDF from a given text.
+ * It allows users to input text into a textarea, and then generates a PDF from the text using the API.
+ * The generated PDF is then downloaded directly to the user's browser.
+ */
 const TextToPdfGenerator = () => {
 	const { trackToolUsage } = useAnalytics();
-
 	const [text, setText] = useState("");
 	const [loading, setLoading] = useState(false);
 
+	/**
+	 * Handles text change event in the text area, updates the text state variable with the new value.
+	 * @param {React.ChangeEvent} e - The event object.
+	 */
 	const onChange = (e) => {
 		setText(e.target.value);
 	};
 
+	/**
+	 * Submits the text to the server for PDF generation.
+	 * Prevents default form submission behavior and displays an error message if no text is entered
+	 * Sets loading state to true while the request is being processed
+	 * Resets text state variable after the request is finished
+	 * Calls trackToolUsage with "TextToPdfGenerator" and "pdf" as arguments
+	 * Calls handleDownload with the generated PDF blob and a filename of the format "converted-text-<timestamp>.pdf"
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);

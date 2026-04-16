@@ -24,6 +24,21 @@ router.post(
 				return res.status(400).json({ msg: "Uploaded file must be a PDF." });
 			}
 
+			/**
+			 * Splits a given text into sentences.
+			 *
+			 * This function first normalizes the input text by replacing all
+			 * occurrences of "\r\n" with "\n", and then replaces all occurrences
+			 * of "\n\s*\n+" with "\n". It then proceeds to replace all URLs
+			 * with tokens of the form "__URL_<number>__", and replaces all
+			 * abbreviations with their "safe" equivalents (i.e. all periods
+			 * are replaced with "∯"). Finally, the function splits the text on
+			 * sentence boundaries (i.e. on periods, question marks, and
+			 * exclamation marks) and returns the resulting sentences as an array.
+			 *
+			 * @param {string} text The text to be split into sentences.
+			 * @returns {string[]} An array of sentences.
+			 */
 			const splitTextIntoSentences = (text) => {
 				if (!text || typeof text !== "string") return [];
 

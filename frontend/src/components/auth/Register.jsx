@@ -18,6 +18,14 @@ import { AlertCircle } from "lucide-react";
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+/**
+ * A component for creating an account.
+ *
+ * @param {object} formData The form data.
+ * @param {object} error The error message to display.
+ * @param {boolean} loading Whether the account is being created.
+ * @param {function} onSubmit The function to call when the form is submitted.
+ */
 const Register = () => {
 	const { trackToolUsage } = useAnalytics();
 	const [formData, setFormData] = useState({
@@ -35,6 +43,10 @@ const Register = () => {
 
 	const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+	/**
+	 * Submits the registration form to the server, and on success, dispatches a 'LOGIN' action to the reducer with the user's token and user data.
+	 * @param {object} e The event to submit.
+	 */
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
