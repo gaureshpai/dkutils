@@ -310,7 +310,7 @@ router.post(
 					extension = "png";
 				}
 
-				image.resize({ width: parsedWidth, height: parsedHeight });
+				image.resize({ w: parsedWidth, h: parsedHeight });
 				const mime = `image/${outputFormat}`;
 				const resizedBuffer = await image.getBuffer(mime);
 
@@ -357,7 +357,7 @@ router.post(
 						outputFormat = "png";
 						extension = "png";
 					}
-					image.resize({ width: parsedWidth, height: parsedHeight });
+					image.resize({ w: parsedWidth, h: parsedHeight });
 					const mime = `image/${outputFormat}`;
 					const resizedBuffer = await image.getBuffer(mime);
 
