@@ -138,6 +138,7 @@ router.get("/download", async (req, res) => {
 		}
 
 		const baseName = path.basename(filename);
+		const baseName = path.basename(filename);
 		const allowedPrefixes = [
 			"dkutils_",
 			"dkutils-",
@@ -146,6 +147,11 @@ router.get("/download", async (req, res) => {
 			"screenshots/screenshot_dkutils_",
 			"favicons/",
 		];
+
+		const isAllowed = allowedPrefixes.some((prefix) => filename.startsWith(prefix));
+		if (!isAllowed) {
+			return res.status(403).json({ msg: "Access denied." });
+		}
 
 		const { data, error } = await supabase.storage.from("utilityhub").download(filename);
 
