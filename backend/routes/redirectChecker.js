@@ -33,9 +33,9 @@ function isPrivateIP(ip) {
 }
 
 /**
- * Determines whether the given IP address is link-local.
+ * Determines whether the given IP address is a link-local address.
  *
- * IPv4 link-local range: 169.254.0.0/16. IPv6 link-local prefix: fe80::/10.
+ * Recognizes IPv4 addresses in 169.254.0.0/16 and IPv6 addresses in fe80::/10; returns `false` for non-IP literals.
  * @param {string} ip - IP address string.
  * @returns {boolean} `true` if the address is link-local, `false` otherwise.
  */
@@ -184,9 +184,10 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Determine whether the response represents an HTTP redirect and, if so, resolve and validate the redirect target and return the next request state.
+ * Determine if an Axios response is an HTTP redirect and, if so, resolve and validate its Location target.
  *
- * If the response status is in the 3xx range and a `Location` header is present, resolves the `Location` against `currentUrl`, validates the resulting URL (including its hostname/IP safety) and returns the next URL, hostname, and the validated addresses. Otherwise indicates that no redirect-following should occur.
+ * Resolves a relative or absolute `Location` header against `currentUrl`, validates the resulting URL (including hostname/IP safety),
+ * and returns the next URL, hostname, and validated addresses when the response is a redirect; otherwise indicates no redirect should be followed.
  *
  * @param {import("axios").AxiosResponse} response - Axios response to inspect for a `Location` header and status code.
  * @param {string} currentUrl - Base URL used to resolve relative `Location` values.
