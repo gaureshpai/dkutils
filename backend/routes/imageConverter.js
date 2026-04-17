@@ -143,15 +143,9 @@ router.get("/download", async (req, res) => {
 			"dkutils-",
 			"screenshot-",
 			"screenshots/screenshot-",
+			"screenshots/screenshot_dkutils_",
 			"favicons/",
 		];
-		if (
-			filename.includes("..") ||
-			(!allowedPrefixes.some((prefix) => filename.startsWith(prefix)) &&
-				!(filename === baseName && baseName.includes("_dkutils_")))
-		) {
-			return res.status(403).json({ msg: "Invalid filename." });
-		}
 
 		const { data, error } = await supabase.storage.from("utilityhub").download(filename);
 
