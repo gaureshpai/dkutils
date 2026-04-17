@@ -184,14 +184,11 @@ async function validateRedirectLocation(location, baseUrl) {
 }
 
 /**
- * Determine if an Axios response is an HTTP redirect and, if so, resolve and validate its Location target.
- *
- * Resolves a relative or absolute `Location` header against `currentUrl`, validates the resulting URL (including hostname/IP safety),
- * and returns the next URL, hostname, and validated addresses when the response is a redirect; otherwise indicates no redirect should be followed.
+ * Inspect an Axios response for an HTTP redirect and, if present, resolve and validate its Location target.
  *
  * @param {import("axios").AxiosResponse} response - Axios response to inspect for a `Location` header and status code.
  * @param {string} currentUrl - Base URL used to resolve relative `Location` values.
- * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} `{ shouldContinue: true, nextUrl, nextHostname, nextSafeAddresses }` when the response contains a validated redirect target; `{ shouldContinue: false }` otherwise.
+ * @returns {{shouldContinue: boolean, nextUrl?: string, nextHostname?: string, nextSafeAddresses?: Array<{address: string, family: number}>|null}} An object indicating whether a validated redirect should be followed; when a validated redirect is found, includes `nextUrl`, `nextHostname`, and `nextSafeAddresses`.
  * @throws {Error} If the `Location` header cannot be resolved to a valid URL or resolves to an unsafe IP address.
  */
 async function handleRedirectResponse(response, currentUrl) {
