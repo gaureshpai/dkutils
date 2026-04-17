@@ -48,9 +48,7 @@ const requireSecret = (req, res, next) => {
 		return res.status(401).json({ msg: "Invalid or missing cron secret" });
 	}
 
-	try {
-		crypto.timingSafeEqual(secretBuffer, expectedBuffer);
-	} catch {
+	if (!crypto.timingSafeEqual(secretBuffer, expectedBuffer)) {
 		return res.status(401).json({ msg: "Invalid or missing cron secret" });
 	}
 
