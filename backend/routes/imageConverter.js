@@ -148,13 +148,9 @@ router.get("/download", async (req, res) => {
 		];
 
 		const isAllowed = allowedPrefixes.some((prefix) => filename.startsWith(prefix));
-		if (!isAllowed) {
+		if (!isAllowed || filename.includes("..")) {
 			return res.status(403).json({ msg: "Access denied." });
 		}
-
-		const { data, error } = await supabase.storage.from("utilityhub").download(filename);
-
-		if (error) {
 			throw error;
 		}
 
