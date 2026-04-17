@@ -40,8 +40,8 @@ const PrivateRoute = ({ children }) => {
 };
 
 /**
- * Renders the app shell with theme, global layout, routing, and UI containers.
- * @returns {JSX.Element} The root React element containing the ThemeProvider, navbar, route tree, footer, and toast container.
+ * Compose the application's top-level UI with theming, layout, navigation, routes, footer, and global toast container.
+ * @returns {JSX.Element} The root JSX element for the application UI.
  */
 function App() {
 	return (

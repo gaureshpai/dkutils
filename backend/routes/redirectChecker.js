@@ -163,11 +163,11 @@ async function validateUrl(targetUrl) {
 }
 
 /**
- * Resolve a redirect `Location` value against a base URL and validate the resulting absolute URL.
+ * Resolve a redirect `Location` value against a base URL and validate the resolved absolute URL for safe connection pinning.
  * @param {string} location - The redirect `Location` header value; absolute or relative to `baseUrl`.
  * @param {string} baseUrl - Base URL used to resolve relative `location` values.
- * @returns {{url: string, safeAddresses: Array<{address: string, family: number}>|null}} The resolved absolute URL and validated IP addresses to pin connections to, or `null` if no pinning is available.
- * @throws {Error} If the resolved URL's scheme is not `http` or `https`, or if its hostname/IP fails safety checks.
+ * @returns {{url: string, safeAddresses: Array<{address: string, family: number}>}} The resolved absolute URL and the validated IP addresses to pin connections to.
+ * @throws {Error} If the resolved URL's scheme is not `http` or `https`, or if DNS/IP safety validation fails for the resolved hostname.
  */
 async function validateRedirectLocation(location, baseUrl) {
 	let resolvedUrl;
@@ -207,12 +207,15 @@ async function handleRedirectResponse(response, currentUrl) {
 }
 
 /**
- * Create HTTP and HTTPS agents that pin DNS resolution for a specific hostname to a provided set of validated IP addresses.
+ * Create HTTP and HTTPS agents that pin DNS resolution for a specific hostname to a validated set of IP addresses.
  *
- * @param {string} hostname - Hostname whose DNS resolution will be pinned when the request hostname matches.
- * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated `{address, family}` records to use for `hostname`, or `null` to indicate DNS validation was suppressed.
+ * When a request's hostname equals the given `hostname`, the agents' custom lookup will return only the provided `validatedAddresses`
+ * (honoring `family` and `all` options); for other hostnames the lookup delegates to the system DNS.
+ *
+ * @param {string} hostname - Hostname whose resolution will be pinned.
+ * @param {Array<{address: string, family: number}>|null} validatedAddresses - Validated DNS records to use for `hostname`, or `null` to indicate DNS validation was suppressed.
  * @throws {Error} If `validatedAddresses` is `null`.
- * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the custom lookup that returns the pinned address(es) for `hostname`.
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object containing `httpAgent` and `httpsAgent` configured to use the pinned lookup.
  */
 function createPinnedAgents(hostname, validatedAddresses) {
 	if (validatedAddresses === null) {

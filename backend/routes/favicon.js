@@ -10,16 +10,14 @@ const { supabase } = require("@backend/utils/supabaseClient");
 const { isPrivateIP, normalizeIPv4Mapped } = require("@backend/utils/ipValidation");
 
 /**
- * Ensures a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
  * For an IP literal the function validates that single address; for a domain name it resolves A/AAAA records
- * and validates each resolved address. If DNS resolution produced no addresses or was suppressed for certain
- * transient/no-data errors it returns `null`.
+ * and validates each resolved address. Returns `null` only when DNS resolution yields no addresses.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS errors were suppressed.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
- * @see Suppressed DNS error codes that result in `null`: `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, `ENOTIMP`.
  */
 async function checkIPSafety(hostname) {
 	const { isIP } = require("node:net");
