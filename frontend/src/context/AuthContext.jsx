@@ -50,6 +50,8 @@ const AuthProvider = ({ children }) => {
 				// Check if token is expired
 				if (decoded.exp && decoded.exp < currentTime) {
 					localStorage.removeItem("token");
+					setAuthToken(null);
+					dispatch({ type: "SET_INITIALIZED" });
 					return;
 				}
 
@@ -58,8 +60,10 @@ const AuthProvider = ({ children }) => {
 			} catch (error) {
 				// Invalid token, remove it
 				localStorage.removeItem("token");
+				setAuthToken(null);
 			}
 		}
+		dispatch({ type: "SET_INITIALIZED" });
 	}, []);
 
 	return <AuthContext.Provider value={{ state, dispatch }}>{children}</AuthContext.Provider>;

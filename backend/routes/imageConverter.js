@@ -673,7 +673,7 @@ router.post(
 
 				// Validate that the decoded buffer is a valid image
 				const imageType = await import("image-type");
-				const detected = imageType.default(buffer);
+				const detected = await imageType.default(buffer);
 				if (!detected) {
 					return res.status(400).json({ msg: "Invalid image data in base64 string." });
 				}
