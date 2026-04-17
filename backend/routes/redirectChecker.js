@@ -94,11 +94,9 @@ function isMulticast(ip) {
 }
 
 /**
- * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ * Verify that a hostname or IP literal does not resolve to a private, link-local, loopback, or multicast address.
  *
- * For an IP literal the function validates that single address; for a hostname it resolves A/AAAA records
- * and validates each resolved address. Returns `null` when resolution produced no addresses or when DNS
- * resolution was suppressed for certain transient/no-data errors.
+ * For an IP literal the function checks that single address; for a hostname it resolves A/AAAA records and checks each resolved address. Returns `null` when resolution produced no addresses or when DNS resolution was suppressed for certain transient/no-data errors.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
  * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS resolution was suppressed.
