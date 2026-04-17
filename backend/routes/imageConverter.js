@@ -439,12 +439,18 @@ router.post(
 						quality: parsedQuality,
 					});
 				} catch (error) {
-					image ??= await Jimp.read(imageBuffer);
-					compressedBuffer = await image.getBuffer("image/jpeg", {
-						quality: parsedQuality,
-					});
-					extension = "jpg";
-					contentType = "image/jpeg";
+					console.error("Error compressing image in original format:", error.message, error.stack);
+					try {
+						image ??= await Jimp.read(imageBuffer);
+						compressedBuffer = await image.getBuffer("image/jpeg", {
+							quality: parsedQuality,
+						});
+						extension = "jpg";
+						contentType = "image/jpeg";
+					} catch (fallbackError) {
+						console.error("Error during JPEG fallback compression:", fallbackError.message, fallbackError.stack);
+						throw fallbackError;
+					}
 				}
 
 				const outputFileName = `${nameWithoutExt}_dkutils_compressed_${Date.now()}.${extension}`;
@@ -495,11 +501,17 @@ router.post(
 							quality: parsedQuality,
 						});
 					} catch (error) {
-						image ??= await Jimp.read(imageBuffer);
-						compressedBuffer = await image.getBuffer("image/jpeg", {
-							quality: parsedQuality,
-						});
-						extension = "jpg";
+						console.error("Error compressing image in original format:", error.message, error.stack);
+						try {
+							image ??= await Jimp.read(imageBuffer);
+							compressedBuffer = await image.getBuffer("image/jpeg", {
+								quality: parsedQuality,
+							});
+							extension = "jpg";
+						} catch (fallbackError) {
+							console.error("Error during JPEG fallback compression:", fallbackError.message, fallbackError.stack);
+							throw fallbackError;
+						}
 					}
 
 					archive.append(compressedBuffer, {

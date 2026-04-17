@@ -69,16 +69,17 @@ router.post("/shorten", async (req, res) => {
 		return res.status(400).json({ msg: "Please enter a valid URL." });
 	}
 
-	// Normalize originalUrl by prepending http:// if no protocol is present
+	// Normalize originalUrl by prepending https:// if no protocol is present
 	let normalizedUrl = originalUrl;
 	if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
-		normalizedUrl = `http://${originalUrl}`;
+		normalizedUrl = `https://${originalUrl}`;
 	}
 
 	try {
 		await validateUrlHost(normalizedUrl);
 	} catch (err) {
-		return res.status(400).json({ msg: err.message });
+		console.error("URL validation error:", err.message, err.stack);
+		return res.status(400).json({ msg: "Invalid URL" });
 	}
 
 	try {

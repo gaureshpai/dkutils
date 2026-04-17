@@ -115,6 +115,8 @@ const fetchContent = async (url, validatedAddresses) => {
 		const response = await axios.get(url, {
 			timeout: 5000,
 			maxRedirects: 5, // Allow a small number of redirects
+			maxContentLength: 50 * 1024 * 1024, // 50 MB limit
+			maxBodyLength: 50 * 1024 * 1024, // 50 MB limit
 			validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
 			httpAgent: new http.Agent({ lookup: pinnedLookup }),
 			httpsAgent: new https.Agent({
@@ -144,15 +146,20 @@ const fetchContent = async (url, validatedAddresses) => {
  * @returns {Function} Express route handler function
  */
 const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
-	const url = req.query.url || req.body.domain;
+	const rawUrl = req.query.url || req.body.domain;
 
-	if (!url) {
+	if (!rawUrl) {
 		return res.status(400).json({ msg: "URL is required" });
+	}
+
+	// Ensure rawUrl is a string, reject arrays or non-primitive types
+	if (typeof rawUrl !== "string") {
+		return res.status(400).json({ msg: "URL must be a single string value" });
 	}
 
 	try {
 		// Normalize URL by prepending https:// if no scheme is present
-		let normalizedUrl = url.trim();
+		let normalizedUrl = rawUrl.trim();
 		if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
 			normalizedUrl = `https://${normalizedUrl}`;
 		}
