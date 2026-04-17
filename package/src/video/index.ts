@@ -116,12 +116,16 @@ Utils.Platform.load({
 function extractVideoId(url: string): string {
 	const patterns = [
 		/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([^&\n?#]+)/,
-		/^[a-zA-Z0-9_-]{11}$/,
-	];
-	for (const pattern of patterns) {
-		const match = url.match(pattern);
-		if (match) return match[1];
-	}
+		const patterns = [
+			/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([^&\n?#]+)/,
+		];
+		for (const pattern of patterns) {
+			const match = url.match(pattern);
+			if (match) return match[1];
+		}
+		// If it's already a bare 11-character video ID, return it directly
+		if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+		return url;
 	return url;
 }
 
