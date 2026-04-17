@@ -134,6 +134,13 @@ const fetchContent = async (url, validatedAddresses) => {
 				return { content: "", exists: false, error: "too_many_redirects" };
 			}
 		}
+		// Log full error server-side for diagnostics
+		console.error("fetchContent error:", error.message);
+
+		// Map unsafe redirect errors to generic label
+		if (error.message?.startsWith("Rejected unsafe redirect")) {
+			return { content: "", exists: false, error: "redirect_blocked" };
+		}
 		return { content: "", exists: false, error: error.message };
 	}
 };
@@ -212,7 +219,7 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 		console.error(`Error fetching ${label}:`, sanitizedError);
 
 		// Return appropriate error response
-		if (err.message?.includes("Domain validation failed") || err.message?.includes("Invalid")) {
+		if (err.message?.startsWith("Domain validation failed")) {
 			return res.status(400).json({ msg: err.message });
 		}
 		return res.status(500).json({ msg: "Server Error" });

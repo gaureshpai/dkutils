@@ -83,7 +83,13 @@ router.post("/shorten", async (req, res) => {
 	}
 
 	try {
-		let url = await Url.findOne({ originalUrl: normalizedUrl });
+		// Check for existing URL with both normalized and original forms to catch legacy entries
+		let url = await Url.findOne({
+			$or: [
+				{ originalUrl: normalizedUrl },
+				{ originalUrl: originalUrl }
+			]
+		});
 
 		if (url) {
 			return res.json(url);
