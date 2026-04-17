@@ -57,7 +57,17 @@ const fetchContent = async (url, validatedAddresses) => {
 		 */
 		const pinnedLookup = (hostname, options, callback) => {
 			if (hostname !== parsedUrl.hostname) {
-				return dns.lookup(hostname, options, callback);
+				// Validate the redirect target before resolving
+				dns.lookup(hostname, { all: true }, (err, addrs) => {
+					if (err) return callback(err);
+					for (const { address } of addrs) {
+						if (isPrivateIP(address)) {
+							return callback(new Error(`Rejected unsafe redirect to ${address}`));
+						}
+					}
+					return dns.lookup(hostname, options, callback);
+				});
+				return;
 			}
 
 			// Handle options.all === true case
@@ -147,7 +157,11 @@ router.get("/robots-txt", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "robots.txt not found", error: result.error || "robots.txt not found", exists: false });
+		return res.status(404).json({
+			msg: result.error || "robots.txt not found",
+			error: result.error || "robots.txt not found",
+			exists: false,
+		});
 	} catch (err) {
 		console.error("Error fetching robots.txt:", err);
 		return res.status(500).json({ msg: "Server Error" });
@@ -191,7 +205,11 @@ router.post("/robots-txt", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "robots.txt not found", error: result.error || "robots.txt not found", exists: false });
+		return res.status(404).json({
+			msg: result.error || "robots.txt not found",
+			error: result.error || "robots.txt not found",
+			exists: false,
+		});
 	} catch (err) {
 		console.error("Error fetching robots.txt:", err);
 		return res.status(500).json({ msg: "Server Error" });
@@ -235,7 +253,11 @@ router.get("/sitemap-xml", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "sitemap.xml not found", error: result.error || "sitemap.xml not found", exists: false });
+		return res.status(404).json({
+			msg: result.error || "sitemap.xml not found",
+			error: result.error || "sitemap.xml not found",
+			exists: false,
+		});
 	} catch (err) {
 		console.error("Error fetching sitemap.xml:", err);
 		return res.status(500).json({ msg: "Server Error" });
@@ -279,7 +301,11 @@ router.post("/sitemap-xml", async (req, res) => {
 			});
 		}
 
-		return res.status(404).json({ msg: result.error || "sitemap.xml not found", error: result.error || "sitemap.xml not found", exists: false });
+		return res.status(404).json({
+			msg: result.error || "sitemap.xml not found",
+			error: result.error || "sitemap.xml not found",
+			exists: false,
+		});
 	} catch (err) {
 		console.error("Error fetching sitemap.xml:", err);
 		return res.status(500).json({ msg: "Server Error" });

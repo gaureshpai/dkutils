@@ -44,7 +44,6 @@ const PrivateRoute = ({ children }) => {
  * @returns {JSX.Element} The root React element containing the ThemeProvider, navbar, route tree, footer, and toast container.
  */
 function App() {
-
 	return (
 		<ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
 			<div className="bg-background min-h-screen flex flex-col font-sans antialiased text-foreground">
