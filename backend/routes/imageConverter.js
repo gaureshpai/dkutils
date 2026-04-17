@@ -138,7 +138,6 @@ router.get("/download", async (req, res) => {
 		}
 
 		const baseName = path.basename(filename);
-		const baseName = path.basename(filename);
 		const allowedPrefixes = [
 			"dkutils_",
 			"dkutils-",
