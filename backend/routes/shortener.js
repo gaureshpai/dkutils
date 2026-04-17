@@ -51,6 +51,14 @@ router.post("/shorten", async (req, res) => {
 		baseUrl = `https://${baseUrl}`;
 	}
 
+	// Length guard to prevent ReDoS attacks
+	const MAX_URL_LENGTH = 2083; // Common browser URL length limit
+	if (!originalUrl || originalUrl.length > MAX_URL_LENGTH) {
+		return res.status(400).json({
+			msg: `URL length must not exceed ${MAX_URL_LENGTH} characters.`,
+		});
+	}
+
 	const urlRegex =
 		/^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|[a-zA-Z0-9]+\.[^\s]{2,})$/;
 
@@ -112,6 +120,13 @@ router.get("/l/:code", async (req, res) => {
 		const url = await Url.findOne({ urlCode: req.params.code });
 
 		if (url) {
+			// Re-validate the target URL before redirecting to prevent DNS-rebinding TOCTOU attacks
+			try {
+				await validateUrlHost(url.originalUrl);
+			} catch (validationErr) {
+				console.error("Redirect blocked due to validation failure:", validationErr.message);
+				return res.status(400).json({ msg: "Redirect blocked: URL validation failed" });
+			}
 			return res.redirect(url.originalUrl);
 		}
 		return res.status(404).json("No url found");

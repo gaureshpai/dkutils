@@ -428,9 +428,6 @@ router.post("/", async (req, res) => {
 		let errorMessage = "Failed to check redirects.";
 		if (err.response) {
 			errorMessage = `Request failed with status code ${err.response.status}.`;
-			if (err.response.headers.location) {
-				errorMessage += ` Redirected to: ${err.response.headers.location}`;
-			}
 		} else if (err.request) {
 			errorMessage = "No response received from the server.";
 		} else {

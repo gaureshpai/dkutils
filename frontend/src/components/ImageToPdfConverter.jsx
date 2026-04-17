@@ -107,7 +107,6 @@ const ImageToPdfConverter = () => {
 			// Only apply results if this is still the current conversion
 			if (myId === conversionIdRef.current) {
 				setConvertedFile(res.data);
-				handleDownload(res.data.path, res.data.originalname);
 				toast.success("Images converted to PDF successfully!");
 				trackToolUsage("ImageToPdfConverter", "image");
 			}

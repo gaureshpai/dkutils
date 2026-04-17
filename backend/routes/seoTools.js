@@ -57,7 +57,7 @@ const fetchContent = async (url, validatedAddresses) => {
 		 */
 		const pinnedLookup = (hostname, options, callback) => {
 			if (hostname !== parsedUrl.hostname) {
-				// Validate the redirect target before resolving
+				// Validate the redirect target before resolving - use a single lookup to prevent TOCTOU
 				dns.lookup(hostname, { all: true }, (err, addrs) => {
 					if (err) return callback(err);
 					for (const { address } of addrs) {
@@ -65,7 +65,23 @@ const fetchContent = async (url, validatedAddresses) => {
 							return callback(new Error(`Rejected unsafe redirect to ${address}`));
 						}
 					}
-					return dns.lookup(hostname, options, callback);
+					// All addresses validated - now return the appropriate result from the already-validated records
+					const family = typeof options === "number" ? options : options?.family;
+					const returnAll = typeof options === "object" && options?.all === true;
+
+					if (returnAll) {
+						const filtered = family ? addrs.filter((entry) => entry.family === family) : addrs;
+						if (filtered.length === 0) {
+							return callback(new Error("No validated DNS records available"));
+						}
+						return callback(null, filtered);
+					}
+
+					const candidate = addrs.find((entry) => !family || entry.family === family) ?? addrs[0];
+					if (!candidate) {
+						return callback(new Error("No validated DNS records available"));
+					}
+					return callback(null, candidate.address, candidate.family);
 				});
 				return;
 			}
@@ -120,10 +136,14 @@ const fetchContent = async (url, validatedAddresses) => {
 	}
 };
 
-// @route   GET /api/seo/robots-txt
-// @desc    Fetch and validate robots.txt from a domain
-// @access  Public
-router.get("/robots-txt", async (req, res) => {
+/**
+ * Factory function to create SEO fetch handlers for robots.txt and sitemap.xml.
+ * Normalizes incoming URLs, validates domains, and fetches content.
+ * @param {string} pathSuffix - The path to append to the base URL (e.g., "/robots.txt", "/sitemap.xml")
+ * @param {string} label - Human-readable label for the resource (e.g., "robots.txt", "sitemap.xml")
+ * @returns {Function} Express route handler function
+ */
+const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 	const url = req.query.url || req.body.domain;
 
 	if (!url) {
@@ -131,21 +151,34 @@ router.get("/robots-txt", async (req, res) => {
 	}
 
 	try {
-		const robotsUrl = new URL("/robots.txt", url);
+		// Normalize URL by prepending https:// if no scheme is present
+		let normalizedUrl = url.trim();
+		if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+			normalizedUrl = `https://${normalizedUrl}`;
+		}
 
+		// Attempt to construct the target URL
+		let targetUrl;
+		try {
+			targetUrl = new URL(pathSuffix, normalizedUrl);
+		} catch (parseError) {
+			return res.status(400).json({ msg: `Invalid URL format: ${parseError.message}` });
+		}
+
+		// Validate the domain
 		let validatedAddresses;
 		try {
-			const validation = await validateDomain(robotsUrl.hostname);
-			validatedAddresses = validation;
+			validatedAddresses = await validateDomain(targetUrl.hostname);
 		} catch (validationError) {
 			return res.status(400).json({ msg: validationError.message });
 		}
 
-		let result = await fetchContent(robotsUrl.href, validatedAddresses);
+		// Fetch content
+		let result = await fetchContent(targetUrl.href, validatedAddresses);
 
+		// If HTTPS fails, try HTTP
 		if (!result.exists) {
-			// Try HTTP if HTTPS fails
-			const httpUrl = robotsUrl.href.replace(/^https:/, "http:");
+			const httpUrl = targetUrl.href.replace(/^https:/, "http:");
 			result = await fetchContent(httpUrl, validatedAddresses);
 		}
 
@@ -153,163 +186,50 @@ router.get("/robots-txt", async (req, res) => {
 			return res.json({
 				exists: true,
 				content: result.content,
-				url: robotsUrl.href,
+				url: targetUrl.href,
 			});
 		}
 
 		return res.status(404).json({
-			msg: result.error || "robots.txt not found",
-			error: result.error || "robots.txt not found",
+			msg: result.error || `${label} not found`,
+			error: result.error || `${label} not found`,
 			exists: false,
 		});
 	} catch (err) {
-		console.error("Error fetching robots.txt:", err);
+		// Sanitized error logging
+		const sanitizedError = {
+			message: err.message,
+			code: err.code,
+			status: err.response?.status,
+		};
+		console.error(`Error fetching ${label}:`, sanitizedError);
+
+		// Return appropriate error response
+		if (err.message?.includes("Domain validation failed") || err.message?.includes("Invalid")) {
+			return res.status(400).json({ msg: err.message });
+		}
 		return res.status(500).json({ msg: "Server Error" });
 	}
-});
+};
+
+// @route   GET /api/seo/robots-txt
+// @desc    Fetch and validate robots.txt from a domain
+// @access  Public
+router.get("/robots-txt", handleSeoFetch("/robots.txt", "robots.txt"));
 
 // @route   POST /api/seo/robots-txt
 // @desc    Fetch and validate robots.txt from a domain (backward compatibility)
 // @access  Public
-router.post("/robots-txt", async (req, res) => {
-	const url = req.query.url || req.body.domain;
-
-	if (!url) {
-		return res.status(400).json({ msg: "URL is required" });
-	}
-
-	try {
-		const robotsUrl = new URL("/robots.txt", url);
-
-		let validatedAddresses;
-		try {
-			const validation = await validateDomain(robotsUrl.hostname);
-			validatedAddresses = validation;
-		} catch (validationError) {
-			return res.status(400).json({ msg: validationError.message });
-		}
-
-		let result = await fetchContent(robotsUrl.href, validatedAddresses);
-
-		if (!result.exists) {
-			// Try HTTP if HTTPS fails
-			const httpUrl = robotsUrl.href.replace(/^https:/, "http:");
-			result = await fetchContent(httpUrl, validatedAddresses);
-		}
-
-		if (result.exists) {
-			return res.json({
-				exists: true,
-				content: result.content,
-				url: robotsUrl.href,
-			});
-		}
-
-		return res.status(404).json({
-			msg: result.error || "robots.txt not found",
-			error: result.error || "robots.txt not found",
-			exists: false,
-		});
-	} catch (err) {
-		console.error("Error fetching robots.txt:", err);
-		return res.status(500).json({ msg: "Server Error" });
-	}
-});
+router.post("/robots-txt", handleSeoFetch("/robots.txt", "robots.txt"));
 
 // @route   GET /api/seo/sitemap-xml
 // @desc    Fetch and validate sitemap.xml from a domain
 // @access  Public
-router.get("/sitemap-xml", async (req, res) => {
-	const url = req.query.url || req.body.domain;
-
-	if (!url) {
-		return res.status(400).json({ msg: "URL is required" });
-	}
-
-	try {
-		const sitemapUrl = new URL("/sitemap.xml", url);
-
-		let validatedAddresses;
-		try {
-			const validation = await validateDomain(sitemapUrl.hostname);
-			validatedAddresses = validation;
-		} catch (validationError) {
-			return res.status(400).json({ msg: validationError.message });
-		}
-
-		let result = await fetchContent(sitemapUrl.href, validatedAddresses);
-
-		if (!result.exists) {
-			// Try HTTP if HTTPS fails
-			const httpUrl = sitemapUrl.href.replace(/^https:/, "http:");
-			result = await fetchContent(httpUrl, validatedAddresses);
-		}
-
-		if (result.exists) {
-			return res.json({
-				exists: true,
-				content: result.content,
-				url: sitemapUrl.href,
-			});
-		}
-
-		return res.status(404).json({
-			msg: result.error || "sitemap.xml not found",
-			error: result.error || "sitemap.xml not found",
-			exists: false,
-		});
-	} catch (err) {
-		console.error("Error fetching sitemap.xml:", err);
-		return res.status(500).json({ msg: "Server Error" });
-	}
-});
+router.get("/sitemap-xml", handleSeoFetch("/sitemap.xml", "sitemap.xml"));
 
 // @route   POST /api/seo/sitemap-xml
 // @desc    Fetch and validate sitemap.xml from a domain (backward compatibility)
 // @access  Public
-router.post("/sitemap-xml", async (req, res) => {
-	const url = req.query.url || req.body.domain;
-
-	if (!url) {
-		return res.status(400).json({ msg: "URL is required" });
-	}
-
-	try {
-		const sitemapUrl = new URL("/sitemap.xml", url);
-
-		let validatedAddresses;
-		try {
-			const validation = await validateDomain(sitemapUrl.hostname);
-			validatedAddresses = validation;
-		} catch (validationError) {
-			return res.status(400).json({ msg: validationError.message });
-		}
-
-		let result = await fetchContent(sitemapUrl.href, validatedAddresses);
-
-		if (!result.exists) {
-			// Try HTTP if HTTPS fails
-			const httpUrl = sitemapUrl.href.replace(/^https:/, "http:");
-			result = await fetchContent(httpUrl, validatedAddresses);
-		}
-
-		if (result.exists) {
-			return res.json({
-				exists: true,
-				content: result.content,
-				url: sitemapUrl.href,
-			});
-		}
-
-		return res.status(404).json({
-			msg: result.error || "sitemap.xml not found",
-			error: result.error || "sitemap.xml not found",
-			exists: false,
-		});
-	} catch (err) {
-		console.error("Error fetching sitemap.xml:", err);
-		return res.status(500).json({ msg: "Server Error" });
-	}
-});
+router.post("/sitemap-xml", handleSeoFetch("/sitemap.xml", "sitemap.xml"));
 
 module.exports = router;

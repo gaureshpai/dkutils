@@ -62,8 +62,7 @@ const requireSecret = (req, res, next) => {
  * @async
  * @param {Request} req - Express request object.
  * @param {Response} res - Express response object.
- * @returns {Promise<void>} - Resolves with no value when the Supabase cleanup is triggered successfully, or rejects with an error when the Supabase cleanup fails.
- * @throws {Error} - When the Supabase cleanup fails.
+ * @returns {Promise<void>} - Resolves after sending a 200 response on successful cleanup or a 500 response if cleanSupabaseStorage() throws an error. Handles errors internally.
  */
 const runCleanup = async (req, res) => {
 	try {
