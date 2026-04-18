@@ -82,13 +82,22 @@ router.post(
 					.filter((p) => p.trim().length > 0);
 			};
 
-			extractedText = splitTextIntoSentences(extractedText).join("\n");
+			const data = await pdf(file.buffer);
+			const extractedText = data.text;
+
+			if (!extractedText || extractedText.trim().length === 0) {
+				return res
+					.status(200)
+					.json({ msg: "No text could be extracted. The PDF might contain only images." });
+			}
+
+			const processedText = splitTextIntoSentences(extractedText).join("\n");
 
 			const doc = new Document({
 				sections: [
 					{
 						properties: {},
-						children: extractedText.split("\n").map(
+						children: processedText.split("\n").map(
 							(line) =>
 								new Paragraph({
 									children: [new TextRun(line)],
@@ -142,6 +151,15 @@ router.post(
 			// Validate file is a PDF
 			if (file.mimetype !== "application/pdf") {
 				return res.status(400).json({ msg: "Uploaded file must be a PDF." });
+			}
+
+			const data = await pdf(file.buffer);
+			const extractedText = data.text;
+
+			if (!extractedText || extractedText.trim().length === 0) {
+				return res
+					.status(200)
+					.json({ msg: "No text could be extracted. The PDF might contain only images." });
 			}
 
 			// Split text into lines and create proper Excel structure

@@ -145,6 +145,9 @@ router.get("/download", async (req, res) => {
 			"screenshots/screenshot-",
 			"screenshots/screenshot_dkutils_",
 			"favicons/",
+			"keep-alive/",
+			"decoded_dkutils_",
+			"merged_dkutils_",
 		];
 
 		const isAllowed = allowedPrefixes.some((prefix) => filename.startsWith(prefix));
@@ -447,7 +450,11 @@ router.post(
 						extension = "jpg";
 						contentType = "image/jpeg";
 					} catch (fallbackError) {
-						console.error("Error during JPEG fallback compression:", fallbackError.message, fallbackError.stack);
+						console.error(
+							"Error during JPEG fallback compression:",
+							fallbackError.message,
+							fallbackError.stack,
+						);
 						throw fallbackError;
 					}
 				}
@@ -500,7 +507,11 @@ router.post(
 							quality: parsedQuality,
 						});
 					} catch (error) {
-						console.error("Error compressing image in original format:", error.message, error.stack);
+						console.error(
+							"Error compressing image in original format:",
+							error.message,
+							error.stack,
+						);
 						try {
 							image ??= await Jimp.read(imageBuffer);
 							compressedBuffer = await image.getBuffer("image/jpeg", {
@@ -508,7 +519,11 @@ router.post(
 							});
 							extension = "jpg";
 						} catch (fallbackError) {
-							console.error("Error during JPEG fallback compression:", fallbackError.message, fallbackError.stack);
+							console.error(
+								"Error during JPEG fallback compression:",
+								fallbackError.message,
+								fallbackError.stack,
+							);
 							throw fallbackError;
 						}
 					}

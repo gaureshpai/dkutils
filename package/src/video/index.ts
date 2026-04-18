@@ -504,10 +504,16 @@ async function downloadWithYoutubei(videoId: string, outputDir: string): Promise
 		while (true) {
 			const { done, value } = await reader.read();
 			if (done) break;
-			writer.write(value);
+			if (!writer.write(value)) {
+				await new Promise<void>((resolve) => writer.once("drain", () => resolve()));
+			}
 		}
 	} finally {
 		writer.end();
+		await new Promise<void>((resolve, reject) => {
+			writer.on("finish", () => resolve());
+			writer.on("error", reject);
+		});
 	}
 
 	if (!(await validateFile(outputPath))) {
