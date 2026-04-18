@@ -6,11 +6,9 @@ const { isPrivateIP } = require("@backend/utils/ipValidation");
 const { isIP } = require("node:net");
 
 /**
- * Validates that the hostname of an absolute URL does not resolve to a private or reserved IP address.
+ * Ensure the hostname of an absolute URL does not resolve to a private or reserved IP address.
  *
- * If the hostname is an IP literal, the IP is checked directly; if it is private or reserved an Error is thrown.
- * Otherwise DNS is resolved and each returned address is checked; if any resolved address is private or reserved an Error is thrown.
- * DNS resolution errors from the underlying lookup are not caught and will propagate to the caller.
+ * If the hostname is an IP literal it is checked directly; otherwise the hostname is DNS-resolved and each returned address is checked.
  *
  * @param {string} url - Absolute URL whose hostname will be checked.
  * @returns {Array<{address: string, family?: number}>|null} An array of resolved address records when one or more addresses are returned; `null` if DNS lookup returned no addresses.

@@ -70,15 +70,11 @@ async function validateUrl(url) {
 }
 
 /**
- * Create HTTP and HTTPS agents that pin DNS resolution for a specific hostname to a set of validated IP addresses.
+ * Create HTTP and HTTPS agents that pin DNS lookups for a hostname to a given set of validated IP addresses.
  *
- * When `validatedAddresses` is provided and the requested hostname equals `hostname`, the agents resolve that hostname
- * only to the supplied `{ address, family }` entries. For other hostnames (or when `validatedAddresses` is falsy),
- * the agents delegate resolution to the system DNS lookup.
- *
- * @param {string} hostname - The target hostname whose DNS resolution should be pinned.
- * @param {Array<{address: string, family: number}>} validatedAddresses - Validated DNS answers to be returned for the target hostname.
- * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object containing HTTP and HTTPS agents configured to use the pinned lookup.
+ * @param {string} hostname - The hostname whose DNS resolution will be pinned.
+ * @param {Array<{address: string, family: number}>} validatedAddresses - Validated DNS answers to return for the target hostname; when provided, lookups for `hostname` will return only these `{ address, family }` records (optionally filtered by requested family or `all`).
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the pinned lookup for the specified hostname.
  */
 function createPinnedAgents(hostname, validatedAddresses) {
 	const lookupFunction = (requestHostname, options, callback) => {

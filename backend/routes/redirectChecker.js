@@ -54,10 +54,9 @@ function isLinkLocal(ip) {
 }
 
 /**
- * Checks whether an IP address is a loopback address.
+ * Determine whether an IP address is a loopback address.
  *
- * Normalizes IPv4-mapped IPv6 addresses to IPv4 form before checking.
- * Considers IPv4 loopback as 127.0.0.0/8 and IPv6 loopback as ::1.
+ * Normalizes IPv4-mapped IPv6 literals to IPv4 before checking. For IPv4, treats any address in 127.0.0.0/8 as loopback; for IPv6, treats only `::1` as loopback.
  * @param {string} ip - The IP address to check.
  * @returns {boolean} `true` if the address is a loopback address, `false` otherwise.
  */
@@ -94,7 +93,7 @@ function isMulticast(ip) {
 }
 
 /**
- * Verify that a hostname or IP literal does not resolve to a private, link-local, loopback, or multicast address.
+ * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
  * For an IP literal the function checks that single address; for a hostname it resolves A/AAAA records and checks each resolved address. Returns `null` when resolution produced no addresses or when DNS resolution was suppressed for certain transient/no-data errors.
  *
