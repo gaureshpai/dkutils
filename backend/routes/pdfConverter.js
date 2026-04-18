@@ -218,7 +218,7 @@ router.post(
 
 			const sanitizedName = sanitizeFilename(file.originalname);
 			const nameWithoutExt = path.parse(sanitizedName).name;
-			const outputFileName = `${nameWithoutExt}_dkutils_rotated_${Date.now()}.pdf`;
+			const outputFileName = `dkutils_${nameWithoutExt}_rotated_${Date.now()}.pdf`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
 				.upload(outputFileName, Buffer.from(modifiedPdfBytes), {
