@@ -144,7 +144,7 @@ router.get("/l/:code", async (req, res) => {
 			}
 			return res.redirect(normalizedUrl);
 		}
-		return res.status(404).json("No url found");
+		return res.status(404).json({ msg: "No url found" });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json({ msg: "Server error during URL redirection." });

@@ -324,7 +324,7 @@ router.post("/", async (req, res) => {
 							httpsAgent: agents.httpsAgent,
 						});
 					} catch (getErr) {
-						return res.status(500).json({ msg: `GET request failed: ${getErr.message}` });
+						throw getErr;
 					}
 				}
 
@@ -384,31 +384,39 @@ router.post("/", async (req, res) => {
 
 		// Final fetch if we haven't recorded this URL yet
 		if (redirectChain.length === 0 || redirectChain[redirectChain.length - 1].url !== currentUrl) {
-			const agents = createPinnedAgents(currentHostname, currentSafeAddresses);
-			const finalResponse = await axios.get(currentUrl, {
-				timeout: TIMEOUT_MS,
-				maxContentLength: 1024 * 1024,
-				maxRedirects: 0,
-				validateStatus: () => true, // Accept all HTTP statuses
-				httpAgent: agents.httpAgent,
-				httpsAgent: agents.httpsAgent,
-			});
-
-			redirectChain.push({
-				url: currentUrl,
-				status: finalResponse.status,
-			});
-
 			try {
-				const redirect = await handleRedirectResponse(finalResponse, currentUrl);
-				if (redirect.shouldContinue) {
-					redirectChain.push({
-						url: redirect.nextUrl,
-						status: "pending",
-					});
+				const agents = createPinnedAgents(currentHostname, currentSafeAddresses);
+				const finalResponse = await axios.get(currentUrl, {
+					timeout: TIMEOUT_MS,
+					maxContentLength: 1024 * 1024,
+					maxRedirects: 0,
+					validateStatus: () => true, // Accept all HTTP statuses
+					httpAgent: agents.httpAgent,
+					httpsAgent: agents.httpsAgent,
+				});
+
+				redirectChain.push({
+					url: currentUrl,
+					status: finalResponse.status,
+				});
+
+				try {
+					const redirect = await handleRedirectResponse(finalResponse, currentUrl);
+					if (redirect.shouldContinue) {
+						redirectChain.push({
+							url: redirect.nextUrl,
+							status: "pending",
+						});
+					}
+				} catch (err) {
+					return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
 				}
 			} catch (err) {
-				return res.status(400).json({ msg: `Redirect blocked: ${err.message}` });
+				redirectChain.push({
+					url: currentUrl,
+					status: "error",
+					message: err.message,
+				});
 			}
 		}
 
