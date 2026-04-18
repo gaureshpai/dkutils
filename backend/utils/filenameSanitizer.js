@@ -23,7 +23,8 @@ const sanitizeFilename = (filename, fallback = `file_${Date.now()}`) => {
 	sanitized = sanitized.replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
 	// 4. Prevent directory traversal by removing ".."
-	sanitized = sanitized.replace(/\.\./g, ".");
+	// 4. Prevent directory traversal by collapsing consecutive dots into a single underscore.
+	sanitized = sanitized.replace(/\.{2,}/g, "_");
 
 	// 6. Collapse multiple underscores or dashes
 	sanitized = sanitized.replace(/[_-]{2,}/g, "_");
