@@ -315,7 +315,7 @@ router.post(
 			// Compress PDF
 			const sanitizedName = sanitizeFilename(file.originalname);
 			const nameWithoutExt = path.parse(sanitizedName).name;
-			const outputFileName = `${nameWithoutExt}_dkutils_compressed_${Date.now()}.pdf`;
+			const outputFileName = `dkutils_${nameWithoutExt}_compressed_${Date.now()}.pdf`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
 				.upload(outputFileName, Buffer.from(compressedPdfBytes), {
