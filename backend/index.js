@@ -1,47 +1,44 @@
+require("module-alias/register");
 require("dotenv").config();
 
 const mongoose = require("mongoose");
 const { createClient } = require("@supabase/supabase-js");
+const { migrateTotalUsageKey } = require("@backend/scripts/migrateTotalUsageKey");
 
 if (!process.env.SUPABASE_URL) {
-  console.error("Error: SUPABASE_URL environment variable is not set.");
-  process.exit(1);
+	console.error("Error: SUPABASE_URL environment variable is not set.");
+	process.exit(1);
 }
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error(
-    "Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set.",
-  );
-  process.exit(1);
+	console.error("Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set.");
+	process.exit(1);
 }
 if (!process.env.MONGO_URI) {
-  console.error("Error: MONGO_URI environment variable is not set.");
-  process.exit(1);
+	console.error("Error: MONGO_URI environment variable is not set.");
+	process.exit(1);
+}
+if (!process.env.SUPABASE_CLEANUP_CRON_SECRET) {
+	console.error("Error: SUPABASE_CLEANUP_CRON_SECRET environment variable is not set.");
+	process.exit(1);
 }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+/**
+ * Tests the connection to Supabase Storage by attempting to get the specified bucket.
+ * Logs a success message if the bucket is found, or an error message if the connection fails.
+ * @throws {Error} If the connection fails
+ */
 const testSupabaseConnection = async () => {
-  try {
-    const { data: bucket, error: getBucketError } =
-      await supabase.storage.getBucket("utilityhub");
-    if (getBucketError) throw getBucketError;
-    console.log(`Supabase Storage connected!\nBucket '${bucket.name}' found.`);
-  } catch (error) {
-    console.error("Supabase Storage connection failed:", error.message);
-  }
+	try {
+		const { data: bucket, error: getBucketError } = await supabase.storage.getBucket("utilityhub");
+		if (getBucketError) throw getBucketError;
+		console.log(`Supabase Storage connected!\nBucket '${bucket.name}' found.`);
+	} catch (error) {
+		console.error("Supabase Storage connection failed:", error.message);
+		throw error;
+	}
 };
-
-mongoose.connect(process.env.MONGO_URI);
-
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => {
-  console.log("MongoDB connected!");
-  testSupabaseConnection();
-});
 
 const express = require("express");
 const cors = require("cors");
@@ -53,92 +50,123 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-const apiActivityTracker = require("./middleware/apiActivityTracker");
-const authMiddleware = require("./middleware/auth");
-const uploadLimiter = require("./middleware/uploadLimiter");
+const apiActivityTracker = require("@backend/middleware/apiActivityTracker");
+const authMiddleware = require("@backend/middleware/auth");
+const uploadLimiter = require("@backend/middleware/uploadLimiter");
 
 app.use(apiActivityTracker);
 
-const shortener = require("./routes/shortener");
+const shortener = require("@backend/routes/shortener");
 
 app.use(shortener);
 
-const imageConverter = require("./routes/imageConverter");
+const imageConverter = require("@backend/routes/imageConverter");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, imageConverter);
 
-const pdfConverter = require("./routes/pdfConverter");
+const pdfConverter = require("@backend/routes/pdfConverter");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, pdfConverter);
 
-const textToPdf = require("./routes/textToPdf");
+const textToPdf = require("@backend/routes/textToPdf");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, textToPdf);
 
-const officeConverter = require("./routes/officeConverter");
+const officeConverter = require("@backend/routes/officeConverter");
 
 app.use("/api/convert", authMiddleware, uploadLimiter, officeConverter);
 
-const textConverter = require("./routes/textConverter");
+const textConverter = require("@backend/routes/textConverter");
 
 app.use("/api/convert", textConverter);
 
-const auth = require("./routes/auth");
+const auth = require("@backend/routes/auth");
 
 app.use("/api/auth", auth);
 
-const keepAlive = require("./routes/keepAlive");
+const keepAlive = require("@backend/routes/keepAlive");
 
 app.use("/api/keep-alive", authMiddleware, keepAlive);
 
-const cleanSupabase = require("./routes/cleanSupabase");
+const cleanSupabase = require("@backend/routes/cleanSupabase");
 
-app.use("/api/clean-supabase", authMiddleware, cleanSupabase);
+app.use("/api/clean-supabase", cleanSupabase);
 
-const screenshot = require("./routes/screenshot");
+const screenshot = require("@backend/routes/screenshot");
 
 app.use("/api/screenshot", authMiddleware, uploadLimiter, screenshot);
 
-const favicon = require("./routes/favicon");
+const favicon = require("@backend/routes/favicon");
 
 app.use("/api/favicon", authMiddleware, uploadLimiter, favicon);
 
-const redirectChecker = require("./routes/redirectChecker");
+const redirectChecker = require("@backend/routes/redirectChecker");
 
 app.use("/api/redirect-checker", redirectChecker);
 
-const jsonXmlConverter = require("./routes/jsonXmlConverter");
+const jsonXmlConverter = require("@backend/routes/jsonXmlConverter");
 
 app.use("/api/convert", jsonXmlConverter);
 
-const seoTools = require("./routes/seoTools");
+const seoTools = require("@backend/routes/seoTools");
 
 app.use("/api/seo", seoTools);
 
-const analytics = require("./routes/analytics");
+const analytics = require("@backend/routes/analytics");
 
 app.use("/api/analytics", analytics);
 
-const passwordStrength = require("./routes/passwordStrength");
+const passwordStrength = require("@backend/routes/passwordStrength");
 
 app.use("/api/password-strength", passwordStrength);
 
 app.get("/", (req, res) => {
-  res.send("Hello from dkutils Backend!");
+	res.send("Hello from dkutils Backend!");
 });
 
 app.get("/health", (req, res) => {
-  res.status(200).send("Backend is healthy!");
+	res.status(200).send("Backend is healthy!");
 });
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({
-    msg: err.message || "Server error",
-  });
+	// Sanitize error logging - don't dump the full error object
+	const logObj = {
+		message: err.message,
+		status: err.status || 500,
+		method: req.method,
+		path: req.path,
+	};
+
+	// Only include stack in non-production
+	if (process.env.NODE_ENV !== "production") {
+		logObj.stack = err.stack;
+	}
+
+	console.error("Error:", logObj);
+	res.status(err.status || 500).json({
+		msg: err.message || "Server error",
+	});
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});
+/**
+ * Starts the Express.js server and connects to MongoDB and Supabase.
+ * @throws {Error} If there is an error connecting to MongoDB or Supabase.
+ */
+const startServer = async () => {
+	try {
+		await mongoose.connect(process.env.MONGO_URI);
+		console.log("MongoDB connected!");
+		await migrateTotalUsageKey();
+		await testSupabaseConnection();
+
+		app.listen(port, () => {
+			console.log(`Server is running on port: ${port}`);
+		});
+	} catch (error) {
+		console.error("Failed to start backend:", error);
+		process.exit(1);
+	}
+};
+
+startServer();

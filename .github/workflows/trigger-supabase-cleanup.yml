@@ -15,10 +15,17 @@ jobs:
         env:
           # The base URL of your deployed backend on Vercel
           VERCEL_BACKEND_URL: ${{ secrets.VERCEL_BACKEND_URL }}
+          CLEANUP_CRON_SECRET: ${{ secrets.SUPABASE_CLEANUP_CRON_SECRET }}
         run: |
           if [ -z "$VERCEL_BACKEND_URL" ]; then
             echo "Error: VERCEL_BACKEND_URL secret is not set."
             exit 1
           fi
+          if [ -z "$CLEANUP_CRON_SECRET" ]; then
+            echo "Error: SUPABASE_CLEANUP_CRON_SECRET secret is not set."
+            exit 1
+          fi
           echo "Triggering Supabase cleanup at $VERCEL_BACKEND_URL/api/clean-supabase/trigger"
-          curl -X GET "$VERCEL_BACKEND_URL/api/clean-supabase/trigger"
+          curl --fail --show-error --silent -X POST \
+            "$VERCEL_BACKEND_URL/api/clean-supabase/trigger" \
+            -H "x-cron-secret: $CLEANUP_CRON_SECRET"

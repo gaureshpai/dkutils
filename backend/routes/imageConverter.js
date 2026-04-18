@@ -1,951 +1,869 @@
 const PDFDocument = require("pdfkit");
 const router = require("express").Router();
 const archiver = require("archiver");
-const sharp = require("sharp");
-const path = require("path");
-const os = require("os");
-const fsp = require("fs").promises;
-const { supabase } = require("../utils/supabaseClient");
+const { createJimp, defaultFormats, defaultPlugins } = require("jimp");
+const webp = require("@jimp/wasm-webp");
+const avif = require("@jimp/wasm-avif");
+const path = require("node:path");
+const os = require("node:os");
+const fsp = require("node:fs").promises;
+const { supabase } = require("@backend/utils/supabaseClient");
+const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
+
+// Create a custom Jimp instance with WASM plugins
+const Jimp = createJimp({
+	formats: [...defaultFormats, webp, avif],
+	plugins: defaultPlugins,
+});
+
+/**
+ * Remove control characters from a string.
+ *
+ * Control characters are characters with a code point <= 31 or equal to 127.
+ * @param {string} value - The string to strip control characters from.
+ * @returns {string} The string with all control characters removed.
+ */
+const stripControlCharacters = (value) =>
+	Array.from(value)
+		.filter((char) => {
+			const code = char.charCodeAt(0);
+			return code > 31 && code !== 127;
+		})
+		.join("");
 
 // @route   POST /api/convert/png-to-jpg
 // @desc    Convert PNG images to JPG
 // @access  Public
 router.post(
-  "/png-to-jpg",
-  (req, res, next) => req.upload.array("images")(req, res, next),
-  async (req, res) => {
-    try {
-      const { files } = req;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ msg: "No image files uploaded." });
-      }
+	"/png-to-jpg",
+	(req, res, next) => req.upload.array("images")(req, res, next),
+	async (req, res) => {
+		try {
+			const { files } = req;
+			if (!files || files.length === 0) {
+				return res.status(400).json({ msg: "No image files uploaded." });
+			}
 
-      if (files.length === 1) {
-        const file = files[0];
-        const imageBuffer = file.buffer;
-        const { originalname } = file;
-        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
-        const jpgBuffer = await sharp(imageBuffer).jpeg().toBuffer();
-        const outputFileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.jpg`;
+			if (files.length === 1) {
+				const file = files[0];
+				const imageBuffer = file.buffer;
+				const { originalname } = file;
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(outputFileName, jpgBuffer, {
-            contentType: "image/jpeg",
-          });
+				const image = await Jimp.read(imageBuffer);
+				const jpgBuffer = await image.getBuffer("image/jpeg");
+				const outputFileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.jpg`;
 
-        if (uploadError) {
-          throw uploadError;
-        }
+				const { error: uploadError } = await supabase.storage
+					.from("utilityhub")
+					.upload(outputFileName, jpgBuffer, {
+						contentType: "image/jpeg",
+					});
 
-        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+				if (uploadError) {
+					throw uploadError;
+				}
 
-        return res.json({
-          path: downloadUrl,
-          originalname: outputFileName,
-        });
-      }
+				const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
+				return res.json({
+					path: downloadUrl,
+					originalname: outputFileName,
+				});
+			}
 
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
+			const archive = archiver("zip", {
+				zlib: { level: 9 },
+			});
 
-        const conversionPromises = files.map(async (file) => {
-          const imageBuffer = file.buffer;
-          const { originalname } = file;
-          const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+			const archiveBuffer = await new Promise((resolve, reject) => {
+				const buffers = [];
+				archive.on("data", (data) => buffers.push(data));
+				archive.on("end", () => resolve(Buffer.concat(buffers)));
+				archive.on("error", (err) => reject(err));
 
-          const jpgBuffer = await sharp(imageBuffer).jpeg().toBuffer();
+				const conversionPromises = files.map(async (file) => {
+					const imageBuffer = file.buffer;
+					const { originalname } = file;
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
-          archive.append(jpgBuffer, {
-            name: `dkutils_${nameWithoutExt}_converted.jpg`,
-          });
-        });
+					const image = await Jimp.read(imageBuffer);
+					const jpgBuffer = await image.getBuffer("image/jpeg");
 
-        Promise.all(conversionPromises)
-          .then(() => archive.finalize())
-          .catch((err) => reject(err));
-      });
+					archive.append(jpgBuffer, {
+						name: `${nameWithoutExt}_dkutils_converted.jpg`,
+					});
+				});
 
-      const zipFileName = `dkutils_converted_png_to_jpg_${Date.now()}.zip`;
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
-        });
+				Promise.all(conversionPromises)
+					.then(() => archive.finalize())
+					.catch((err) => reject(err));
+			});
 
-      if (uploadError) {
-        throw uploadError;
-      }
+			const zipFileName = `dkutils_converted_png_to_jpg_${Date.now()}.zip`;
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(zipFileName, archiveBuffer, {
+					contentType: "application/zip",
+				});
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      return res.json({
-        path: downloadUrl,
-        originalname: zipFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
+
+			return res.json({
+				path: downloadUrl,
+				originalname: zipFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   GET /api/convert/download
 // @desc    Download a converted file with forced attachment
 // @access  Public
 router.get("/download", async (req, res) => {
-  try {
-    const { filename } = req.query;
-    if (!filename) {
-      return res.status(400).json({ msg: "Filename is required." });
-    }
+	try {
+		const { filename } = req.query;
+		if (!filename || typeof filename !== "string") {
+			return res.status(400).json({ msg: "Filename is required and must be a string." });
+		}
 
-    const allowedPrefixes = [
-      "dkutils_",
-      "screenshot-",
-      "screenshots/screenshot-",
-      "favicons/",
-    ];
-    if (
-      filename.includes("..") ||
-      !allowedPrefixes.some((prefix) => filename.startsWith(prefix))
-    ) {
-      return res.status(403).json({ msg: "Invalid filename." });
-    }
+		const baseName = path.basename(filename);
+		const allowedPrefixes = [
+			"dkutils_",
+			"dkutils-",
+			"screenshot-",
+			"screenshots/screenshot-",
+			"screenshots/screenshot_dkutils_",
+			"favicons/",
+			"keep-alive/",
+			"decoded_dkutils_",
+			"merged_dkutils_",
+		];
 
-    const { data, error } = await supabase.storage
-      .from("utilityhub")
-      .download(filename);
+		const isAllowed = allowedPrefixes.some((prefix) => filename.startsWith(prefix));
+		if (!isAllowed || filename.includes("..")) {
+			return res.status(403).json({ msg: "Access denied." });
+		}
 
-    if (error) {
-      throw error;
-    }
+		const { data, error } = await supabase.storage.from("utilityhub").download(filename);
+		if (error) {
+			throw error;
+		}
 
-    const baseName = path.basename(filename);
-    const arrayBuffer = await data.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+		const arrayBuffer = await data.arrayBuffer();
+		const buffer = Buffer.from(arrayBuffer);
 
-    // Sanitize filename to prevent header injection
-    const sanitizedBaseName = baseName
-      .replace(/["\\]/g, "_")
-      .replace(/[\x00-\x1f\x7f]/g, "");
-    const encodedFilename = encodeURIComponent(baseName);
+		// Sanitize filename to prevent header injection
+		const sanitizedBaseName = stripControlCharacters(baseName.replace(/["\\]/g, "_"));
+		const encodedFilename = encodeURIComponent(baseName);
 
-    res.set("Content-Type", data.type || "application/octet-stream");
-    res.set(
-      "Content-Disposition",
-      `attachment; filename="${sanitizedBaseName}"; filename*=UTF-8''${encodedFilename}`,
-    );
-    return res.send(buffer);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ msg: "Server Error" });
-  }
+		res.set("Content-Type", data.type || "application/octet-stream");
+		res.set(
+			"Content-Disposition",
+			`attachment; filename="${sanitizedBaseName}"; filename*=UTF-8''${encodedFilename}`,
+		);
+		return res.send(buffer);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ msg: "Server Error" });
+	}
 });
 
 // @route   POST /api/convert/image-to-pdf
 // @desc    Convert images to PDF
 // @access  Public
 router.post(
-  "/image-to-pdf",
-  (req, res, next) => req.upload.array("images")(req, res, next),
-  async (req, res) => {
-    try {
-      const { files } = req;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ msg: "No image files uploaded." });
-      }
+	"/image-to-pdf",
+	(req, res, next) => req.upload.array("images")(req, res, next),
+	async (req, res) => {
+		try {
+			const { files } = req;
+			if (!files || files.length === 0) {
+				return res.status(400).json({ msg: "No image files uploaded." });
+			}
 
-      const pdfDoc = new PDFDocument({
-        autoFirstPage: false,
-      });
+			const pdfDoc = new PDFDocument({
+				autoFirstPage: false,
+			});
 
-      const buffers = [];
-      pdfDoc.on("data", buffers.push.bind(buffers));
-      const pdfGenerationPromise = new Promise((resolve, reject) => {
-        pdfDoc.on("end", () => resolve(Buffer.concat(buffers)));
-        pdfDoc.on("error", reject);
-      });
+			const buffers = [];
+			pdfDoc.on("data", buffers.push.bind(buffers));
+			const pdfGenerationPromise = new Promise((resolve, reject) => {
+				pdfDoc.on("end", () => resolve(Buffer.concat(buffers)));
+				pdfDoc.on("error", reject);
+			});
 
-      for (const file of files) {
-        let tempImagePath = "";
-        try {
-          const imageBuffer = file.buffer;
+			for (const file of files) {
+				let tempImagePath = "";
+				try {
+					const imageBuffer = file.buffer;
 
-          const image = sharp(imageBuffer);
-          const metadata = await image.metadata();
-          const pngBuffer = await image.png().toBuffer();
+					const image = await Jimp.read(imageBuffer);
+					const pngBuffer = await image.getBuffer("image/png");
 
-          tempImagePath = path.join(
-            os.tmpdir(),
-            `temp_image_${Date.now()}_${Math.random().toString(16).slice(2)}.png`,
-          );
-          await fsp.writeFile(tempImagePath, pngBuffer);
+					tempImagePath = path.join(
+						os.tmpdir(),
+						`temp_image_${Date.now()}_${Math.random().toString(16).slice(2)}.png`,
+					);
+					await fsp.writeFile(tempImagePath, pngBuffer);
 
-          const imgWidth = metadata.width;
-          const imgHeight = metadata.height;
+					const imgWidth = image.width;
+					const imgHeight = image.height;
 
-          pdfDoc.addPage({ width: imgWidth, height: imgHeight });
-          pdfDoc.image(tempImagePath, 0, 0, {
-            width: imgWidth,
-            height: imgHeight,
-          });
-        } catch (imageErr) {
-          console.error(
-            `Error processing image ${file.originalname}:`,
-            imageErr,
-          );
-          throw new Error(
-            `Failed to process image ${file.originalname}: ${imageErr.message}`,
-          );
-        } finally {
-          if (tempImagePath) {
-            try {
-              await fsp.unlink(tempImagePath);
-            } catch (unlinkErr) {
-              console.error(
-                `Error deleting temp image file ${tempImagePath}:`,
-                unlinkErr,
-              );
-            }
-          }
-        }
-      }
+					pdfDoc.addPage({ width: imgWidth, height: imgHeight });
+					pdfDoc.image(tempImagePath, 0, 0, {
+						width: imgWidth,
+						height: imgHeight,
+					});
+				} catch (imageErr) {
+					console.error(`Error processing image ${file.originalname}:`, imageErr);
+					throw new Error(`Failed to process image ${file.originalname}: ${imageErr.message}`);
+				} finally {
+					if (tempImagePath) {
+						try {
+							await fsp.unlink(tempImagePath);
+						} catch (unlinkErr) {
+							console.error(`Error deleting temp image file ${tempImagePath}:`, unlinkErr);
+						}
+					}
+				}
+			}
 
-      pdfDoc.end();
-      const pdfBuffer = await pdfGenerationPromise;
+			pdfDoc.end();
+			const pdfBuffer = await pdfGenerationPromise;
 
-      const outputFileName = `dkutils_converted_images_${Date.now()}.pdf`;
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(outputFileName, pdfBuffer, {
-          contentType: "application/pdf",
-        });
+			const outputFileName = `dkutils_converted_images_${Date.now()}.pdf`;
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(outputFileName, pdfBuffer, {
+					contentType: "application/pdf",
+				});
 
-      if (uploadError) {
-        throw uploadError;
-      }
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-      return res.json({
-        path: downloadUrl,
-        originalname: outputFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			return res.json({
+				path: downloadUrl,
+				originalname: outputFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/resize-image
 // @desc    Resize images
 // @access  Public
 router.post(
-  "/resize-image",
-  (req, res, next) => req.upload.array("images")(req, res, next),
-  async (req, res) => {
-    try {
-      const { files } = req;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ msg: "No image files uploaded." });
-      }
+	"/resize-image",
+	(req, res, next) => req.upload.array("images")(req, res, next),
+	async (req, res) => {
+		try {
+			const { files } = req;
+			if (!files || files.length === 0) {
+				return res.status(400).json({ msg: "No image files uploaded." });
+			}
 
-      const { width, height } = req.body;
-      const parsedWidth = parseInt(width, 10);
-      const parsedHeight = parseInt(height, 10);
+			const { width, height } = req.body;
+			const parsedWidth = Number.parseInt(width, 10);
+			const parsedHeight = Number.parseInt(height, 10);
 
-      if (
-        Number.isNaN(parsedWidth) ||
-        parsedWidth <= 0 ||
-        Number.isNaN(parsedHeight) ||
-        parsedHeight <= 0
-      ) {
-        return res.status(400).json({
-          msg: "Invalid width or height provided. Must be positive numbers.",
-        });
-      }
+			if (
+				Number.isNaN(parsedWidth) ||
+				parsedWidth <= 0 ||
+				Number.isNaN(parsedHeight) ||
+				parsedHeight <= 0
+			) {
+				return res.status(400).json({
+					msg: "Invalid width or height provided. Must be positive numbers.",
+				});
+			}
 
-      if (files.length === 1) {
-        const file = files[0];
-        const imageBuffer = file.buffer;
-        const { originalname } = file;
-        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+			if (files.length === 1) {
+				const file = files[0];
+				const imageBuffer = file.buffer;
+				const { originalname } = file;
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
-        let outputFormat = "jpeg";
-        let extension = "jpg";
-        try {
-          const metadata = await sharp(imageBuffer).metadata();
-          if (metadata.hasAlpha) {
-            outputFormat = "png";
-            extension = "png";
-          }
-        } catch (metadataErr) {
-          console.error(
-            `Error reading image metadata for ${originalname}:`,
-            metadataErr,
-          );
-        }
+				let outputFormat = "jpeg";
+				let extension = "jpg";
 
-        const resizedBuffer = await sharp(imageBuffer)
-          .resize(parsedWidth, parsedHeight)
-          .toFormat(outputFormat)
-          .toBuffer();
+				const image = await Jimp.read(imageBuffer);
+				if (image.hasAlpha()) {
+					outputFormat = "png";
+					extension = "png";
+				}
 
-        const outputFileName = `dkutils_${nameWithoutExt}_resized_${Date.now()}.${extension}`;
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(outputFileName, resizedBuffer, {
-            contentType: `image/${outputFormat}`,
-          });
+				image.resize({ w: parsedWidth, h: parsedHeight });
+				const mime = `image/${outputFormat}`;
+				const resizedBuffer = await image.getBuffer(mime);
 
-        if (uploadError) {
-          throw uploadError;
-        }
+				const outputFileName = `${nameWithoutExt}_dkutils_resized_${Date.now()}.${extension}`;
+				const { error: uploadError } = await supabase.storage
+					.from("utilityhub")
+					.upload(outputFileName, resizedBuffer, {
+						contentType: `image/${outputFormat}`,
+					});
 
-        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+				if (uploadError) {
+					throw uploadError;
+				}
 
-        return res.json({
-          path: downloadUrl,
-          originalname: outputFileName,
-        });
-      }
+				const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
+				return res.json({
+					path: downloadUrl,
+					originalname: outputFileName,
+				});
+			}
 
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
+			const archive = archiver("zip", {
+				zlib: { level: 9 },
+			});
 
-        const resizePromises = files.map(async (file) => {
-          const imageBuffer = file.buffer;
-          const { originalname } = file;
-          const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+			const archiveBuffer = await new Promise((resolve, reject) => {
+				const buffers = [];
+				archive.on("data", (data) => buffers.push(data));
+				archive.on("end", () => resolve(Buffer.concat(buffers)));
+				archive.on("error", (err) => reject(err));
 
-          let outputFormat = "jpeg";
-          let extension = "jpg";
-          try {
-            const metadata = await sharp(imageBuffer).metadata();
-            if (metadata.hasAlpha) {
-              outputFormat = "png";
-              extension = "png";
-            }
-          } catch (metadataErr) {
-            console.error(
-              `Error reading image metadata for ${originalname}:`,
-              metadataErr,
-            );
-          }
+				const resizePromises = files.map(async (file) => {
+					const imageBuffer = file.buffer;
+					const { originalname } = file;
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
-          const resizedBuffer = await sharp(imageBuffer)
-            .resize(parsedWidth, parsedHeight)
-            .toFormat(outputFormat)
-            .toBuffer();
+					let outputFormat = "jpeg";
+					let extension = "jpg";
 
-          archive.append(resizedBuffer, {
-            name: `dkutils_${nameWithoutExt}_resized.${extension}`,
-          });
-        });
+					const image = await Jimp.read(imageBuffer);
+					if (image.hasAlpha()) {
+						outputFormat = "png";
+						extension = "png";
+					}
+					image.resize({ w: parsedWidth, h: parsedHeight });
+					const mime = `image/${outputFormat}`;
+					const resizedBuffer = await image.getBuffer(mime);
 
-        Promise.all(resizePromises)
-          .then(() => archive.finalize())
-          .catch((err) => reject(err));
-      });
+					archive.append(resizedBuffer, {
+						name: `${nameWithoutExt}_dkutils_resized.${extension}`,
+					});
+				});
 
-      const zipFileName = `dkutils_resized_images_${Date.now()}.zip`;
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
-        });
+				Promise.all(resizePromises)
+					.then(() => archive.finalize())
+					.catch((err) => reject(err));
+			});
 
-      if (uploadError) {
-        throw uploadError;
-      }
+			const zipFileName = `dkutils_resized_images_${Date.now()}.zip`;
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(zipFileName, archiveBuffer, {
+					contentType: "application/zip",
+				});
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      return res.json({
-        path: downloadUrl,
-        originalname: zipFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
+
+			return res.json({
+				path: downloadUrl,
+				originalname: zipFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/compress-image
 // @desc    Compress images
 // @access  Public
 router.post(
-  "/compress-image",
-  (req, res, next) => req.upload.array("images")(req, res, next),
-  async (req, res) => {
-    try {
-      const { files } = req;
-      if (!files || files.length === 0) {
-        return res
-          .status(400)
-          .json({ msg: "No image files uploaded for compression." });
-      }
+	"/compress-image",
+	(req, res, next) => req.upload.array("images")(req, res, next),
+	async (req, res) => {
+		try {
+			const { files } = req;
+			if (!files || files.length === 0) {
+				return res.status(400).json({ msg: "No image files uploaded for compression." });
+			}
 
-      const { quality } = req.body;
-      const parsedQuality = parseInt(quality, 10);
+			const { quality } = req.body;
+			const parsedQuality = Number.parseInt(quality, 10);
 
-      if (
-        Number.isNaN(parsedQuality) ||
-        parsedQuality < 0 ||
-        parsedQuality > 100
-      ) {
-        return res.status(400).json({
-          msg: "Invalid quality provided. Must be a number between 0 and 100.",
-        });
-      }
+			if (Number.isNaN(parsedQuality) || parsedQuality < 0 || parsedQuality > 100) {
+				return res.status(400).json({
+					msg: "Invalid quality provided. Must be a number between 0 and 100.",
+				});
+			}
 
-      if (files.length === 1) {
-        const file = files[0];
-        const imageBuffer = file.buffer;
-        const { originalname } = file;
-        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+			if (files.length === 1) {
+				const file = files[0];
+				const imageBuffer = file.buffer;
+				const { originalname } = file;
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
-        let compressedBuffer;
-        let extension;
-        let contentType;
+				let compressedBuffer;
+				let extension;
+				let contentType;
+				let image;
 
-        try {
-          const metadata = await sharp(imageBuffer).metadata();
-          const format = metadata.format;
-          extension = format;
-          contentType = `image/${format}`;
+				try {
+					image = await Jimp.read(imageBuffer);
+					const format = image.mime.split("/")[1];
+					extension = format === "jpeg" ? "jpg" : format;
+					contentType = image.mime;
 
-          let pipeline = sharp(imageBuffer, { animated: true });
+					compressedBuffer = await image.getBuffer(image.mime, {
+						quality: parsedQuality,
+					});
+				} catch (error) {
+					console.error("Error compressing image in original format:", error.message, error.stack);
+					try {
+						image ??= await Jimp.read(imageBuffer);
+						compressedBuffer = await image.getBuffer("image/jpeg", {
+							quality: parsedQuality,
+						});
+						extension = "jpg";
+						contentType = "image/jpeg";
+					} catch (fallbackError) {
+						console.error(
+							"Error during JPEG fallback compression:",
+							fallbackError.message,
+							fallbackError.stack,
+						);
+						throw fallbackError;
+					}
+				}
 
-          switch (format) {
-            case "jpeg":
-            case "jpg":
-              pipeline = pipeline.jpeg({ quality: parsedQuality });
-              extension = "jpg";
-              contentType = "image/jpeg";
-              break;
-            case "png":
-              pipeline = pipeline.png({ quality: parsedQuality });
-              extension = "png";
-              contentType = "image/png";
-              break;
-            case "webp":
-              pipeline = pipeline.webp({ quality: parsedQuality });
-              extension = "webp";
-              contentType = "image/webp";
-              break;
-            case "tiff":
-              pipeline = pipeline.tiff({ quality: parsedQuality });
-              extension = "tiff";
-              contentType = "image/tiff";
-              break;
-            case "avif":
-              pipeline = pipeline.avif({ quality: parsedQuality });
-              extension = "avif";
-              contentType = "image/avif";
-              break;
-            case "gif":
-              pipeline = pipeline.gif();
-              extension = "gif";
-              contentType = "image/gif";
-              break;
-            default:
-              pipeline = pipeline.jpeg({ quality: parsedQuality });
-              extension = "jpg";
-              contentType = "image/jpeg";
-          }
-          compressedBuffer = await pipeline.toBuffer();
-        } catch (error) {
-          compressedBuffer = await sharp(imageBuffer)
-            .jpeg({ quality: parsedQuality })
-            .toBuffer();
-          extension = "jpg";
-          contentType = "image/jpeg";
-        }
+				const outputFileName = `${nameWithoutExt}_dkutils_compressed_${Date.now()}.${extension}`;
+				const { error: uploadError } = await supabase.storage
+					.from("utilityhub")
+					.upload(outputFileName, compressedBuffer, {
+						contentType,
+					});
 
-        const outputFileName = `dkutils_${nameWithoutExt}_compressed_${Date.now()}.${extension}`;
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(outputFileName, compressedBuffer, {
-            contentType,
-          });
+				if (uploadError) {
+					throw uploadError;
+				}
 
-        if (uploadError) {
-          throw uploadError;
-        }
+				const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+				return res.json({
+					path: downloadUrl,
+					originalname: outputFileName,
+				});
+			}
 
-        return res.json({
-          path: downloadUrl,
-          originalname: outputFileName,
-        });
-      }
+			const archive = archiver("zip", {
+				zlib: { level: 9 },
+			});
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
+			const archiveBuffer = await new Promise((resolve, reject) => {
+				const buffers = [];
+				archive.on("data", (data) => buffers.push(data));
+				archive.on("end", () => resolve(Buffer.concat(buffers)));
+				archive.on("error", (err) => reject(err));
 
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
+				const compressionPromises = files.map(async (file) => {
+					const imageBuffer = file.buffer;
+					const { originalname } = file;
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
-        const compressionPromises = files.map(async (file) => {
-          const imageBuffer = file.buffer;
-          const { originalname } = file;
-          const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+					let compressedBuffer;
+					let extension;
+					let image;
 
-          let compressedBuffer;
-          let extension;
+					try {
+						image = await Jimp.read(imageBuffer);
+						const format = image.mime.split("/")[1];
+						extension = format === "jpeg" ? "jpg" : format;
 
-          try {
-            const metadata = await sharp(imageBuffer).metadata();
-            const format = metadata.format;
-            extension = format;
+						compressedBuffer = await image.getBuffer(image.mime, {
+							quality: parsedQuality,
+						});
+					} catch (error) {
+						console.error(
+							"Error compressing image in original format:",
+							error.message,
+							error.stack,
+						);
+						try {
+							image ??= await Jimp.read(imageBuffer);
+							compressedBuffer = await image.getBuffer("image/jpeg", {
+								quality: parsedQuality,
+							});
+							extension = "jpg";
+						} catch (fallbackError) {
+							console.error(
+								"Error during JPEG fallback compression:",
+								fallbackError.message,
+								fallbackError.stack,
+							);
+							throw fallbackError;
+						}
+					}
 
-            let pipeline = sharp(imageBuffer, { animated: true });
+					archive.append(compressedBuffer, {
+						name: `${nameWithoutExt}_dkutils_compressed.${extension}`,
+					});
+				});
 
-            switch (format) {
-              case "jpeg":
-              case "jpg":
-                pipeline = pipeline.jpeg({ quality: parsedQuality });
-                extension = "jpg";
-                break;
-              case "png":
-                pipeline = pipeline.png({ quality: parsedQuality });
-                extension = "png";
-                break;
-              case "webp":
-                pipeline = pipeline.webp({ quality: parsedQuality });
-                extension = "webp";
-                break;
-              case "tiff":
-                pipeline = pipeline.tiff({ quality: parsedQuality });
-                extension = "tiff";
-                break;
-              case "avif":
-                pipeline = pipeline.avif({ quality: parsedQuality });
-                extension = "avif";
-                break;
-              case "gif":
-                pipeline = pipeline.gif();
-                extension = "gif";
-                break;
-              default:
-                pipeline = pipeline.jpeg({ quality: parsedQuality });
-                extension = "jpg";
-            }
-            compressedBuffer = await pipeline.toBuffer();
-          } catch (error) {
-            // Fallback if metadata fails or something goes wrong, though unlikely with valid images
-            compressedBuffer = await sharp(imageBuffer)
-              .jpeg({ quality: parsedQuality })
-              .toBuffer();
-            extension = "jpg";
-          }
+				Promise.all(compressionPromises)
+					.then(() => archive.finalize())
+					.catch((err) => reject(err));
+			});
 
-          archive.append(compressedBuffer, {
-            name: `dkutils_${nameWithoutExt}_compressed.${extension}`,
-          });
-        });
+			const zipFileName = `dkutils_compressed_images_${Date.now()}.zip`;
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(zipFileName, archiveBuffer, {
+					contentType: "application/zip",
+				});
 
-        Promise.all(compressionPromises)
-          .then(() => archive.finalize())
-          .catch((err) => reject(err));
-      });
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      const zipFileName = `dkutils_compressed_images_${Date.now()}.zip`;
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
-        });
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
 
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
-
-      return res.json({
-        path: downloadUrl,
-        originalname: zipFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			return res.json({
+				path: downloadUrl,
+				originalname: zipFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/convert-image-format
 // @desc    Convert image format
 // @access  Public
 router.post(
-  "/convert-image-format",
-  (req, res, next) => req.upload.array("images")(req, res, next),
-  async (req, res) => {
-    try {
-      const { files } = req;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ msg: "No image files uploaded." });
-      }
+	"/convert-image-format",
+	(req, res, next) => req.upload.array("images")(req, res, next),
+	async (req, res) => {
+		try {
+			const { files } = req;
+			if (!files || files.length === 0) {
+				return res.status(400).json({ msg: "No image files uploaded." });
+			}
 
-      const { format } = req.body;
-      const allowedFormats = ["jpeg", "png", "webp", "tiff", "gif", "avif"];
-      const normalizedFormat = format ? format.toLowerCase().trim() : "";
+			const { format } = req.body;
+			const allowedFormats = ["jpeg", "png", "webp", "tiff", "gif", "avif"];
+			const normalizedFormat = format ? format.toLowerCase().trim() : "";
 
-      if (!normalizedFormat || !allowedFormats.includes(normalizedFormat)) {
-        return res.status(400).json({
-          msg: `Invalid format provided. Allowed formats are: ${allowedFormats.join(", ")}`,
-        });
-      }
+			if (!normalizedFormat || !allowedFormats.includes(normalizedFormat)) {
+				return res.status(400).json({
+					msg: `Invalid format provided. Allowed formats are: ${allowedFormats.join(", ")}`,
+				});
+			}
 
-      if (files.length === 1) {
-        const file = files[0];
-        const imageBuffer = file.buffer;
-        const { originalname } = file;
-        const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+			if (files.length === 1) {
+				const file = files[0];
+				const imageBuffer = file.buffer;
+				const { originalname } = file;
+				const sanitizedName = sanitizeFilename(originalname);
+				const nameWithoutExt = path.parse(sanitizedName).name;
 
-        const convertedBuffer = await sharp(imageBuffer)
-          .toFormat(normalizedFormat)
-          .toBuffer();
+				const image = await Jimp.read(imageBuffer);
+				const mime = `image/${normalizedFormat}`;
+				const convertedBuffer = await image.getBuffer(mime);
 
-        const outputFileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.${normalizedFormat}`;
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(outputFileName, convertedBuffer, {
-            contentType: `image/${normalizedFormat}`,
-          });
+				const outputFileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.${normalizedFormat}`;
+				const { error: uploadError } = await supabase.storage
+					.from("utilityhub")
+					.upload(outputFileName, convertedBuffer, {
+						contentType: `image/${normalizedFormat}`,
+					});
 
-        if (uploadError) {
-          throw uploadError;
-        }
+				if (uploadError) {
+					throw uploadError;
+				}
 
-        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+				const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-        return res.json({
-          path: downloadUrl,
-          originalname: outputFileName,
-        });
-      }
+				return res.json({
+					path: downloadUrl,
+					originalname: outputFileName,
+				});
+			}
 
-      const archive = archiver("zip", {
-        zlib: { level: 9 },
-      });
+			const archive = archiver("zip", {
+				zlib: { level: 9 },
+			});
 
-      const archiveBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        archive.on("data", (data) => buffers.push(data));
-        archive.on("end", () => resolve(Buffer.concat(buffers)));
-        archive.on("error", (err) => reject(err));
+			const archiveBuffer = await new Promise((resolve, reject) => {
+				const buffers = [];
+				archive.on("data", (data) => buffers.push(data));
+				archive.on("end", () => resolve(Buffer.concat(buffers)));
+				archive.on("error", (err) => reject(err));
 
-        const conversionPromises = files.map(async (file) => {
-          const imageBuffer = file.buffer;
-          const { originalname } = file;
-          const nameWithoutExt = originalname.split(".").slice(0, -1).join(".");
+				const conversionPromises = files.map(async (file) => {
+					const imageBuffer = file.buffer;
+					const { originalname } = file;
+					const sanitizedName = sanitizeFilename(originalname);
+					const nameWithoutExt = path.parse(sanitizedName).name;
 
-          const convertedBuffer = await sharp(imageBuffer)
-            .toFormat(normalizedFormat)
-            .toBuffer();
+					const image = await Jimp.read(imageBuffer);
+					const mime = `image/${normalizedFormat}`;
+					const convertedBuffer = await image.getBuffer(mime);
 
-          archive.append(convertedBuffer, {
-            name: `dkutils_${nameWithoutExt}_converted.${normalizedFormat}`,
-          });
-        });
+					archive.append(convertedBuffer, {
+						name: `${nameWithoutExt}_dkutils_converted.${normalizedFormat}`,
+					});
+				});
 
-        Promise.all(conversionPromises)
-          .then(() => archive.finalize())
-          .catch((err) => reject(err));
-      });
+				Promise.all(conversionPromises)
+					.then(() => archive.finalize())
+					.catch((err) => reject(err));
+			});
 
-      const zipFileName = `dkutils_converted_images_${Date.now()}.zip`;
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(zipFileName, archiveBuffer, {
-          contentType: "application/zip",
-        });
+			const zipFileName = `dkutils_converted_images_${Date.now()}.zip`;
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(zipFileName, archiveBuffer, {
+					contentType: "application/zip",
+				});
 
-      if (uploadError) {
-        throw uploadError;
-      }
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(zipFileName)}`;
 
-      return res.json({
-        path: downloadUrl,
-        originalname: zipFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			return res.json({
+				path: downloadUrl,
+				originalname: zipFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/base64-image
 // @desc    Encode/Decode image to/from Base64
 // @access  Public
 router.post(
-  "/base64-image",
-  (req, res, next) => req.upload.single("image")(req, res, next),
-  async (req, res) => {
-    try {
-      const { type, base64String } = req.body;
+	"/base64-image",
+	(req, res, next) => req.upload.single("image")(req, res, next),
+	async (req, res) => {
+		try {
+			const { type, base64String } = req.body;
 
-      if (type === "encode") {
-        if (!req.file) {
-          return res
-            .status(400)
-            .json({ msg: "No image file uploaded for encoding." });
-        }
-        const imageBuffer = req.file.buffer;
-        const base64 = imageBuffer.toString("base64");
-        return res.json({ base64 });
-      }
+			if (type === "encode") {
+				if (!req.file) {
+					return res.status(400).json({ msg: "No image file uploaded for encoding." });
+				}
+				const imageBuffer = req.file.buffer;
+				const base64 = imageBuffer.toString("base64");
+				return res.json({ base64 });
+			}
 
-      if (type === "decode") {
-        if (!base64String) {
-          return res
-            .status(400)
-            .json({ msg: "No base64 string provided for decoding." });
-        }
-        const buffer = Buffer.from(base64String, "base64");
-        const outputFileName = `dkutils_decoded-${Date.now()}.png`;
+			if (type === "decode") {
+				if (!base64String || typeof base64String !== "string") {
+					return res.status(400).json({ msg: "No base64 string provided for decoding." });
+				}
+				const buffer = Buffer.from(base64String, "base64");
 
-        const { error: uploadError } = await supabase.storage
-          .from("utilityhub")
-          .upload(outputFileName, buffer, {
-            contentType: "image/png",
-          });
+				// Validate that the decoded buffer is a valid image
+				const imageType = await import("image-type");
+				const detected = await imageType.default(buffer);
+				if (!detected) {
+					return res.status(400).json({ msg: "Invalid image data in base64 string." });
+				}
 
-        if (uploadError) {
-          throw uploadError;
-        }
+				const contentType = detected.mime;
+				const extension = detected.ext;
+				const outputFileName = `decoded_dkutils_${Date.now()}.${extension}`;
 
-        const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+				const { error: uploadError } = await supabase.storage
+					.from("utilityhub")
+					.upload(outputFileName, buffer, {
+						contentType: contentType,
+					});
 
-        return res.json({
-          path: downloadUrl,
-          originalname: outputFileName,
-        });
-      }
-      return res
-        .status(400)
-        .json({ msg: 'Invalid request type. Must be "encode" or "decode".' });
-    } catch (err) {
-      console.error(err);
-      console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+				if (uploadError) {
+					throw uploadError;
+				}
+
+				const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+				return res.json({
+					path: downloadUrl,
+					originalname: outputFileName,
+				});
+			}
+			return res.status(400).json({ msg: 'Invalid request type. Must be "encode" or "decode".' });
+		} catch (err) {
+			console.error(err);
+			console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/image-flip
 // @desc    Flip an image horizontally or vertically
 // @access  Public
 router.post(
-  "/image-flip",
-  (req, res, next) => req.upload.single("image")(req, res, next),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ msg: "No image file uploaded." });
-      }
+	"/image-flip",
+	(req, res, next) => req.upload.single("image")(req, res, next),
+	async (req, res) => {
+		try {
+			if (!req.file) {
+				return res.status(400).json({ msg: "No image file uploaded." });
+			}
 
-      const imageBuffer = req.file.buffer;
-      const { originalname } = req.file;
-      const { direction } = req.body;
+			const imageBuffer = req.file.buffer;
+			const { originalname } = req.file;
+			const { direction } = req.body;
 
-      let outputFormat;
-      let extension;
-      try {
-        const metadata = await sharp(imageBuffer).metadata();
-        if (metadata.format) {
-          outputFormat = metadata.format;
-        }
-        if (outputFormat === "jpeg") {
-          extension = "jpg";
-        } else {
-          extension = outputFormat;
-        }
-        if (!outputFormat || !extension) {
-          throw new Error("Unable to detect image format");
-        }
-      } catch (metaErr) {
-        console.error("Error detecting image format, falling back:", metaErr);
-        const fallbackMeta = await sharp(imageBuffer).metadata();
-        if (fallbackMeta.hasAlpha) {
-          outputFormat = "png";
-          extension = "png";
-        } else {
-          outputFormat = "jpeg";
-          extension = "jpg";
-        }
-      }
+			if (!direction || (direction !== "horizontal" && direction !== "vertical")) {
+				return res.status(400).json({
+					msg: "Invalid flip direction. Must be 'horizontal' or 'vertical'.",
+				});
+			}
 
-      let flippedBuffer;
-      if (direction === "horizontal") {
-        flippedBuffer = await sharp(imageBuffer)
-          .flop()
-          .toFormat(outputFormat)
-          .toBuffer();
-      } else if (direction === "vertical") {
-        flippedBuffer = await sharp(imageBuffer)
-          .flip()
-          .toFormat(outputFormat)
-          .toBuffer();
-      } else {
-        return res.status(400).json({
-          msg: "Invalid flip direction. Must be 'horizontal' or 'vertical'.",
-        });
-      }
+			const image = await Jimp.read(imageBuffer);
+			const outputFormat = image.mime.split("/")[1];
+			const extension = outputFormat === "jpeg" ? "jpg" : outputFormat;
 
-      const timestamp = Date.now();
-      const nameWithoutExt = path.parse(originalname).name;
-      const outputFileName = `dkutils_flipped-${nameWithoutExt}-${timestamp}.${extension}`;
+			if (direction === "horizontal") {
+				image.flip({ horizontal: true, vertical: false });
+			} else if (direction === "vertical") {
+				image.flip({ horizontal: false, vertical: true });
+			}
 
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(outputFileName, flippedBuffer, {
-          contentType: `image/${outputFormat}`,
-        });
+			const flippedBuffer = await image.getBuffer(image.mime);
+			const timestamp = Date.now();
+			const sanitizedName = sanitizeFilename(originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
+			const outputFileName = `${nameWithoutExt}_dkutils_flipped_${timestamp}.${extension}`;
 
-      if (uploadError) {
-        throw uploadError;
-      }
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(outputFileName, flippedBuffer, {
+					contentType: image.mime,
+				});
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      return res.json({
-        path: downloadUrl,
-        originalname: outputFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+
+			return res.json({
+				path: downloadUrl,
+				originalname: outputFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/image-to-base64
 // @desc    Convert image to Base64 string
 // @access  Public
 router.post(
-  "/image-to-base64",
-  (req, res, next) => req.upload.single("image")(req, res, next),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ msg: "No image file uploaded." });
-      }
+	"/image-to-base64",
+	(req, res, next) => req.upload.single("image")(req, res, next),
+	async (req, res) => {
+		try {
+			if (!req.file) {
+				return res.status(400).json({ msg: "No image file uploaded." });
+			}
 
-      const imageBuffer = req.file.buffer;
-      const base64 = imageBuffer.toString("base64");
-      return res.json({ base64 });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			const imageBuffer = req.file.buffer;
+			const base64 = imageBuffer.toString("base64");
+			return res.json({ base64 });
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 // @route   POST /api/convert/image-grayscale
 // @desc    Convert image to grayscale
 // @access  Public
 router.post(
-  "/image-grayscale",
-  (req, res, next) => req.upload.single("image")(req, res, next),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ msg: "No image file uploaded." });
-      }
+	"/image-grayscale",
+	(req, res, next) => req.upload.single("image")(req, res, next),
+	async (req, res) => {
+		try {
+			if (!req.file) {
+				return res.status(400).json({ msg: "No image file uploaded." });
+			}
 
-      const imageBuffer = req.file.buffer;
-      const { originalname } = req.file;
+			const imageBuffer = req.file.buffer;
+			const { originalname } = req.file;
 
-      let outputFormat;
-      let extension;
-      try {
-        const metadata = await sharp(imageBuffer).metadata();
-        if (metadata.format) {
-          outputFormat = metadata.format;
-        }
-        if (outputFormat === "jpeg") {
-          extension = "jpg";
-        } else {
-          extension = outputFormat;
-        }
-        if (!outputFormat || !extension) {
-          throw new Error("Unable to detect image format");
-        }
-      } catch (metaErr) {
-        console.error("Error detecting image format, falling back:", metaErr);
-        const fallbackMeta = await sharp(imageBuffer).metadata();
-        if (fallbackMeta.hasAlpha) {
-          outputFormat = "png";
-          extension = "png";
-        } else {
-          outputFormat = "jpeg";
-          extension = "jpg";
-        }
-      }
+			const image = await Jimp.read(imageBuffer);
+			const outputFormat = image.mime.split("/")[1];
+			const extension = outputFormat === "jpeg" ? "jpg" : outputFormat;
 
-      const grayscaleBuffer = await sharp(imageBuffer)
-        .grayscale()
-        .toFormat(outputFormat)
-        .toBuffer();
+			image.greyscale();
+			const grayscaleBuffer = await image.getBuffer(image.mime);
 
-      const timestamp = Date.now();
-      const nameWithoutExt = path.parse(originalname).name;
-      const outputFileName = `dkutils_grayscale-${nameWithoutExt}-${timestamp}.${extension}`;
+			const timestamp = Date.now();
+			const sanitizedName = sanitizeFilename(originalname);
+			const nameWithoutExt = path.parse(sanitizedName).name;
+			const outputFileName = `${nameWithoutExt}_dkutils_grayscale_${timestamp}.${extension}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("utilityhub")
-        .upload(outputFileName, grayscaleBuffer, {
-          contentType: `image/${outputFormat}`,
-        });
+			const { error: uploadError } = await supabase.storage
+				.from("utilityhub")
+				.upload(outputFileName, grayscaleBuffer, {
+					contentType: image.mime,
+				});
 
-      if (uploadError) {
-        throw uploadError;
-      }
+			if (uploadError) {
+				throw uploadError;
+			}
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(outputFileName)}`;
 
-      return res.json({
-        path: downloadUrl,
-        originalname: outputFileName,
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ msg: "Server Error" });
-    }
-  },
+			return res.json({
+				path: downloadUrl,
+				originalname: outputFileName,
+			});
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json({ msg: "Server Error" });
+		}
+	},
 );
 
 module.exports = router;

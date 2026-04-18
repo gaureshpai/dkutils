@@ -1,179 +1,200 @@
-﻿import { useState, useContext, useRef } from "react";
+﻿import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import useAnalytics from "@frontend/utils/useAnalytics";
 import axios from "axios";
+import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { AuthContext } from "../context/AuthContext.jsx";
-import useAnalytics from "../utils/useAnalytics";
 
+/**
+ * A component for compressing images.
+ *
+ * It takes multiple image files as an input and returns the compressed images.
+ *
+ * The quality of the images can be adjusted between 1 and 100.
+ *
+ * The component uses the `api/convert/compress-image` endpoint to compress the images.
+ * @param {Object} props - The props object.
+ * @returns {JSX.Element} - The rendered component.
+ */
 const ImageCompressor = () => {
-  const { trackToolUsage } = useAnalytics();
+	const { trackToolUsage } = useAnalytics();
 
-  const {
-    state: { isAuthenticated },
-  } = useContext(AuthContext);
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [quality, setQuality] = useState(80);
-  const [loading, setLoading] = useState(false);
-  const [convertedZipFile, setConvertedZipFile] = useState(null);
-  const fileInputRef = useRef(null);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
+	const [selectedFiles, setSelectedFiles] = useState([]);
+	const [quality, setQuality] = useState(80);
+	const [loading, setLoading] = useState(false);
+	const fileInputRef = useRef(null);
 
-  const onFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/tiff",
-      "image/avif",
-    ];
-    const maxSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+	/**
+	 * Handles file change event for image compressor.
+	 * @param {React.ChangeEvent<HTMLInputElement>} e - The file change event.
+	 */
+	const onFileChange = (e) => {
+		const files = Array.from(e.target.files);
+		const allowedTypes = [
+			"image/jpeg",
+			"image/png",
+			"image/gif",
+			"image/webp",
+			"image/tiff",
+			"image/avif",
+		];
+		const maxSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
-    const validFiles = [];
-    let hasInvalidFile = false;
+		const validFiles = [];
 
-    files.forEach((file) => {
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(
-          `Invalid file type: ${file.name}. Only images (JPEG, PNG, GIF, WebP, TIFF, AVIF) are allowed.`,
-        );
-        hasInvalidFile = true;
-        return;
-      }
-      if (file.size > maxSize) {
-        toast.error(
-          `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
-        );
-        hasInvalidFile = true;
-        return;
-      }
-      validFiles.push(file);
-    });
+		for (const file of files) {
+			if (!allowedTypes.includes(file.type)) {
+				toast.error(
+					`Invalid file type: ${file.name}. Only images (JPEG, PNG, GIF, WebP, TIFF, AVIF) are allowed.`,
+				);
+				setSelectedFiles([]);
+				e.target.value = "";
+				return;
+			}
+			if (file.size > maxSize) {
+				toast.error(
+					isAuthenticated
+						? `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB.`
+						: `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
+				);
+				setSelectedFiles([]);
+				e.target.value = "";
+				return;
+			}
+			validFiles.push(file);
+		}
 
-    setSelectedFiles(validFiles);
-    if (hasInvalidFile) {
-      e.target.value = "";
-    }
-  };
+		setSelectedFiles(validFiles);
+	};
 
-  const onQualityChange = (e) => {
-    setQuality(e.target.value);
-  };
+	const onQualityChange = (e) => {
+		const value = Math.min(100, Math.max(1, Number(e.target.value) || 1));
+		setQuality(value);
+	};
 
-  // fetch the file as a blob and trigger download
-  const handleDownload = async (fileUrl, fileName) => {
-    try {
-      const downloadRes = await axios.get(fileUrl, { responseType: "blob" });
-      const url = window.URL.createObjectURL(downloadRes.data);
+	/**
+	 * Downloads a compressed image from the given URL.
+	 * @param {string} fileUrl - The URL of the compressed image.
+	 * @param {string} fileName - The name of the file to be downloaded.
+	 * @throws {Error} - If there is an error downloading the file.
+	 */
+	const handleDownload = async (fileUrl, fileName) => {
+		try {
+			const downloadRes = await axios.get(fileUrl, { responseType: "blob" });
+			const url = window.URL.createObjectURL(downloadRes.data);
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+			const link = document.createElement("a");
+			link.href = url;
+			link.setAttribute("download", fileName);
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
 
-      // cleanup
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error downloading file:", err);
-      toast.error("Failed to download compressed image. You can try again.");
-      throw err;
-    }
-  };
+			// cleanup
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error("Error downloading file:", err);
+			toast.error("Failed to download compressed image. You can try again.");
+			throw err;
+		}
+	};
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+	/**
+	 * Submits the selected image files to the server for compression.
+	 * @throws {Error} - If there is an error compressing the images.
+	 */
+	const onSubmit = async (e) => {
+		e.preventDefault();
 
-    if (selectedFiles.length === 0) {
-      toast.error("Please select at least one image file.");
-      return;
-    }
+		if (selectedFiles.length === 0) {
+			toast.error("Please select at least one image file.");
+			return;
+		}
 
-    setLoading(true);
-    trackToolUsage("ImageCompressor", "image");
-    const formData = new FormData();
-    for (const file of selectedFiles) {
-      formData.append("images", file);
-    }
-    formData.append("quality", quality);
+		setLoading(true);
+		trackToolUsage("ImageCompressor", "image");
+		const formData = new FormData();
+		for (const file of selectedFiles) {
+			formData.append("images", file);
+		}
+		formData.append("quality", quality);
 
-    try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/convert/compress-image`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
-      setConvertedZipFile(res.data);
+		try {
+			const res = await axios.post(
+				`${import.meta.env.VITE_API_BASE_URL}/api/convert/compress-image`,
+				formData,
+				{
+					headers: {
+						"Content-Type": "multipart/form-data",
+					},
+				},
+			);
+			try {
+				await handleDownload(res.data.path, res.data.originalname);
+				toast.success("Images compressed successfully!");
+				setSelectedFiles([]);
+				if (fileInputRef.current) {
+					fileInputRef.current.value = "";
+				}
+			} catch {
+				// Download error already toasted in handleDownload
+			}
+		} catch (err) {
+			console.error(err);
+			toast.error(err.response?.data?.msg || "Error compressing images. Please try again.");
+		} finally {
+			setLoading(false);
+		}
+	};
 
-      // trigger download and wait so we can show toast after it completes / errors
-      await handleDownload(res.data.path, res.data.originalname);
-      toast.success("Images compressed successfully!");
-      setSelectedFiles([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(
-        err.response?.data?.msg ||
-          "Error compressing images. Please try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Image Compressor</h2>
-      <form onSubmit={onSubmit}>
-        <div className="mb-4">
-          <label
-            className="block mb-2 text-sm font-medium text-foreground"
-            htmlFor="multiple_files"
-          >
-            Upload multiple image files
-          </label>
-          <input
-            ref={fileInputRef}
-            accept="image/*"
-            className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
-            id="multiple_files"
-            type="file"
-            multiple
-            onChange={onFileChange}
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="block mb-2 text-sm font-medium text-foreground"
-            htmlFor="quality"
-          >
-            Quality (1-100%)
-          </label>
-          <input
-            type="number"
-            id="quality"
-            className="bg-background border border-input text-foreground text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-primary"
-            placeholder="80"
-            value={quality}
-            onChange={onQualityChange}
-          />
-        </div>
-        <button
-          type="submit"
-          className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-          disabled={loading}
-        >
-          {loading ? "Compressing..." : "Compress Images"}
-        </button>
-      </form>
-    </div>
-  );
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">Image Compressor</h2>
+			<form onSubmit={onSubmit}>
+				<div className="mb-4">
+					<label
+						className="block mb-2 text-sm font-medium text-foreground"
+						htmlFor="multiple_files"
+					>
+						Upload multiple image files
+					</label>
+					<input
+						ref={fileInputRef}
+						accept="image/*"
+						className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
+						id="multiple_files"
+						type="file"
+						multiple
+						onChange={onFileChange}
+					/>
+				</div>
+				<div className="mb-4">
+					<label className="block mb-2 text-sm font-medium text-foreground" htmlFor="quality">
+						Quality (1-100%)
+					</label>
+					<input
+						type="number"
+						id="quality"
+						min={1}
+						max={100}
+						className="bg-background border border-input text-foreground text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-primary"
+						placeholder="80"
+						value={quality}
+						onChange={onQualityChange}
+					/>
+				</div>
+				<button
+					type="submit"
+					className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
+					disabled={loading}
+				>
+					{loading ? "Compressing..." : "Compress Images"}
+				</button>
+			</form>
+		</div>
+	);
 };
 
 export default ImageCompressor;

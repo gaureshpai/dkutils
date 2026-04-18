@@ -1,145 +1,198 @@
-﻿import React, { useState } from "react";
+import useAnalytics from "@frontend/utils/useAnalytics";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import useAnalytics from "../utils/useAnalytics";
 
+/**
+ * A React component that provides a text area for encoding/decoding text to/from Base64
+ * @returns {JSX.Element} A JSX element containing a text area and buttons for encoding/decoding to/from Base64
+ */
 const Base64TextConverter = () => {
-  const { trackToolUsage } = useAnalytics();
+	const { trackToolUsage } = useAnalytics();
 
-  const [text, setText] = useState("");
-  const [convertedText, setConvertedText] = useState("");
-  const [loading, setLoading] = useState(false);
+	const [text, setText] = useState("");
+	const [convertedText, setConvertedText] = useState("");
+	const [loading, setLoading] = useState(false);
 
-  const handleTextChange = (e) => {
-    setText(e.target.value);
-  };
+	/**
+	 * Handle text change event in the text area
+	 * @param {React.ChangeEvent} e - The event object
+	 */
+	const handleTextChange = (e) => {
+		setText(e.target.value);
+	};
 
-  const encodeBase64 = () => {
-    setLoading(true);
-    trackToolUsage("Base64TextConverter", "text");
-    setTimeout(() => {
-      setConvertedText(btoa(text));
-      setLoading(false);
-    }, 500);
-  };
+	/**
+	 * Encode text to Base64 using TextEncoder and btoa
+	 * @throws {Error} - If there is an error while encoding the text
+	 */
+	const encodeBase64 = () => {
+		setLoading(true);
+		setTimeout(() => {
+			try {
+				// UTF-8 safe encoding using TextEncoder
+				const encoder = new TextEncoder();
+				const data = encoder.encode(text);
+				// Convert byte array to binary string
+				let binaryString = "";
+				for (let i = 0; i < data.length; i++) {
+					binaryString += String.fromCharCode(data[i]);
+				}
+				// Convert to base64
+				const encoded = btoa(binaryString);
+				trackToolUsage("Base64TextConverter", "text");
+				setConvertedText(encoded);
+			} catch (error) {
+				setConvertedText("");
+				toast.error("Failed to encode text.");
+			} finally {
+				setLoading(false);
+			}
+		}, 500);
+	};
 
-  const decodeBase64 = () => {
-    setLoading(true);
-    trackToolUsage("Base64TextConverter", "text");
-    setTimeout(() => {
-      try {
-        setConvertedText(atob(text));
-      } catch (e) {
-        setConvertedText("Invalid Base64 string");
-      }
-      setLoading(false);
-    }, 500);
-  };
+	/**
+	 * Decode Base64 text to original text using TextDecoder and atob
+	 * @throws {Error} - If there is an error while decoding the text
+	 */
+	const decodeBase64 = () => {
+		setLoading(true);
+		setTimeout(() => {
+			try {
+				// UTF-8 safe decoding using TextDecoder
+				// First, decode base64 to binary string
+				const binaryString = atob(text);
+				// Convert binary string to byte array
+				const bytes = new Uint8Array(binaryString.length);
+				for (let i = 0; i < binaryString.length; i++) {
+					bytes[i] = binaryString.charCodeAt(i);
+				}
+				// Decode UTF-8 bytes to string
+				const decoder = new TextDecoder("utf-8");
+				const decoded = decoder.decode(bytes);
+				trackToolUsage("Base64TextConverter", "text");
+				setConvertedText(decoded);
+			} catch (error) {
+				setConvertedText("");
+				toast.error("Failed to decode text.");
+			} finally {
+				setLoading(false);
+			}
+		}, 500);
+	};
 
-  const handleCopyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(convertedText);
-      toast.success("Copied to clipboard!");
-    } catch (error) {
-      console.error("Failed to copy to clipboard:", error);
-      // Fallback for older browsers
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = convertedText;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        toast.success("Copied to clipboard!");
-      } catch (fallbackError) {
-        console.error("Fallback copy failed:", fallbackError);
-        toast.error("Failed to copy to clipboard. Please try again.");
-      }
-    }
-  };
+	/**
+	 * Copies the converted text to the clipboard.
+	 * @throws {Error} - If there is an error while copying the text
+	 */
+	const handleCopyToClipboard = async () => {
+		try {
+			await navigator.clipboard.writeText(convertedText);
+			toast.success("Copied to clipboard!");
+		} catch (error) {
+			console.error("Failed to copy to clipboard:", error);
+			// Fallback for older browsers
+			try {
+				const textArea = document.createElement("textarea");
+				textArea.value = convertedText;
+				document.body.appendChild(textArea);
+				textArea.select();
+				document.execCommand("copy");
+				document.body.removeChild(textArea);
+				toast.success("Copied to clipboard!");
+			} catch (fallbackError) {
+				console.error("Fallback copy failed:", fallbackError);
+				toast.error("Failed to copy to clipboard. Please try again.");
+			}
+		}
+	};
 
-  const downloadAsTxt = () => {
-    const blob = new Blob([convertedText], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `converted-text-${Date.now()}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+	/**
+	 * Downloads the converted text as a plain text file.
+	 * @returns {void} - No return value
+	 */
+	const downloadAsTxt = () => {
+		const blob = new Blob([convertedText], { type: "text/plain" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `converted-text-${Date.now()}.txt`;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+	};
 
-  return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Base64 Text Encoder/Decoder</h2>
-      <div className="mb-4">
-        <textarea
-          className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
-          rows="5"
-          placeholder="Enter text or Base64 string..."
-          value={text}
-          onChange={handleTextChange}
-        ></textarea>
-      </div>
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={encodeBase64}
-          className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-          disabled={loading}
-        >
-          {loading ? "Encoding..." : "Encode Base64"}
-        </button>
-        <button
-          type="button"
-          onClick={decodeBase64}
-          className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-          disabled={loading}
-        >
-          {loading ? "Decoding..." : "Decode Base64"}
-        </button>
-      </div>
-      {convertedText && (
-        <div className="mt-4">
-          <h3 className="text-xl font-bold mb-2">
-            Converted Text:
-            <button
-              type="button"
-              onClick={handleCopyToClipboard}
-              className="ml-2 text-sm text-primary hover:underline"
-              aria-label="Copy converted text to clipboard"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 inline-block"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <title>Copy to clipboard</title>
-                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={downloadAsTxt}
-              className="ml-2 text-sm text-primary hover:underline"
-              aria-label="Download converted text as TXT file"
-            >
-              Download TXT
-            </button>
-          </h3>
-          <textarea
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm h-max"
-            rows="10"
-            readOnly
-            value={convertedText}
-          ></textarea>
-        </div>
-      )}
-    </div>
-  );
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">Base64 Text Encoder/Decoder</h2>
+			<div className="mb-4">
+				<textarea
+					className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-ring focus:border-primary sm:text-sm"
+					rows="5"
+					placeholder="Enter text or Base64 string..."
+					value={text}
+					onChange={handleTextChange}
+				/>
+			</div>
+			<div className="mb-4">
+				<button
+					type="button"
+					onClick={encodeBase64}
+					className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
+					disabled={loading}
+				>
+					{loading ? "Encoding..." : "Encode Base64"}
+				</button>
+				<button
+					type="button"
+					onClick={decodeBase64}
+					className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
+					disabled={loading}
+				>
+					{loading ? "Decoding..." : "Decode Base64"}
+				</button>
+			</div>
+			{convertedText && (
+				<div className="mt-4">
+					<h3 className="text-xl font-bold mb-2">
+						Converted Text:
+						<button
+							type="button"
+							onClick={handleCopyToClipboard}
+							className="ml-2 text-sm text-primary hover:underline"
+							aria-label="Copy converted text to clipboard"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-5 w-5 inline-block"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								aria-hidden="true"
+							>
+								<title>Copy to clipboard</title>
+								<path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+								<path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+							</svg>
+						</button>
+						<button
+							type="button"
+							onClick={downloadAsTxt}
+							className="ml-2 text-sm text-primary hover:underline"
+							aria-label="Download converted text as TXT file"
+						>
+							Download TXT
+						</button>
+					</h3>
+					<textarea
+						className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm h-max"
+						rows="10"
+						readOnly
+						value={convertedText}
+					/>
+				</div>
+			)}
+		</div>
+	);
 };
 
 export default Base64TextConverter;

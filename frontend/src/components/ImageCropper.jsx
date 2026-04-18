@@ -1,146 +1,248 @@
-﻿import { useState, useRef, useContext } from "react";
+import { AuthContext } from "@frontend/context/AuthContext.jsx";
+import useAnalytics from "@frontend/utils/useAnalytics";
+import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { AuthContext } from "../context/AuthContext.jsx";
-import useAnalytics from "../utils/useAnalytics";
 
+/**
+ * ImageCropper component
+ *
+ * @description ImageCropper is a component that allows users to upload an image and crop it. It also allows users to download the cropped image.
+ *
+ * @param {Object} props - Component props
+ * @example
+ * <ImageCropper />
+ *
+ * @returns {React.ReactElement} - A React element
+ */
 const ImageCropper = () => {
-  const { trackToolUsage } = useAnalytics();
+	const { trackToolUsage } = useAnalytics();
 
-  const {
-    state: { isAuthenticated },
-  } = useContext(AuthContext);
-  const [imageSrc, setImageSrc] = useState(null);
-  const [croppedImageSrc, setCroppedImageSrc] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const imageRef = useRef(null);
-  const canvasRef = useRef(null);
+	const {
+		state: { isAuthenticated },
+	} = useContext(AuthContext);
+	const [imageSrc, setImageSrc] = useState(null);
+	const [croppedImageSrc, setCroppedImageSrc] = useState(null);
+	const [originalMimeType, setOriginalMimeType] = useState(null);
+	const [loading, setLoading] = useState(false);
+	const imageRef = useRef(null);
+	const canvasRef = useRef(null);
+	const cropOpIdRef = useRef(0);
+	const isMountedRef = useRef(true);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+	// Cleanup imageSrc object URL to prevent memory leaks
+	useEffect(() => {
+		return () => {
+			if (imageSrc?.startsWith("blob:")) {
+				URL.revokeObjectURL(imageSrc);
+			}
+		};
+	}, [imageSrc]);
 
-    if (!file) {
-      setImageSrc(null);
-      setCroppedImageSrc(null);
-      return;
-    }
+	// Cleanup croppedImageSrc object URL to prevent memory leaks
+	useEffect(() => {
+		return () => {
+			if (croppedImageSrc?.startsWith("blob:")) {
+				URL.revokeObjectURL(croppedImageSrc);
+			}
+		};
+	}, [croppedImageSrc]);
 
-    if (!file.type.startsWith("image/")) {
-      toast.error(
-        "Invalid file type. Please upload an image file (e.g., JPEG, PNG, GIF).",
-      );
-      setImageSrc(null);
-      setCroppedImageSrc(null);
-      e.target.value = "";
-      return;
-    }
+	// Track mount status
+	useEffect(() => {
+		isMountedRef.current = true;
+		return () => {
+			isMountedRef.current = false;
+		};
+	}, []);
 
-    if (file.size > maxSize) {
-      toast.error(
-        `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`,
-      );
-      setImageSrc(null);
-      setCroppedImageSrc(null);
-      e.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImageSrc(event.target.result);
-      setCroppedImageSrc(null);
-    };
-    reader.readAsDataURL(file);
-  };
+	/**
+	 * Handles file change event from the input file element.
+	 * If the selected file is not an image, it will show an error message and reset the input file element.
+	 * If the selected file is an image, it will set the imageSrc state to the selected file as a blob URL.
+	 * If the selected file exceeds the maximum allowed size (50MB for authenticated users, 10MB for unauthenticated users), it will show an error message and reset the input file element.
+	 * @param {Event} e - The file change event from the input file element.
+	 */
+	const handleFileChange = (e) => {
+		const file = e.target.files[0];
+		const maxSize = isAuthenticated ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
-  const handleCrop = () => {
-    if (!imageSrc) {
-      toast.error("Please upload an image first.");
-      return;
-    }
+		if (!file) {
+			setImageSrc(null);
+			setCroppedImageSrc(null);
+			return;
+		}
 
-    setLoading(true);
-    trackToolUsage("ImageCropper", "image");
-    const image = imageRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+		if (!file.type.startsWith("image/")) {
+			toast.error("Invalid file type. Please upload an image file (e.g., JPEG, PNG, GIF).");
+			setImageSrc(null);
+			setCroppedImageSrc(null);
+			e.target.value = "";
+			return;
+		}
 
-    const cropX = image.naturalWidth * 0.25;
-    const cropY = image.naturalHeight * 0.25;
-    const cropWidth = image.naturalWidth * 0.5;
-    const cropHeight = image.naturalHeight * 0.5;
+		if (file.size > maxSize) {
+			const message = isAuthenticated
+				? `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB.`
+				: `File too large: ${file.name}. Maximum size is ${maxSize / (1024 * 1024)}MB. Login for a higher limit (50MB).`;
+			toast.error(message);
+			setImageSrc(null);
+			setCroppedImageSrc(null);
+			e.target.value = "";
+			return;
+		}
 
-    canvas.width = cropWidth;
-    canvas.height = cropHeight;
+		// Revoke previous blob URL if exists
+		if (imageSrc?.startsWith("blob:")) {
+			URL.revokeObjectURL(imageSrc);
+		}
 
-    ctx.drawImage(
-      image,
-      cropX,
-      cropY,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      cropWidth,
-      cropHeight,
-    );
-    const dataUrl = canvas.toDataURL(image.type);
-    setCroppedImageSrc(dataUrl);
+		// Use blob URL instead of FileReader for better performance and to avoid race conditions
+		const blobUrl = URL.createObjectURL(file);
+		setImageSrc(blobUrl);
+		setCroppedImageSrc(null);
+		setOriginalMimeType(file.type);
+	};
 
-    handleDownload(dataUrl, `cropped-image-${Date.now()}.png`);
-    setLoading(false);
-  };
+	/**
+	 * Handles crop button click event.
+	 * If there is no image selected, it will show an error message and exit early.
+	 * If the selected image is still loading, it will show an error message and exit early.
+	 * If the selected image is successfully cropped, it will download the cropped image.
+	 * @throws {Error} If an error occurs during cropping or downloading the image.
+	 */
+	const handleCrop = () => {
+		if (!imageSrc) {
+			toast.error("Please upload an image first.");
+			return;
+		}
 
-  const handleDownload = (fileUrl, fileName) => {
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+		try {
+			trackToolUsage("ImageCropper", "image");
+			const currentOpId = ++cropOpIdRef.current;
+			const image = imageRef.current;
+			const canvas = canvasRef.current;
 
-  return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Image Cropper</h2>
+			if (!image || !canvas) {
+				toast.error("Image or canvas reference is missing.");
+				return;
+			}
 
-      <div className="mb-4">
-        <label
-          className="block mb-2 text-sm font-medium text-foreground"
-          htmlFor="image_file"
-        >
-          Upload Image
-        </label>
-        <input
-          className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
-          id="image_file"
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
-      </div>
+			const ctx = canvas.getContext("2d");
+			if (!ctx) {
+				toast.error("Could not get canvas context.");
+				return;
+			}
 
-      {imageSrc && (
-        <div className="mb-4 p-4 border rounded-md bg-muted/30">
-          <h3 className="text-xl font-semibold mb-2">Original Image Preview</h3>
-          <img
-            ref={imageRef}
-            src={imageSrc}
-            alt="Original"
-            className="max-w-full h-auto border rounded-md mb-4"
-          />
-          <button
-            type="button"
-            onClick={handleCrop}
-            className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
-            disabled={loading}
-          >
-            {loading ? "Cropping..." : "Crop Image (Center 50%)"}
-          </button>
-        </div>
-      )}
-      <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
-    </div>
-  );
+			if (!image.complete || image.naturalWidth === 0 || image.naturalHeight === 0) {
+				toast.error("Image is still loading. Please try again in a moment.");
+				return;
+			}
+
+			setLoading(true);
+
+			const cropX = image.naturalWidth * 0.25;
+			const cropY = image.naturalHeight * 0.25;
+			const cropWidth = image.naturalWidth * 0.5;
+			const cropHeight = image.naturalHeight * 0.5;
+
+			canvas.width = cropWidth;
+			canvas.height = cropHeight;
+
+			ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+			const mimeType = originalMimeType || "image/png";
+
+			// Use toBlob for better performance and memory efficiency
+			canvas.toBlob((blob) => {
+				// Verify this callback is for the current crop operation and component is still mounted
+				if (currentOpId !== cropOpIdRef.current || !isMountedRef.current) {
+					// Stale or unmounted, revoke blob URL immediately and skip updates
+					if (blob) {
+						const tempUrl = URL.createObjectURL(blob);
+						URL.revokeObjectURL(tempUrl);
+					}
+					return;
+				}
+
+				if (!blob) {
+					toast.error("Failed to create image blob.");
+					setLoading(false);
+					return;
+				}
+
+				// Revoke previous object URL if exists
+				if (croppedImageSrc?.startsWith("blob:")) {
+					URL.revokeObjectURL(croppedImageSrc);
+				}
+
+				const objectUrl = URL.createObjectURL(blob);
+				setCroppedImageSrc(objectUrl);
+
+				const extension = (blob.type || "image/png").split("/")[1] || "png";
+				handleDownload(objectUrl, `dkutils-cropped-image-${Date.now()}.${extension}`);
+				setLoading(false);
+			}, mimeType);
+			return; // Exit early since toBlob is async
+		} catch (error) {
+			console.error("Cropping error:", error);
+			toast.error("An error occurred during cropping.");
+			setLoading(false);
+		}
+	};
+
+	/**
+	 * Downloads a file from the given URL and saves it with the given filename.
+	 * @param {string} fileUrl - The URL of the file to download.
+	 * @param {string} fileName - The filename to save the downloaded file as.
+	 */
+	const handleDownload = (fileUrl, fileName) => {
+		const link = document.createElement("a");
+		link.href = fileUrl;
+		link.download = fileName;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	};
+
+	return (
+		<div className="container mx-auto p-4">
+			<h2 className="text-2xl font-bold mb-4">Image Cropper</h2>
+
+			<div className="mb-4">
+				<label className="block mb-2 text-sm font-medium text-foreground" htmlFor="image_file">
+					Upload Image
+				</label>
+				<input
+					className="block w-full text-sm text-foreground border border-input rounded-lg cursor-pointer bg-background focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/10"
+					id="image_file"
+					type="file"
+					accept="image/*"
+					onChange={handleFileChange}
+					disabled={loading}
+				/>
+			</div>
+
+			{imageSrc && (
+				<div className="mb-4 p-4 border rounded-md bg-muted/30">
+					<h3 className="text-xl font-semibold mb-2">Original Image Preview</h3>
+					<img
+						ref={imageRef}
+						src={imageSrc}
+						alt="Original"
+						className="max-w-full h-auto border rounded-md mb-4"
+					/>
+					<button
+						type="button"
+						onClick={handleCrop}
+						className="text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-4 focus:ring-ring font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:hover:bg-primary focus:outline-none "
+						disabled={loading}
+					>
+						{loading ? "Cropping..." : "Crop Image (Center 50%)"}
+					</button>
+				</div>
+			)}
+			<canvas ref={canvasRef} style={{ display: "none" }} />
+		</div>
+	);
 };
 
 export default ImageCropper;

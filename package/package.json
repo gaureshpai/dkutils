@@ -1,0 +1,51 @@
+{
+	"name": "dkutils",
+	"version": "0.0.0",
+	"description": "dkutils interactive CLI and TypeScript utility toolkit for image, PDF, and media workflows.",
+	"type": "module",
+	"license": "ISC",
+	"bin": {
+		"dkutils": "./dist/bin/dkutils.js"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/DKUTILS.d.ts",
+			"import": "./dist/DKUTILS.js",
+			"default": "./dist/DKUTILS.js"
+		}
+	},
+	"files": ["dist", "README.md"],
+	"scripts": {
+		"build": "rslib build && node ./scripts/postbuild.mjs",
+		"dev": "rslib build --watch",
+		"lint": "biome check src scripts tests",
+		"format": "biome format --write src scripts tests",
+		"test": "pnpm build && node --test tests/**/*.test.js",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@distube/ytdl-core": "catalog:",
+		"@imgly/background-removal-node": "catalog:",
+		"@inquirer/prompts": "catalog:",
+		"cli-progress": "^3.12.0",
+		"commander": "catalog:",
+		"docx": "catalog:",
+		"fast-glob": "catalog:",
+		"ffmpeg-static": "catalog:",
+		"pdf-lib": "catalog:",
+		"pdf-parse": "catalog:",
+		"pdfkit": "catalog:",
+		"sharp": "catalog:",
+		"xlsx": "catalog:",
+		"youtubei.js": "catalog:",
+		"yt-dlp-static": "^1.0.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "catalog:",
+		"@rslib/core": "catalog:",
+		"@types/node": "catalog:",
+		"@types/pdfkit": "catalog:",
+		"tsx": "catalog:",
+		"typescript": "catalog:"
+	}
+}

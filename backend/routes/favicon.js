@@ -1,219 +1,337 @@
 const router = require("express").Router();
 const axios = require("axios");
 const cheerio = require("cheerio");
-const path = require("path");
+const path = require("node:path");
 const archiver = require("archiver");
-const { supabase } = require("../utils/supabaseClient");
-const dns = require("dns");
-const { isPrivateIP } = require("../utils/ipValidation");
+const http = require("node:http");
+const https = require("node:https");
+const dns = require("node:dns");
+const { supabase } = require("@backend/utils/supabaseClient");
+const { isPrivateIP, normalizeIPv4Mapped } = require("@backend/utils/ipValidation");
 
-// Function to validate URL and check for private IPs
-const validateUrl = async (url) => {
-  try {
-    const urlObj = new URL(url);
+/**
+ * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ *
+ * For an IP literal, validates that single address; for a domain name, resolves A/AAAA records and validates each resolved address.
+ * Returns `null` when DNS resolution yields no addresses.
+ *
+ * @param {string} hostname - Hostname or IP literal to validate.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found.
+ * @throws {Error} If the input or any resolved address is unsafe. Thrown errors have messages prefixed with `Rejected unsafe IP address:` and include `isValidationError = true`.
+ */
+async function checkIPSafety(hostname) {
+	const { isIP } = require("node:net");
 
-    // Only allow http and https protocols
-    if (!["http:", "https:"].includes(urlObj.protocol)) {
-      throw new Error("Only HTTP and HTTPS protocols are allowed");
-    }
+	if (isIP(hostname)) {
+		const ip = hostname;
+		if (isPrivateIP(ip)) {
+			const error = new Error(`Rejected unsafe IP address: ${ip}`);
+			error.isValidationError = true;
+			throw error;
+		}
+		return [{ address: ip, family: isIP(ip) }];
+	}
 
-    // Extract hostname and resolve to check IP addresses (dual-stack support)
-    const hostname = urlObj.hostname;
-    const addresses = await new Promise((resolve, reject) => {
-      // Run both IPv4 and IPv6 lookups in parallel for dual-stack support
-      const ipv4Promise = new Promise((res) => {
-        dns.resolve4(hostname, (err, addresses) => {
-          res(err ? [] : addresses);
-        });
-      });
+	const addresses = await dns.promises.lookup(hostname, {
+		all: true,
+		verbatim: true,
+	});
+	for (const { address: ip } of addresses) {
+		if (isPrivateIP(ip)) {
+			const error = new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
+			error.isValidationError = true;
+			throw error;
+		}
+	}
+	return addresses.length > 0 ? addresses : null;
+}
 
-      const ipv6Promise = new Promise((res) => {
-        dns.resolve6(hostname, (err, addresses) => {
-          res(err ? [] : addresses);
-        });
-      });
+/**
+ * Ensures a URL uses http(s) and that its hostname resolves to safe IP addresses for connection pinning.
+ * @param {string} url - The URL to validate.
+ * @returns {{hostname: string, safeAddresses: Array<{address: string, family: number}>}} The parsed hostname and validated IP address records suitable for pinning.
+ * @throws {Error} If the URL scheme is not `http:` or `https:` (message: `"Only HTTP and HTTPS protocols are allowed"`), if DNS validation cannot verify address safety (message: `"DNS validation failed - unable to verify address safety"`), or if resolved addresses are rejected as unsafe (messages like `"Rejected unsafe IP address: <ip>"` or `"Rejected unsafe IP address: <ip> (resolved from <hostname>)"`).
+ */
+async function validateUrl(url) {
+	const urlObj = new URL(url);
+	if (!["http:", "https:"].includes(urlObj.protocol)) {
+		const error = new Error("Only HTTP and HTTPS protocols are allowed");
+		error.isValidationError = true;
+		throw error;
+	}
 
-      Promise.all([ipv4Promise, ipv6Promise])
-        .then(([ipv4Addresses, ipv6Addresses]) => {
-          const allAddresses = [...ipv4Addresses, ...ipv6Addresses];
-          if (allAddresses.length === 0) {
-            reject(new Error("DNS resolution failed for both IPv4 and IPv6"));
-          } else {
-            resolve(allAddresses);
-          }
-        })
-        .catch((err) =>
-          reject(new Error(`DNS resolution failed: ${err.message}`)),
-        );
-    });
+	const safeAddresses = await checkIPSafety(urlObj.hostname);
+	if (safeAddresses === null) {
+		const error = new Error("DNS validation failed - unable to verify address safety");
+		error.isValidationError = true;
+		throw error;
+	}
+	return { hostname: urlObj.hostname, safeAddresses };
+}
 
-    // Check if any resolved IP is private
-    for (const ip of addresses) {
-      if (isPrivateIP(ip)) {
-        throw new Error("Private IP ranges not allowed");
-      }
-    }
+/**
+ * Create HTTP and HTTPS agents that pin DNS lookups for a hostname to a given set of validated IP addresses.
+ *
+ * @param {string} hostname - The hostname whose DNS resolution will be pinned.
+ * @param {Array<{address: string, family: number}>} validatedAddresses - Validated DNS answers to return for the target hostname; when provided, lookups for `hostname` will return only these `{ address, family }` records (optionally filtered by requested family or `all`).
+ * @returns {{httpAgent: http.Agent, httpsAgent: https.Agent}} An object with `httpAgent` and `httpsAgent` configured to use the pinned lookup for the specified hostname.
+ */
+function createPinnedAgents(hostname, validatedAddresses) {
+	const lookupFunction = (requestHostname, options, callback) => {
+		if (validatedAddresses && requestHostname === hostname) {
+			const family = typeof options === "number" ? options : options?.family;
+			const returnAll = typeof options === "object" && options?.all === true;
 
-    return true;
-  } catch (error) {
-    throw new Error(`URL validation failed: ${error.message}`);
-  }
-};
+			if (returnAll) {
+				const validatedAddressesFiltered = family
+					? validatedAddresses.filter((entry) => entry.family === family)
+					: validatedAddresses;
 
+				if (validatedAddressesFiltered.length === 0) {
+					return callback(new Error("No validated DNS records available"));
+				}
+				return callback(
+					null,
+					validatedAddressesFiltered.map((e) => ({
+						address: e.address,
+						family: e.family,
+					})),
+				);
+			}
+			const candidate =
+				validatedAddresses.find((entry) => !family || entry.family === family) ??
+				validatedAddresses[0];
+
+			if (!candidate) {
+				return callback(new Error("No validated DNS records available"));
+			}
+			return callback(null, candidate.address, candidate.family);
+		}
+		dns.lookup(requestHostname, options, callback);
+	};
+
+	return {
+		httpAgent: new http.Agent({ lookup: lookupFunction }),
+		httpsAgent: new https.Agent({ lookup: lookupFunction }),
+	};
+}
+
+/**
+ * Downloads a file from a given URL and returns its contents and content type.
+ * @param {string} fileUrl - The URL of the file to download.
+ * @returns {Promise<object>} A promise that resolves to an object containing the file contents, content type, and success status.
+ * @throws {Error} If the download fails due to a non-404 error, or if the URL is blocked due to validation failure.
+ */
 const downloadFile = async (fileUrl) => {
-  try {
-    // Validate the URL before making the request
-    await validateUrl(fileUrl);
+	try {
+		// Validate the URL and get pinned agents to prevent DNS rebinding
+		const { hostname, safeAddresses } = await validateUrl(fileUrl);
+		const agents = createPinnedAgents(hostname, safeAddresses);
 
-    const response = await axios.get(fileUrl, {
-      responseType: "arraybuffer",
-      maxRedirects: 0, // Disable redirects to prevent SSRF chains
-      timeout: 5000,
-    });
-    return {
-      buffer: Buffer.from(response.data),
-      contentType: response.headers["content-type"],
-    };
-  } catch (error) {
-    console.error(`Failed to download file from ${fileUrl}:`, error.message);
-    return null;
-  }
+		const response = await axios.get(fileUrl, {
+			responseType: "arraybuffer",
+			maxRedirects: 0,
+			timeout: 5000,
+			maxContentLength: 5_000_000,
+			maxBodyLength: 5_000_000,
+			httpAgent: agents.httpAgent,
+			httpsAgent: agents.httpsAgent,
+		});
+		return {
+			success: true,
+			buffer: Buffer.from(response.data),
+			contentType: response.headers["content-type"],
+		};
+	} catch (error) {
+		console.error(`Failed to download file from ${fileUrl}:`, error.message);
+		if (error.isValidationError) {
+			return {
+				success: false,
+				reason: "blocked",
+				message: error.message,
+				blocked: true,
+			};
+		}
+		if (axios.isAxiosError(error) && error.response?.status === 404) {
+			return {
+				success: false,
+				reason: "not_found",
+				message: error.message,
+				blocked: false,
+			};
+		}
+		if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
+			return {
+				success: false,
+				reason: "timeout",
+				message: error.message,
+				blocked: false,
+			};
+		}
+		return {
+			success: false,
+			reason: "other",
+			message: error.message,
+			blocked: false,
+		};
+	}
 };
 
 // @route   POST /api/favicon
 // @desc    Extract favicons from a given URL and upload to Supabase as a ZIP
 // @access  Public
 router.post("/", async (req, res) => {
-  const { url } = req.body;
+	const { url } = req.body;
 
-  if (!url) {
-    return res.status(400).json({ msg: "URL is required" });
-  }
+	if (!url) {
+		return res.status(400).json({ msg: "URL is required" });
+	}
 
-  try {
-    // Validate the main URL before processing
-    await validateUrl(url);
+	// Normalize URL by prepending https:// if no protocol is present
+	let normalizedUrl = url.trim();
+	if (!/^https?:\/\//i.test(normalizedUrl)) {
+		normalizedUrl = `https://${normalizedUrl}`;
+	}
 
-    const response = await axios.get(url, {
-      maxRedirects: 0, // Disable redirects to prevent SSRF chains
-      timeout: 5000,
-      validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx status codes
-    });
-    const $ = cheerio.load(response.data);
-    const faviconUrls = [];
+	try {
+		// Validate the main URL and get pinned agents to prevent DNS rebinding
+		const { hostname, safeAddresses } = await validateUrl(normalizedUrl);
+		const agents = createPinnedAgents(hostname, safeAddresses);
 
-    $(
-      'link[rel~="icon"], link[rel~="shortcut icon"], link[rel~="apple-touch-icon"]',
-    ).each((i, el) => {
-      let href = $(el).attr("href");
-      if (href) {
-        if (href.startsWith("//")) {
-          href = `https:${href}`;
-        } else if (href.startsWith("/")) {
-          const urlObj = new URL(url);
-          href = `${urlObj.protocol}//${urlObj.host}${href}`;
-        } else if (!href.startsWith("http")) {
-          const urlObj = new URL(url);
-          href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf("/") + 1)}${href}`;
-        }
-        faviconUrls.push(href);
-      }
-    });
+		const response = await axios.get(normalizedUrl, {
+			maxRedirects: 0,
+			timeout: 5000,
+			maxContentLength: 5_000_000,
+			maxBodyLength: 5_000_000,
+			validateStatus: (status) => status >= 200 && status < 300,
+			httpAgent: agents.httpAgent,
+			httpsAgent: agents.httpsAgent,
+		});
+		const $ = cheerio.load(response.data);
+		const faviconUrls = [];
 
-    const urlObj = new URL(url);
-    const defaultFavicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
-    if (!faviconUrls.includes(defaultFavicon)) {
-      faviconUrls.push(defaultFavicon);
-    }
+		$('link[rel~="icon"], link[rel~="shortcut icon"], link[rel~="apple-touch-icon"]').each(
+			(i, el) => {
+				let href = $(el).attr("href");
+				if (href) {
+					if (href.startsWith("//")) {
+						href = `https:${href}`;
+					} else if (href.startsWith("/")) {
+						const urlObj = new URL(normalizedUrl);
+						href = `${urlObj.protocol}//${urlObj.host}${href}`;
+					} else if (!href.startsWith("http")) {
+						const urlObj = new URL(normalizedUrl);
+						href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf("/") + 1)}${href}`;
+					}
+					faviconUrls.push(href);
+				}
+			},
+		);
 
-    const archive = archiver("zip", {
-      zlib: { level: 9 },
-    });
+		const urlObj = new URL(normalizedUrl);
+		const defaultFavicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
+		if (!faviconUrls.includes(defaultFavicon)) {
+			faviconUrls.push(defaultFavicon);
+		}
 
-    // Collect all file data first to avoid race conditions
-    const downloadPromises = faviconUrls.map(async (faviconUrl) => {
-      const fileData = await downloadFile(faviconUrl);
-      if (fileData && fileData.buffer) {
-        const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
-        return {
-          buffer: fileData.buffer,
-          name: fileName,
-          contentType: fileData.contentType,
-        };
-      }
-      return null;
-    });
+		// Deduplicate and cap the number of favicon URLs to prevent abuse
+		const MAX_FAVICONS = 10;
+		const uniqueFaviconUrls = [...new Set(faviconUrls)].slice(0, MAX_FAVICONS);
 
-    const fileDataArray = await Promise.all(downloadPromises);
-    const validFiles = fileDataArray.filter((file) => file !== null);
+		const archive = archiver("zip", {
+			zlib: { level: 9 },
+		});
 
-    if (validFiles.length === 1) {
-      const file = validFiles[0];
-      const outputFileName = `favicon-${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage
-        .from("utilityhub")
-        .upload(`favicons/${outputFileName}`, file.buffer, {
-          contentType: file.contentType || "image/x-icon",
-          upsert: true,
-        });
+		// Collect all file data first to avoid race conditions
+		const downloadPromises = uniqueFaviconUrls.map(async (faviconUrl, index) => {
+			const fileData = await downloadFile(faviconUrl);
+			if (fileData?.buffer) {
+				// Get basename with fallback to "default.ico" for empty paths
+				let basename = path.basename(new URL(faviconUrl).pathname);
+				if (!basename || basename === "/" || basename === "") {
+					basename = "default.ico";
+				}
+				// Append index to ensure unique filenames and prevent ZIP collisions
+				const fileName = `favicon-${index}-${basename}`;
+				return {
+					buffer: fileData.buffer,
+					name: fileName,
+					contentType: fileData.contentType,
+				};
+			}
+			return null;
+		});
 
-      if (error) {
-        console.error("Supabase upload error:", error);
-        return res.status(500).json({
-          msg: "Failed to upload favicon to Supabase",
-          error: error.message,
-        });
-      }
+		const fileDataArray = await Promise.all(downloadPromises);
+		const validFiles = fileDataArray.filter((file) => file !== null);
 
-      const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`favicons/${outputFileName}`)}`;
+		if (validFiles.length === 0) {
+			return res.status(404).json({ msg: "No favicons found or all downloads failed." });
+		}
 
-      return res
-        .status(200)
-        .json({ path: downloadUrl, originalname: outputFileName });
-    }
+		if (validFiles.length === 1) {
+			const file = validFiles[0];
+			const outputFileName = `favicon_dkutils_${Date.now()}_${file.name}`;
+			const { error } = await supabase.storage
+				.from("utilityhub")
+				.upload(`favicons/${outputFileName}`, file.buffer, {
+					contentType: file.contentType || "image/x-icon",
+					upsert: true,
+				});
 
-    const zipBuffer = await new Promise((resolve, reject) => {
-      const buffers = [];
-      archive.on("data", (data) => buffers.push(data));
-      archive.on("end", () => resolve(Buffer.concat(buffers)));
-      archive.on("error", (err) => reject(err));
+			if (error) {
+				console.error("Supabase upload error:", error);
+				return res.status(500).json({
+					msg: "Failed to upload favicon to Supabase",
+					error: error.message,
+				});
+			}
 
-      // Append files sequentially after all downloads complete
-      validFiles.forEach((file) => {
-        archive.append(file.buffer, { name: file.name });
-      });
+			const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`favicons/${outputFileName}`)}`;
 
-      archive.finalize();
-    });
+			return res.status(200).json({ path: downloadUrl, originalname: outputFileName });
+		}
 
-    const zipFileName = `favicons-${Date.now()}.zip`;
-    const { error } = await supabase.storage
-      .from("utilityhub")
-      .upload(`favicons/${zipFileName}`, zipBuffer, {
-        contentType: "application/zip",
-        upsert: true,
-      });
+		const zipBuffer = await new Promise((resolve, reject) => {
+			const buffers = [];
+			archive.on("data", (data) => buffers.push(data));
+			archive.on("end", () => resolve(Buffer.concat(buffers)));
+			archive.on("error", (err) => reject(err));
 
-    if (error) {
-      console.error("Supabase upload error:", error);
-      return res.status(500).json({
-        msg: "Failed to upload favicon ZIP to Supabase",
-        error: error.message,
-      });
-    }
+			// Append files sequentially after all downloads complete
+			for (const file of validFiles) {
+				archive.append(file.buffer, { name: file.name });
+			}
 
-    const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`favicons/${zipFileName}`)}`;
+			archive.finalize();
+		});
 
-    return res
-      .status(200)
-      .json({ path: downloadUrl, originalname: zipFileName });
-  } catch (err) {
-    console.error("Error extracting favicons:", err);
-    return res.status(500).json({
-      msg: "Failed to extract favicons. Please check the URL.",
-      error: err.message,
-    });
-  }
+		const zipFileName = `favicons_dkutils_${Date.now()}.zip`;
+		const { error } = await supabase.storage
+			.from("utilityhub")
+			.upload(`favicons/${zipFileName}`, zipBuffer, {
+				contentType: "application/zip",
+				upsert: true,
+			});
+
+		if (error) {
+			console.error("Supabase upload error:", error);
+			return res.status(500).json({
+				msg: "Failed to upload favicon ZIP to Supabase",
+				error: error.message,
+			});
+		}
+
+		const downloadUrl = `${req.protocol}://${req.get("host")}/api/convert/download?filename=${encodeURIComponent(`favicons/${zipFileName}`)}`;
+
+		return res.status(200).json({ path: downloadUrl, originalname: zipFileName });
+	} catch (err) {
+		console.error("Error extracting favicons:", err);
+		return res.status(500).json({
+			msg: "Failed to extract favicons. Please check the URL.",
+			error: err.message,
+		});
+	}
 });
 
 module.exports = router;

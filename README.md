@@ -1,109 +1,82 @@
-# 🛠️ dkutils — The Ultimate Multi-Utility Platform
+# dkutils
 
 **Version:** 2.0.2
 
-![dkutils Logo](frontend/public/logo.png)
+`dkutils` is now centered on the npm package and interactive CLI, with the website and backend kept as supporting surfaces inside the same monorepo.
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Vite](https://img.shields.io/badge/Frontend-Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Turbo](https://img.shields.io/badge/Monorepo-Turbo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build/)
+## Main product
 
-**dkutils** is a powerful, modern web-based utility platform that provides a comprehensive suite of everyday tools in one unified interface. From image manipulation and PDF processing to text utilities and web development tools, dkutils simplifies your digital workflow.
+The primary distribution is the package in [`package`](./package):
 
----
+- npm package name: `dkutils`
+- library entry: `package/dist/DKUTILS.js`
+- executable CLI: `package/dist/bin/dkutils.js`
+- expected user flow: `npx dkutils`
 
-## 🚀 Key Features
+Running `npx dkutils` opens an interactive terminal UI. Users can select image, PDF, media, and YouTube operations without needing to remember command syntax.
 
-### 🖼️ Image Tools
+## Monorepo layout
 
-- **Conversion**: JPG, PNG, WebP, TIFF, AVIF, and Base64.
-- **Manipulation**: Compress, Resize, Crop, Grayscale, Flip.
-- **Batch Processing**: Convert multiple images to a single PDF.
+- `package`: npm package
+- `frontend`: website UI for browser-based usage
+- `backend`: supporting API/backend services
 
-### 📄 PDF Tools
+Shared dependency versions are managed through the workspace catalog in [`pnpm-workspace.yaml`](./pnpm-workspace.yaml).
 
-- **Management**: Merge, Split, Rotate, Delete pages.
-- **Cloud Storage**: Seamless integration with Supabase for secure processing.
-- **Conversion**: PDF to Text, PDF to Word/Excel, Text to PDF.
-
-### ✍️ Text Utilities
-
-- **Converters**: Case conversion, Base64, HTML/Markdown, CSV to JSON.
-- **Analysis**: Diff Checker, JSON Validator, Password Strength.
-- **Security**: Strong Password Generator & Hash Generator (MD5, SHA).
-
-### 🌐 Web Tools
-
-- **SEO & Analysis**: Robots.txt/Sitemap viewer, URL Redirect Checker.
-- **Generators**: Link Shortener, QR Code Generator & Scanner.
-- **Capture**: Website Screenshot Generator & Favicon Extractor.
-
----
-
-## 💻 Tech Stack
-
-- **Frontend**: [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [Lucide Icons](https://lucide.dev/)
-- **Backend**: [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (Meta-data), [Supabase](https://supabase.com/) (File Storage)
-- **Monorepo Management**: [Turborepo](https://turbo.build/)
-- **Utilities**: [Sharp](https://sharp.pixelplumbing.com/) (Image handling), [PDF-lib](https://pdf-lib.js.org/) (PDF manipulation)
-
----
-
-## 🛠️ Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- [pnpm](https://pnpm.io/) (v10+)
-- MongoDB instance (local or Atlas)
-- Supabase Account (for API keys)
-
-### Environment Setup
-
-1. **Backend (`backend/.env`)**:
-
-   ```env
-   PORT=5000
-   MONGO_URI=your_mongodb_connection_string
-   JWT_SECRET=your_secret_key
-   BASE_URL=http://localhost:5000
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   ```
-
-2. **Frontend (`frontend/.env`)**:
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000
-   ```
-
-### Installation & Running
-
-From the root directory:
+## Quick start
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Run development servers (Frontend + Backend)
-pnpm dev
-
-# Build the entire project
-pnpm build
-
-# Start production build
-pnpm start
+pnpm --filter dkutils build
+pnpm --filter dkutils test
 ```
 
----
+To try the packaged CLI locally from this repo:
 
-## 🔒 Security & Performance
+```bash
+node package/dist/bin/dkutils.js
+```
 
-- **Dynamic Limits**: Upload limits are 10MB for guests and 50MB for authenticated users.
-- **JWT Auth**: Secure user accounts for tracking tool usage.
-- **Fast Pathing**: Single-file operations avoid archive overhead for instant results.
-- **Worker-Safe**: Heavy image processing handled via Sharp for high performance.
+To publish and use it the intended way:
+
+```bash
+npx dkutils
+```
+
+## Package usage
+
+```ts
+import { DKUTILS } from "dkutils";
+
+const pages = DKUTILS.pdf.parsePageRanges("1-2,4", 6);
+```
+
+## Tool coverage
+
+- Image: convert, compress, resize, crop, grayscale, flip, remove background, base64, image-to-PDF, PNG-to-JPG
+- PDF: merge, split, compress, rotate, delete pages, PDF-to-text, PDF-to-Word, PDF-to-Excel, text-to-PDF
+- Media: MOV-to-MP4, media-to-PNG
+- YouTube: download
+
+## Docs
+
+- Package documentation: [`package/README.md`](./package/README.md)
+- Frontend notes: [`frontend/README.md`](./frontend/README.md)
+- Backend notes: [`backend/README.md`](./backend/README.md)
+
+## Development
+
+```bash
+pnpm build
+pnpm --filter dkutils type-check
+pnpm --filter dkutils lint
+pnpm --filter dkutils test
+```
+
+## Notes
+
+- The package is the preferred focus for new utility work.
+- Some image, PDF, and media features rely on native/runtime packages and external binaries, so those commands require a normal dependency install with build scripts enabled.
 
 ---
 
