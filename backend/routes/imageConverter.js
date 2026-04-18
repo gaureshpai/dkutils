@@ -53,7 +53,7 @@ router.post(
 
 				const image = await Jimp.read(imageBuffer);
 				const jpgBuffer = await image.getBuffer("image/jpeg");
-				const outputFileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.jpg`;
+				const outputFileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.jpg`;
 
 				const { error: uploadError } = await supabase.storage
 					.from("utilityhub")
