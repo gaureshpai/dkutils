@@ -243,10 +243,16 @@ router.post("/", async (req, res) => {
 		});
 
 		// Collect all file data first to avoid race conditions
-		const downloadPromises = uniqueFaviconUrls.map(async (faviconUrl) => {
+		const downloadPromises = uniqueFaviconUrls.map(async (faviconUrl, index) => {
 			const fileData = await downloadFile(faviconUrl);
 			if (fileData?.buffer) {
-				const fileName = `favicon-${path.basename(new URL(faviconUrl).pathname || "default.ico")}`;
+				// Get basename with fallback to "default.ico" for empty paths
+				let basename = path.basename(new URL(faviconUrl).pathname);
+				if (!basename || basename === "/" || basename === "") {
+					basename = "default.ico";
+				}
+				// Append index to ensure unique filenames and prevent ZIP collisions
+				const fileName = `favicon-${index}-${basename}`;
 				return {
 					buffer: fileData.buffer,
 					name: fileName,

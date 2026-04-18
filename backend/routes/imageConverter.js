@@ -691,7 +691,7 @@ router.post(
 			}
 
 			if (type === "decode") {
-				if (!base64String) {
+				if (!base64String || typeof base64String !== "string") {
 					return res.status(400).json({ msg: "No base64 string provided for decoding." });
 				}
 				const buffer = Buffer.from(base64String, "base64");
