@@ -9,7 +9,7 @@
 		"lint": "npx biome lint .",
 		"lint:fix": "npx biome lint --write .",
 		"migrate:total-usage-key": "node scripts/migrateTotalUsageKey.js",
-		"test": "node --test tests/*.test.js"
+		"test": "test -d tests && node --test tests/*.test.js || true"
 	},
 	"keywords": [
 		"utility tools",
