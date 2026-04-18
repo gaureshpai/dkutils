@@ -75,8 +75,10 @@ function isLoopback(ip) {
 }
 
 /**
- * Determines whether an IP literal is a multicast address.
- * @param {string} ip - IPv4 dotted-quad or IPv6 literal. IPv4-mapped IPv6 (starting with `::ffff:`) is treated as the underlying IPv4 address.
+ * Determine if an IP literal is a multicast address.
+ *
+ * IPv4-mapped IPv6 literals (starting with `::ffff:`) are treated as their IPv4 equivalent.
+ * @param {string} ip - IPv4 dotted-quad or IPv6 literal.
  * @returns {boolean} `true` if the address is multicast (IPv4: 224.0.0.0/4; IPv6: ff00::/8), `false` otherwise.
  */
 function isMulticast(ip) {
@@ -93,14 +95,11 @@ function isMulticast(ip) {
 }
 
 /**
- * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
+ * Validate that a hostname or IP literal does not resolve to disallowed address classes: private, link-local, loopback, or multicast.
  *
- * For an IP literal the function validates that single address; for a hostname it resolves A/AAAA records and validates each resolved address. Returns `null` when resolution produced no addresses or when DNS resolution was suppressed for certain DNS error codes.
- *
- * @param {string} hostname - Hostname or IP literal to validate.
- * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS resolution was suppressed.
+ * @param {string} hostname - Hostname or IP literal to check.
+ * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`) when addresses were resolved and validated; `null` when resolution produced no addresses or when DNS resolution was suppressed for certain DNS errors.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
- * @note DNS errors with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, and `ENOTIMP` are suppressed and cause the function to return `null`.
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {

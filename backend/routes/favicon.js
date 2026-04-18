@@ -12,12 +12,12 @@ const { isPrivateIP, normalizeIPv4Mapped } = require("@backend/utils/ipValidatio
 /**
  * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
- * For an IP literal the function validates that single address; for a domain name it resolves A/AAAA records
- * and validates each resolved address. Returns `null` only when DNS resolution yields no addresses.
+ * For an IP literal, validates that single address; for a domain name, resolves A/AAAA records and validates each resolved address.
+ * Returns `null` when DNS resolution yields no addresses.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
  * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found.
- * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
+ * @throws {Error} If the input or any resolved address is unsafe. Thrown errors have messages prefixed with `Rejected unsafe IP address:` and include `isValidationError = true`.
  */
 async function checkIPSafety(hostname) {
 	const { isIP } = require("node:net");
