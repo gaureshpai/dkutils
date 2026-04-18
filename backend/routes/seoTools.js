@@ -191,12 +191,8 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 		let servedUrl = targetUrl.href;
 		let result = await fetchContent(servedUrl, validatedAddresses);
 
-		// If HTTPS fails, try HTTP
-		if (!result.exists) {
-			const httpUrl = targetUrl.href.replace(/^https:/, "http:");
-			servedUrl = httpUrl;
-			result = await fetchContent(httpUrl, validatedAddresses);
-		}
+		// If HTTPS fails only due to a missing resource, try HTTP
+		if (!result.exists && (result.error === "File not found (404)" || result.error === "too_many_redirects")) {
 
 		if (result.exists) {
 			return res.json({
