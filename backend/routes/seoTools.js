@@ -184,7 +184,8 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 		try {
 			validatedAddresses = await validateDomain(targetUrl.hostname);
 		} catch (validationError) {
-			return res.status(400).json({ msg: validationError.message });
+			console.error("Domain validation error:", validationError);
+			return res.status(400).json({ msg: "Invalid domain" });
 		}
 
 		// Fetch content

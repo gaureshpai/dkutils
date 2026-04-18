@@ -25,7 +25,9 @@ async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
 		const ip = hostname;
 		if (isPrivateIP(ip)) {
-			throw new Error(`Rejected unsafe IP address: ${ip}`);
+			const error = new Error(`Rejected unsafe IP address: ${ip}`);
+			error.isValidationError = true;
+			throw error;
 		}
 		return [{ address: ip, family: isIP(ip) }];
 	}
@@ -36,7 +38,9 @@ async function checkIPSafety(hostname) {
 	});
 	for (const { address: ip } of addresses) {
 		if (isPrivateIP(ip)) {
-			throw new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
+			const error = new Error(`Rejected unsafe IP address: ${ip} (resolved from ${hostname})`);
+			error.isValidationError = true;
+			throw error;
 		}
 	}
 	return addresses.length > 0 ? addresses : null;
@@ -51,12 +55,16 @@ async function checkIPSafety(hostname) {
 async function validateUrl(url) {
 	const urlObj = new URL(url);
 	if (!["http:", "https:"].includes(urlObj.protocol)) {
-		throw new Error("Only HTTP and HTTPS protocols are allowed");
+		const error = new Error("Only HTTP and HTTPS protocols are allowed");
+		error.isValidationError = true;
+		throw error;
 	}
 
 	const safeAddresses = await checkIPSafety(urlObj.hostname);
 	if (safeAddresses === null) {
-		throw new Error("DNS validation failed - unable to verify address safety");
+		const error = new Error("DNS validation failed - unable to verify address safety");
+		error.isValidationError = true;
+		throw error;
 	}
 	return { hostname: urlObj.hostname, safeAddresses };
 }
@@ -138,7 +146,7 @@ const downloadFile = async (fileUrl) => {
 		};
 	} catch (error) {
 		console.error(`Failed to download file from ${fileUrl}:`, error.message);
-		if (error.message.includes("validation failed")) {
+		if (error.isValidationError) {
 			return {
 				success: false,
 				reason: "blocked",
@@ -181,12 +189,18 @@ router.post("/", async (req, res) => {
 		return res.status(400).json({ msg: "URL is required" });
 	}
 
+	// Normalize URL by prepending https:// if no protocol is present
+	let normalizedUrl = url.trim();
+	if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+		normalizedUrl = `https://${normalizedUrl}`;
+	}
+
 	try {
 		// Validate the main URL and get pinned agents to prevent DNS rebinding
-		const { hostname, safeAddresses } = await validateUrl(url);
+		const { hostname, safeAddresses } = await validateUrl(normalizedUrl);
 		const agents = createPinnedAgents(hostname, safeAddresses);
 
-		const response = await axios.get(url, {
+		const response = await axios.get(normalizedUrl, {
 			maxRedirects: 0,
 			timeout: 5000,
 			validateStatus: (status) => status >= 200 && status < 300,
@@ -203,10 +217,10 @@ router.post("/", async (req, res) => {
 					if (href.startsWith("//")) {
 						href = `https:${href}`;
 					} else if (href.startsWith("/")) {
-						const urlObj = new URL(url);
+						const urlObj = new URL(normalizedUrl);
 						href = `${urlObj.protocol}//${urlObj.host}${href}`;
 					} else if (!href.startsWith("http")) {
-						const urlObj = new URL(url);
+						const urlObj = new URL(normalizedUrl);
 						href = `${urlObj.href.substring(0, urlObj.href.lastIndexOf("/") + 1)}${href}`;
 					}
 					faviconUrls.push(href);
@@ -214,7 +228,7 @@ router.post("/", async (req, res) => {
 			},
 		);
 
-		const urlObj = new URL(url);
+		const urlObj = new URL(normalizedUrl);
 		const defaultFavicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
 		if (!faviconUrls.includes(defaultFavicon)) {
 			faviconUrls.push(defaultFavicon);

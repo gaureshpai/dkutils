@@ -130,14 +130,20 @@ router.get("/l/:code", async (req, res) => {
 		const url = await Url.findOne({ urlCode: req.params.code });
 
 		if (url) {
+			// Normalize the URL by prepending https:// if no protocol is present
+			let normalizedUrl = url.originalUrl;
+			if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+				normalizedUrl = `https://${normalizedUrl}`;
+			}
+
 			// Re-validate the target URL before redirecting to prevent DNS-rebinding TOCTOU attacks
 			try {
-				await validateUrlHost(url.originalUrl);
+				await validateUrlHost(normalizedUrl);
 			} catch (validationErr) {
 				console.error("Redirect blocked due to validation failure:", validationErr.message);
 				return res.status(400).json({ msg: "Redirect blocked: URL validation failed" });
 			}
-			return res.redirect(url.originalUrl);
+			return res.redirect(normalizedUrl);
 		}
 		return res.status(404).json("No url found");
 	} catch (err) {

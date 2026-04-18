@@ -19,7 +19,7 @@ import { ToastContainer } from "react-toastify";
 /**
  * PrivateRoute conditionally renders its children when the user is authenticated
  * and redirects to "/login" when not authenticated.
- * @param {{ children }} children - React nodes to render when authenticated.
+ * @param {{ children: React.ReactNode }} props - Component props containing children to render when authenticated.
  * @returns {JSX.Element} A JSX.Element that either renders children or a Navigate to "/login".
  */
 const PrivateRoute = ({ children }) => {
