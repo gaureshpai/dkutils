@@ -69,7 +69,7 @@ router.post("/shorten", async (req, res) => {
 
 	// Normalize originalUrl by prepending https:// if no protocol is present
 	let normalizedUrl = originalUrl;
-	if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
+	if (!/^https?:\/\//i.test(originalUrl)) {
 		normalizedUrl = `https://${originalUrl}`;
 	}
 
@@ -130,7 +130,7 @@ router.get("/l/:code", async (req, res) => {
 		if (url) {
 			// Normalize the URL by prepending https:// if no protocol is present
 			let normalizedUrl = url.originalUrl;
-			if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+			if (!/^https?:\/\//i.test(normalizedUrl)) {
 				normalizedUrl = `https://${normalizedUrl}`;
 			}
 

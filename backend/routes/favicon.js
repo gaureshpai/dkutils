@@ -189,7 +189,7 @@ router.post("/", async (req, res) => {
 
 	// Normalize URL by prepending https:// if no protocol is present
 	let normalizedUrl = url.trim();
-	if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+	if (!/^https?:\/\//i.test(normalizedUrl)) {
 		normalizedUrl = `https://${normalizedUrl}`;
 	}
 

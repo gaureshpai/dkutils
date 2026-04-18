@@ -166,7 +166,7 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 	try {
 		// Normalize URL by prepending https:// if no scheme is present
 		let normalizedUrl = rawUrl.trim();
-		if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+		if (!/^https?:\/\//i.test(normalizedUrl)) {
 			normalizedUrl = `https://${normalizedUrl}`;
 		}
 
@@ -191,10 +191,12 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 		let servedUrl = targetUrl.href;
 		let result = await fetchContent(servedUrl, validatedAddresses);
 
-		// If HTTPS fails only due to a missing resource, try HTTP
-		// Fetch content
-		let servedUrl = targetUrl.href;
-		let result = await fetchContent(servedUrl, validatedAddresses);
+		// If HTTPS fails only due to a missing resource, try HTTP fallback
+		if (!result.exists && (result.error === "File not found (404)" || result.error === "too_many_redirects")) {
+			targetUrl.protocol = "http:";
+			servedUrl = targetUrl.href;
+			result = await fetchContent(servedUrl, validatedAddresses);
+		}
 
 		if (result.exists) {
 			return res.json({
