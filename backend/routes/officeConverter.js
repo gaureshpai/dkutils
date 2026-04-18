@@ -175,7 +175,7 @@ router.post(
 
 			const sanitizedName = sanitizeFilename(file.originalname);
 			const nameWithoutExt = path.parse(sanitizedName).name;
-			const fileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.xlsx`;
+			const fileName = `dkutils_${nameWithoutExt}_converted_${Date.now()}.xlsx`;
 			const { error: uploadError } = await supabase.storage
 				.from("utilityhub")
 				.upload(fileName, excelBuffer, {
