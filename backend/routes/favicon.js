@@ -132,6 +132,8 @@ const downloadFile = async (fileUrl) => {
 			responseType: "arraybuffer",
 			maxRedirects: 0,
 			timeout: 5000,
+			maxContentLength: 5_000_000,
+			maxBodyLength: 5_000_000,
 			httpAgent: agents.httpAgent,
 			httpsAgent: agents.httpsAgent,
 		});
@@ -199,6 +201,8 @@ router.post("/", async (req, res) => {
 		const response = await axios.get(normalizedUrl, {
 			maxRedirects: 0,
 			timeout: 5000,
+			maxContentLength: 5_000_000,
+			maxBodyLength: 5_000_000,
 			validateStatus: (status) => status >= 200 && status < 300,
 			httpAgent: agents.httpAgent,
 			httpsAgent: agents.httpsAgent,

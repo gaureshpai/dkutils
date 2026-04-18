@@ -121,7 +121,6 @@ const fetchContent = async (url, validatedAddresses) => {
 			httpAgent: new http.Agent({ lookup: pinnedLookup }),
 			httpsAgent: new https.Agent({
 				lookup: pinnedLookup,
-				servername: parsedUrl.hostname,
 			}),
 		});
 		return { content: response.data, exists: true };
@@ -189,11 +188,13 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 		}
 
 		// Fetch content
-		let result = await fetchContent(targetUrl.href, validatedAddresses);
+		let servedUrl = targetUrl.href;
+		let result = await fetchContent(servedUrl, validatedAddresses);
 
 		// If HTTPS fails, try HTTP
 		if (!result.exists) {
 			const httpUrl = targetUrl.href.replace(/^https:/, "http:");
+			servedUrl = httpUrl;
 			result = await fetchContent(httpUrl, validatedAddresses);
 		}
 
@@ -201,7 +202,7 @@ const handleSeoFetch = (pathSuffix, label) => async (req, res) => {
 			return res.json({
 				exists: true,
 				content: result.content,
-				url: targetUrl.href,
+				url: servedUrl,
 			});
 		}
 
