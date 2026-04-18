@@ -95,12 +95,12 @@ function isMulticast(ip) {
 /**
  * Validate that a hostname or IP literal does not resolve to private, link-local, loopback, or multicast addresses.
  *
- * For an IP literal the function checks that single address; for a hostname it resolves A/AAAA records and checks each resolved address. Returns `null` when resolution produced no addresses or when DNS resolution was suppressed for certain transient/no-data errors.
+ * For an IP literal the function validates that single address; for a hostname it resolves A/AAAA records and validates each resolved address. Returns `null` when resolution produced no addresses or when DNS resolution was suppressed for certain DNS error codes.
  *
  * @param {string} hostname - Hostname or IP literal to validate.
  * @returns {Array<{address: string, family: number}>|null} An array of validated DNS records (`address` and numeric `family`), or `null` when no addresses were found or DNS resolution was suppressed.
  * @throws {Error} If the input or any resolved address is private, link-local, loopback, or multicast. Error messages are prefixed with `Rejected unsafe IP address:`.
- * @see Suppressed DNS error codes that result in `null`: `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, `ENOTIMP`.
+ * @note DNS errors with codes `ENOTFOUND`, `ENODATA`, `EAI_AGAIN`, and `ENOTIMP` are suppressed and cause the function to return `null`.
  */
 async function checkIPSafety(hostname) {
 	if (isIP(hostname)) {
