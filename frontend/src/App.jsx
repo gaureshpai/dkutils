@@ -40,7 +40,7 @@ const PrivateRoute = ({ children }) => {
 };
 
 /**
- * Render the application's top-level UI including theme, global layout, navigation, routes, footer, and toast container.
+ * Renders the application's root UI including the theme provider, global layout, navigation, routes, footer, and toast container.
  * @returns {JSX.Element} The root JSX element for the application UI.
  */
 function App() {
