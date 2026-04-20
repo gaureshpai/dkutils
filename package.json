@@ -1,6 +1,6 @@
 {
 	"name": "dkutils-workspace",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
 	"private": true,
 	"packageManager": "pnpm@10.28.2",
@@ -30,7 +30,7 @@
 		"lint": "biome lint .",
 		"check": "biome check --write .",
 		"lint:all": "npx biome lint --write package backend frontend",
-		"type-check": "pnpm --filter dkutils type-check",
+		"type-check": "pnpm --filter dkutils-cli type-check",
 		"prepare": "husky",
 		"start": "turbo run start"
 	},

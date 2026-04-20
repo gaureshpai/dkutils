@@ -1,6 +1,6 @@
 # dkutils
 
-**Version:** 2.0.2
+**Version:** 2.0.3
 
 `dkutils` is now centered on the npm package and interactive CLI, with the website and backend kept as supporting surfaces inside the same monorepo.
 
@@ -8,10 +8,10 @@
 
 The primary distribution is the package in [`package`](./package):
 
-- npm package name: `dkutils`
+- npm package name: `dkutils-cli`
 - library entry: `package/dist/DKUTILS.js`
 - executable CLI: `package/dist/bin/dkutils.js`
-- expected user flow: `npx dkutils`
+- expected user flow: `npx dkutils-cli`
 
 Running `npx dkutils` opens an interactive terminal UI. Users can select image, PDF, media, and YouTube operations without needing to remember command syntax.
 
@@ -27,8 +27,8 @@ Shared dependency versions are managed through the workspace catalog in [`pnpm-w
 
 ```bash
 pnpm install
-pnpm --filter dkutils build
-pnpm --filter dkutils test
+pnpm --filter dkutils-cli build
+pnpm --filter dkutils-cli test
 ```
 
 To try the packaged CLI locally from this repo:
@@ -40,13 +40,13 @@ node package/dist/bin/dkutils.js
 To publish and use it the intended way:
 
 ```bash
-npx dkutils
+npx dkutils-cli
 ```
 
 ## Package usage
 
 ```ts
-import { DKUTILS } from "dkutils";
+import { DKUTILS } from "dkutils-cli";
 
 const pages = DKUTILS.pdf.parsePageRanges("1-2,4", 6);
 ```
@@ -68,8 +68,8 @@ const pages = DKUTILS.pdf.parsePageRanges("1-2,4", 6);
 
 ```bash
 pnpm build
-pnpm --filter dkutils type-check
-pnpm --filter dkutils lint
+pnpm --filter dkutils-cli type-check
+pnpm --filter dkutils-cli lint
 pnpm --filter dkutils test
 ```
 

@@ -1,8 +1,8 @@
-# dkutils package
+# dkutils-cli package
 
 **Version:** 0.0.1
 
-`dkutils` is the package-first distribution of this repo. It ships:
+`dkutils-cli` is the package-first distribution of this repo. It ships:
 
 - a branded library entry at `dist/DKUTILS.js`
 - an executable CLI at `dist/bin/dkutils.js`
@@ -11,23 +11,23 @@
 ## Install
 
 ```bash
-pnpm add dkutils
+pnpm add dkutils-cli
 ```
 
 ## Run with npx
 
 ```bash
-npx dkutils
-npx dkutils --help
-npx dkutils image --help
+npx dkutils-cli
+npx dkutils-cli --help
+npx dkutils-cli image --help
 ```
 
-Running `npx dkutils` opens the terminal UI so non-technical users can choose an operation instead of memorizing commands.
+Running `npx dkutils-cli` opens the terminal UI so non-technical users can choose an operation instead of memorizing commands.
 
 ## Package usage
 
 ```ts
-import { DKUTILS } from "dkutils";
+import { DKUTILS } from "dkutils-cli";
 
 const pages = DKUTILS.pdf.parsePageRanges("1-3,5", 8);
 ```
@@ -46,49 +46,49 @@ The CLI has four top-level groups:
 ### `image`
 
 ```bash
-npx dkutils image convert --input <path> --format <jpeg|png|webp|tiff|gif|avif> [--no-watermark]
-npx dkutils image compress --input <path> [--quality <1-100>] [--no-watermark]
-npx dkutils image resize --input <path> --width <n> --height <n> [--no-watermark]
-npx dkutils image crop --input <path> --left <n> --top <n> --width <n> --height <n> [--no-watermark]
-npx dkutils image grayscale --input <path> [--no-watermark]
-npx dkutils image flip --input <path> --direction <horizontal|vertical> [--no-watermark]
-npx dkutils image remove-bg --input <path> [--no-watermark]
-npx dkutils image to-pdf --input <path> [--no-watermark]
-npx dkutils image to-base64 --input <path> [--stdout]
-npx dkutils image from-base64 --input <file> [--format <png|jpeg|webp|tiff|gif|avif>] [--no-watermark]
-npx dkutils image png-to-jpg --input <path> [--no-watermark]
+npx dkutils-cli image convert --input <path> --format <jpeg|png|webp|tiff|gif|avif> [--no-watermark]
+npx dkutils-cli image compress --input <path> [--quality <1-100>] [--no-watermark]
+npx dkutils-cli image resize --input <path> --width <n> --height <n> [--no-watermark]
+npx dkutils-cli image crop --input <path> --left <n> --top <n> --width <n> --height <n> [--no-watermark]
+npx dkutils-cli image grayscale --input <path> [--no-watermark]
+npx dkutils-cli image flip --input <path> --direction <horizontal|vertical> [--no-watermark]
+npx dkutils-cli image remove-bg --input <path> [--no-watermark]
+npx dkutils-cli image to-pdf --input <path> [--no-watermark]
+npx dkutils-cli image to-base64 --input <path> [--stdout]
+npx dkutils-cli image from-base64 --input <file> [--format <png|jpeg|webp|tiff|gif|avif>] [--no-watermark]
+npx dkutils-cli image png-to-jpg --input <path> [--no-watermark]
 ```
 
 ### `pdf`
 
 ```bash
-npx dkutils pdf merge <file...> [--no-watermark]
-npx dkutils pdf split --input <file> --ranges <1-3,5> [--no-watermark]
-npx dkutils pdf compress --input <file> [--level <low|medium|high>] [--no-watermark]
-npx dkutils pdf rotate --input <file> --angle <90|180|270> [--no-watermark]
-npx dkutils pdf delete-pages --input <file> --ranges <1-3,5> [--no-watermark]
-npx dkutils pdf to-text --input <file>
-npx dkutils pdf to-word --input <file>
-npx dkutils pdf to-excel --input <file>
-npx dkutils pdf text-to-pdf [--input <file> | --text <value>] [--no-watermark]
+npx dkutils-cli pdf merge <file...> [--no-watermark]
+npx dkutils-cli pdf split --input <file> --ranges <1-3,5> [--no-watermark]
+npx dkutils-cli pdf compress --input <file> [--level <low|medium|high>] [--no-watermark]
+npx dkutils-cli pdf rotate --input <file> --angle <90|180|270> [--no-watermark]
+npx dkutils-cli pdf delete-pages --input <file> --ranges <1-3,5> [--no-watermark]
+npx dkutils-cli pdf to-text --input <file>
+npx dkutils-cli pdf to-word --input <file>
+npx dkutils-cli pdf to-excel --input <file>
+npx dkutils-cli pdf text-to-pdf [--input <file> | --text <value>] [--no-watermark]
 ```
 
 ### `media`
 
 ```bash
-npx dkutils media mov-to-mp4 --input <path>
-npx dkutils media to-png --input <path>
+npx dkutils-cli media mov-to-mp4 --input <path>
+npx dkutils-cli media to-png --input <path>
 ```
 
 ### `youtube`
 
 ```bash
-npx dkutils youtube download --url <url>
+npx dkutils-cli youtube download --url <url>
 ```
 
 ## Dist artifacts
 
-After `pnpm --filter dkutils build`, the main shipped files are:
+After `pnpm --filter dkutils-cli build`, the main shipped files are:
 
 - `dist/DKUTILS.js`
 - `dist/DKUTILS.d.ts`
@@ -98,10 +98,10 @@ After `pnpm --filter dkutils build`, the main shipped files are:
 ## Development
 
 ```bash
-pnpm --filter dkutils type-check
-pnpm --filter dkutils lint
-pnpm --filter dkutils build
-pnpm --filter dkutils test
+pnpm --filter dkutils-cli type-check
+pnpm --filter dkutils-cli lint
+pnpm --filter dkutils-cli build
+pnpm --filter dkutils-cli test
 ```
 
 ## Notes

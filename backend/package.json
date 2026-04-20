@@ -1,6 +1,6 @@
 {
 	"name": "dkutils-backend",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"description": "A web-based platform offering a collection of utility tools, built with MERN stack (MongoDB, Express.js, React.js, Node.js) and TailwindCSS",
 	"main": "index.js",
 	"scripts": {
@@ -47,14 +47,15 @@
 		"express-rate-limit": "^8.2.1",
 		"express-validator": "^7.3.1",
 		"image-type": "^5.2.0",
+		"jimp": "catalog:",
 		"jsonwebtoken": "^9.0.3",
+		"module-alias": "^2.3.4",
 		"mongoose": "^8.22.0",
 		"multer": "^2.0.2",
 		"pdf-lib": "catalog:",
 		"pdf-merger-js": "^5.1.2",
 		"pdf-parse": "catalog:",
 		"pdfkit": "catalog:",
-		"jimp": "catalog:",
 		"shortid": "^2.2.17",
 		"xlsx": "catalog:",
 		"xml2js": "^0.6.2"
