@@ -1,6 +1,6 @@
 {
 	"name": "dkutils",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "dkutils interactive CLI and TypeScript utility toolkit for image, PDF, and media workflows.",
 	"type": "module",
 	"license": "ISC",
@@ -14,7 +14,10 @@
 			"default": "./dist/DKUTILS.js"
 		}
 	},
-	"files": ["dist", "README.md"],
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"scripts": {
 		"build": "rslib build && node ./scripts/postbuild.mjs",
 		"dev": "rslib build --watch",
