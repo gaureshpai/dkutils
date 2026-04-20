@@ -11,6 +11,9 @@ export default defineConfig({
 			"@frontend": path.resolve(__dirname, "./src"),
 		},
 	},
+	optimizeDeps: {
+		include: ["react", "react-dom", "react-router-dom"],
+	},
 	server: {
 		proxy: {
 			"/api": {
