@@ -314,18 +314,14 @@ router.post("/", async (req, res) => {
 
 				// If HEAD returned 405 or 501, retry with GET
 				if (response.status === 405 || response.status === 501) {
-					try {
-						response = await axios.get(currentUrl, {
-							maxRedirects: 0,
-							validateStatus: () => true, // Accept all HTTP statuses
-							timeout: TIMEOUT_MS,
-							maxContentLength: 1024 * 1024,
-							httpAgent: agents.httpAgent,
-							httpsAgent: agents.httpsAgent,
-						});
-					} catch (getErr) {
-						throw getErr;
-					}
+					response = await axios.get(currentUrl, {
+						maxRedirects: 0,
+						validateStatus: () => true, // Accept all HTTP statuses
+						timeout: TIMEOUT_MS,
+						maxContentLength: 1024 * 1024,
+						httpAgent: agents.httpAgent,
+						httpsAgent: agents.httpsAgent,
+					});
 				}
 
 				redirectChain.push({ url: currentUrl, status: response.status });

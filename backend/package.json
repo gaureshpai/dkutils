@@ -35,7 +35,6 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"module-alias": "^2.2.3",
 		"@supabase/supabase-js": "^2.93.3",
 		"archiver": "^7.0.1",
 		"axios": "catalog:",
@@ -56,8 +55,6 @@
 		"pdf-parse": "catalog:",
 		"pdfkit": "catalog:",
 		"jimp": "catalog:",
-		"@jimp/wasm-webp": "catalog:",
-		"@jimp/wasm-avif": "catalog:",
 		"shortid": "^2.2.17",
 		"xlsx": "catalog:",
 		"xml2js": "^0.6.2"

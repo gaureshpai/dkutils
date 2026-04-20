@@ -27,15 +27,15 @@ export default defineConfig({
 		chunkSizeWarningLimit: 1000,
 		rollupOptions: {
 			output: {
-				manualChunks: {
-					"react-vendor": ["react", "react-dom", "react-router-dom"],
-					"pdf-vendor": ["pdf-lib", "pdfjs-dist", "jspdf"],
-					"ui-vendor": [
-						"@radix-ui/react-slot",
-						"@radix-ui/react-label",
-						"@radix-ui/react-separator",
-						"lucide-react",
-					],
+				manualChunks(id) {
+					if (id.includes("node_modules")) {
+						if (["pdf-lib", "pdfjs-dist", "jspdf"].some((pkg) => id.includes(pkg))) {
+							return "pdf-vendor";
+						}
+						if (["@radix-ui", "lucide-react"].some((pkg) => id.includes(pkg))) {
+							return "ui-vendor";
+						}
+					}
 				},
 			},
 		},

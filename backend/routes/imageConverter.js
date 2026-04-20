@@ -1,20 +1,12 @@
 const PDFDocument = require("pdfkit");
 const router = require("express").Router();
 const archiver = require("archiver");
-const { createJimp, defaultFormats, defaultPlugins } = require("jimp");
-const webp = require("@jimp/wasm-webp");
-const avif = require("@jimp/wasm-avif");
+const { Jimp } = require("jimp");
 const path = require("node:path");
 const os = require("node:os");
 const fsp = require("node:fs").promises;
 const { supabase } = require("@backend/utils/supabaseClient");
 const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
-
-// Create a custom Jimp instance with WASM plugins
-const Jimp = createJimp({
-	formats: [...defaultFormats, webp, avif],
-	plugins: defaultPlugins,
-});
 
 /**
  * Remove control characters from a string.
