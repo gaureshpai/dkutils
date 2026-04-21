@@ -1,6 +1,6 @@
 {
 	"name": "dkutils-cli",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "dkutils interactive CLI and TypeScript utility toolkit for image, PDF, and media workflows.",
 	"type": "module",
 	"license": "ISC",
