@@ -26,17 +26,20 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 /**
  * Tests the connection to Supabase Storage by attempting to get the specified bucket.
- * Logs a success message if the bucket is found, or an error message if the connection fails.
- * @throws {Error} If the connection fails
+ * Logs a success message if the bucket is found, or a warning if the connection fails.
+ * Does NOT throw - Supabase is optional for server startup.
+ * @returns {Promise<boolean>} true if connected, false otherwise
  */
 const testSupabaseConnection = async () => {
 	try {
 		const { data: bucket, error: getBucketError } = await supabase.storage.getBucket("utilityhub");
 		if (getBucketError) throw getBucketError;
 		console.log(`Supabase Storage connected!\nBucket '${bucket.name}' found.`);
+		return true;
 	} catch (error) {
-		console.error("Supabase Storage connection failed:", error.message);
-		throw error;
+		console.warn("⚠️ Supabase Storage unavailable (non-fatal):", error.message);
+		console.warn("File storage features will not work until Supabase is reachable.");
+		return false;
 	}
 };
 
@@ -151,7 +154,7 @@ app.use((err, req, res, next) => {
 
 /**
  * Starts the Express.js server and connects to MongoDB and Supabase.
- * @throws {Error} If there is an error connecting to MongoDB or Supabase.
+ * Supabase connection failure is non-fatal - server will start without it.
  */
 const startServer = async () => {
 	try {

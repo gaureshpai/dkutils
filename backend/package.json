@@ -43,7 +43,7 @@
 		"cors": "^2.8.6",
 		"docx": "catalog:",
 		"dotenv": "^17.2.3",
-		"express": "^5.2.1",
+		"express": "^4.21.0",
 		"express-rate-limit": "^8.2.1",
 		"express-validator": "^7.3.1",
 		"image-type": "^5.2.0",

@@ -142,7 +142,9 @@ router.get("/download", async (req, res) => {
 			"merged_dkutils_",
 		];
 
-		const isAllowed = allowedPrefixes.some((prefix) => filename.startsWith(prefix));
+		const isAllowed =
+			allowedPrefixes.some((prefix) => filename.startsWith(prefix)) ||
+			filename.includes("_dkutils_");
 		if (!isAllowed || filename.includes("..")) {
 			return res.status(403).json({ msg: "Access denied." });
 		}
