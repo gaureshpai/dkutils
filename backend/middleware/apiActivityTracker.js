@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const ApiActivity = require("@backend/models/ApiActivity");
 const { ServiceUsage, TotalUsage } = require("@backend/models/ServiceUsage");
 
@@ -16,6 +17,9 @@ const { ServiceUsage, TotalUsage } = require("@backend/models/ServiceUsage");
 const apiActivityTracker = (req, res, next) => {
 	res.on("finish", async () => {
 		try {
+			// Skip tracking if mongoose is not connected
+			if (mongoose.connection.readyState !== 1) return;
+
 			const apiActivity = new ApiActivity({
 				endpoint: req.path,
 				method: req.method,

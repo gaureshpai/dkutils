@@ -5,24 +5,25 @@ const mongoose = require("mongoose");
 const { createClient } = require("@supabase/supabase-js");
 const { migrateTotalUsageKey } = require("@backend/scripts/migrateTotalUsageKey");
 
-if (!process.env.SUPABASE_URL) {
-	console.error("Error: SUPABASE_URL environment variable is not set.");
-	process.exit(1);
-}
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-	console.error("Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set.");
-	process.exit(1);
-}
-if (!process.env.MONGO_URI) {
-	console.error("Error: MONGO_URI environment variable is not set.");
-	process.exit(1);
-}
-if (!process.env.SUPABASE_CLEANUP_CRON_SECRET) {
-	console.error("Error: SUPABASE_CLEANUP_CRON_SECRET environment variable is not set.");
-	process.exit(1);
+const missingEnvVars = [];
+if (!process.env.SUPABASE_URL) missingEnvVars.push("SUPABASE_URL");
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missingEnvVars.push("SUPABASE_SERVICE_ROLE_KEY");
+if (!process.env.MONGO_URI) missingEnvVars.push("MONGO_URI");
+if (!process.env.SUPABASE_CLEANUP_CRON_SECRET) missingEnvVars.push("SUPABASE_CLEANUP_CRON_SECRET");
+if (!process.env.JWT_SECRET) missingEnvVars.push("JWT_SECRET");
+
+if (missingEnvVars.length > 0) {
+	console.warn(`⚠️ Missing environment variables: ${missingEnvVars.join(", ")}`);
+	console.warn("Server will start but some features may be unavailable.");
 }
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase =
+	process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+		? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+		: null;
+if (!supabase) {
+	console.warn("⚠️ Supabase client not initialized — file storage features unavailable.");
+}
 
 /**
  * Tests the connection to Supabase Storage by attempting to get the specified bucket.
@@ -31,6 +32,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
  * @returns {Promise<boolean>} true if connected, false otherwise
  */
 const testSupabaseConnection = async () => {
+	if (!supabase) return false;
 	try {
 		const { data: bucket, error: getBucketError } = await supabase.storage.getBucket("utilityhub");
 		if (getBucketError) throw getBucketError;
@@ -156,11 +158,23 @@ app.use((err, req, res, next) => {
  * Starts the Express.js server and connects to MongoDB and Supabase.
  * Supabase connection failure is non-fatal - server will start without it.
  */
+let mongoConnected = false;
+
 const startServer = async () => {
 	try {
-		await mongoose.connect(process.env.MONGO_URI);
-		console.log("MongoDB connected!");
-		await migrateTotalUsageKey();
+		// MongoDB is optional — server starts without it
+		if (process.env.MONGO_URI) {
+			try {
+				await mongoose.connect(process.env.MONGO_URI);
+				console.log("MongoDB connected!");
+				mongoConnected = true;
+				await migrateTotalUsageKey();
+			} catch (mongoError) {
+				console.warn("⚠️ MongoDB connection failed (non-fatal):", mongoError.message);
+				console.warn("Auth, analytics, and URL shortener features will be unavailable.");
+			}
+		}
+
 		await testSupabaseConnection();
 
 		app.listen(port, () => {

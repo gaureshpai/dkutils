@@ -170,8 +170,18 @@ export function mapOutputPath(
 	outputDir: string,
 	suffix: string,
 	extension: string,
+	baseInputDir?: string,
 ): string {
 	const parsed = path.parse(inputFile);
+	// If a base input directory is provided, preserve subdirectory structure
+	if (baseInputDir) {
+		const relativeDir = path.dirname(path.relative(path.resolve(baseInputDir), inputFile));
+		const targetDir =
+			relativeDir === "."
+				? path.resolve(outputDir)
+				: path.join(path.resolve(outputDir), relativeDir);
+		return path.join(targetDir, `${parsed.name}${suffix}.${extension.replace(/^\./, "")}`);
+	}
 	return path.join(
 		path.resolve(outputDir),
 		`${parsed.name}${suffix}.${extension.replace(/^\./, "")}`,

@@ -64,20 +64,44 @@ async function processBatch(
 			action: (pipeline: sharp.Sharp) => sharp.Sharp;
 		},
 ): Promise<BatchResult[]> {
-	const files = await collectFiles(options.input, IMAGE_EXTENSIONS);
+	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);
 	const targetFormat = normalizeFormat(options.format);
 	const outputDir = path.resolve(options.output ?? defaultOutputDir(options.input));
+	const inputDir = path.resolve(options.input);
 	const results: BatchResult[] = [];
+	const total = files.length;
 
-	for (const file of files) {
+	// #27: Real-time progress logging
+	process.stdout.write(`Processing ${total} file(s)…\n`);
+
+	for (let i = 0; i < files.length; i++) {
+		const file = files[i];
+		const progress = `[${i + 1}/${total}]`;
 		try {
 			let pipeline = sharp(file);
 			pipeline = options.action(pipeline);
 
-			const { formatStr, metadata } = await (async () => {
+			const { metadata } = await (async () => {
 				const meta = await pipeline.metadata();
-				return { formatStr: meta.format || targetFormat, metadata: meta };
+				return { metadata: meta };
 			})();
+
+			// #33: Skip conversion when input format already matches target
+			const sourceFormat = metadata.format ?? "";
+			const normalisedTarget = targetFormat === "jpeg" ? "jpeg" : targetFormat;
+			if (
+				(sourceFormat === normalisedTarget ||
+					(sourceFormat === "jpeg" && targetFormat === "jpg") ||
+					(sourceFormat === "jpg" && normalisedTarget === "jpeg")) &&
+				!options.quality &&
+				options.suffix === "-converted"
+			) {
+				process.stdout.write(
+					`${progress} Skipping ${path.basename(file)} — already ${sourceFormat}\n`,
+				);
+				results.push({ input: file, output: file });
+				continue;
+			}
 
 			// Quality and format-specific options
 			if (targetFormat === "jpeg" || targetFormat === "jpg") {
@@ -99,19 +123,21 @@ async function processBatch(
 				buffer = await applyImageWatermark(buffer, targetFormat);
 			}
 
+			// #30: Preserve subdirectory structure when recursive
 			const outputPath = mapOutputPath(
 				file,
 				outputDir,
 				options.suffix,
 				extensionForFormat(targetFormat),
+				options.recursive ? inputDir : undefined,
 			);
 			await writeBuffer(outputPath, buffer);
+			process.stdout.write(`${progress} ${path.basename(file)} → ${path.basename(outputPath)}\n`);
 			results.push({ input: file, output: outputPath });
 		} catch (error) {
-			results.push({
-				input: file,
-				error: error instanceof Error ? error.message : String(error),
-			});
+			const msg = error instanceof Error ? error.message : String(error);
+			process.stderr.write(`${progress} Error processing ${path.basename(file)}: ${msg}\n`);
+			results.push({ input: file, error: msg });
 		}
 	}
 	return results;
@@ -245,7 +271,7 @@ export const flipImages = (opts: FlipOptions) =>
  * AI-powered background remover. Renamed and fixed for proper "spark" integration.
  */
 export async function removeBackground(options: FileTaskOptions): Promise<BatchResult[]> {
-	const files = await collectFiles(options.input, IMAGE_EXTENSIONS);
+	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);
 	const outputDir = path.resolve(options.output ?? defaultOutputDir(options.input));
 	const results: BatchResult[] = [];
 
@@ -293,7 +319,7 @@ export const removeImageBackground = removeBackground;
  * @returns {Promise<string>} A promise that resolves with the path to the output PDF file.
  */
 export async function convertImagesToPdf(options: FileTaskOptions): Promise<string> {
-	const files = await collectFiles(options.input, IMAGE_EXTENSIONS);
+	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);
 	const pdfDoc = await PDFDocument.create();
 	const outputDir = path.resolve(options.output ?? defaultOutputDir(options.input));
 	const outputPath = path.join(outputDir, "dkutils-images.pdf");
@@ -337,7 +363,7 @@ export const convertToPng = (opts: FileTaskOptions) =>
  * @returns {Promise<BatchResult[]>} A promise that resolves with an array of batch results, each containing the input file and the output Base64 string.
  */
 export async function imageToBase64(options: FileTaskOptions): Promise<BatchResult[]> {
-	const files = await collectFiles(options.input, IMAGE_EXTENSIONS);
+	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);
 	const results: BatchResult[] = [];
 	for (const file of files) {
 		try {
