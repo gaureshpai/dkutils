@@ -1,6 +1,6 @@
 # Frontend for dkutils
 
-**Version:** 2.0.3
+**Version:** 2.0.4
 
 This directory contains the frontend application for dkutils, built with React and Vite.
 
