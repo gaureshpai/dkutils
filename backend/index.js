@@ -158,8 +158,6 @@ app.use((err, req, res, next) => {
  * Starts the Express.js server and connects to MongoDB and Supabase.
  * Supabase connection failure is non-fatal - server will start without it.
  */
-let mongoConnected = false;
-
 const startServer = async () => {
 	try {
 		// MongoDB is optional — server starts without it
@@ -167,7 +165,6 @@ const startServer = async () => {
 			try {
 				await mongoose.connect(process.env.MONGO_URI);
 				console.log("MongoDB connected!");
-				mongoConnected = true;
 				await migrateTotalUsageKey();
 			} catch (mongoError) {
 				console.warn("⚠️ MongoDB connection failed (non-fatal):", mongoError.message);

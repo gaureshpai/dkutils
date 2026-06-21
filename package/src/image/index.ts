@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { copyFile } from "node:fs/promises";
 import path from "node:path";
 import { IMAGE_EXTENSIONS } from "@package/constants/index.js";
 import type {
@@ -81,10 +82,16 @@ async function processBatch(
 			let pipeline = sharp(file);
 			pipeline = options.action(pipeline);
 
-			const { metadata } = await (async () => {
-				const meta = await pipeline.metadata();
-				return { metadata: meta };
-			})();
+			const metadata = await pipeline.metadata();
+
+			// #30: Preserve subdirectory structure when recursive
+			const outputPath = mapOutputPath(
+				file,
+				outputDir,
+				options.suffix,
+				extensionForFormat(targetFormat),
+				options.recursive ? inputDir : undefined,
+			);
 
 			// #33: Skip conversion when input format already matches target
 			const sourceFormat = metadata.format ?? "";
@@ -99,7 +106,10 @@ async function processBatch(
 				process.stdout.write(
 					`${progress} Skipping ${path.basename(file)} — already ${sourceFormat}\n`,
 				);
-				results.push({ input: file, output: file });
+				if (path.resolve(file) !== path.resolve(outputPath)) {
+					await copyFile(file, outputPath);
+				}
+				results.push({ input: file, output: outputPath });
 				continue;
 			}
 
@@ -123,14 +133,6 @@ async function processBatch(
 				buffer = await applyImageWatermark(buffer, targetFormat);
 			}
 
-			// #30: Preserve subdirectory structure when recursive
-			const outputPath = mapOutputPath(
-				file,
-				outputDir,
-				options.suffix,
-				extensionForFormat(targetFormat),
-				options.recursive ? inputDir : undefined,
-			);
 			await writeBuffer(outputPath, buffer);
 			process.stdout.write(`${progress} ${path.basename(file)} → ${path.basename(outputPath)}\n`);
 			results.push({ input: file, output: outputPath });
@@ -273,6 +275,7 @@ export const flipImages = (opts: FlipOptions) =>
 export async function removeBackground(options: FileTaskOptions): Promise<BatchResult[]> {
 	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);
 	const outputDir = path.resolve(options.output ?? defaultOutputDir(options.input));
+	const inputDir = path.resolve(options.input);
 	const results: BatchResult[] = [];
 
 	const { removeBackground: runRemoval } = await import("@imgly/background-removal-node");
@@ -295,7 +298,13 @@ export async function removeBackground(options: FileTaskOptions): Promise<BatchR
 				buffer = (await applyImageWatermark(buffer, "png")) as Buffer;
 			}
 
-			const outputPath = mapOutputPath(file, outputDir, "-no-bg", "png");
+			const outputPath = mapOutputPath(
+				file,
+				outputDir,
+				"-no-bg",
+				"png",
+				options.recursive ? inputDir : undefined,
+			);
 			await writeBuffer(outputPath, buffer);
 			results.push({ input: file, output: outputPath });
 		} catch (error) {
