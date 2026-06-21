@@ -21,4 +21,9 @@ jobs:
         run: sleep ${{ steps.random_sleep.outputs.random_seconds }}
         shell: bash
       - name: Call keep-alive API on Vercel backend
-        run: curl -X POST ${{ secrets.VERCEL_BACKEND_URL }}/api/keep-alive
+        run: |
+          if [ -z "${{ secrets.VERCEL_BACKEND_URL }}" ]; then
+            echo "Error: VERCEL_BACKEND_URL secret is not set."
+            exit 1
+          fi
+          curl --fail --show-error --silent -X POST "${{ secrets.VERCEL_BACKEND_URL }}/api/keep-alive"

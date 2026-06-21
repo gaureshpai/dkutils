@@ -41,4 +41,6 @@ export const IMAGE_EXTENSIONS = [
 	".gif",
 	".avif",
 	".bmp",
+	".heic",
+	".heif",
 ];

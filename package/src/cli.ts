@@ -224,6 +224,23 @@ imageCommand
 					}),
 				),
 			),
+	)
+	.addCommand(
+		new Command("heic-to-png")
+			.description("Convert HEIC/HEIF images (Apple photos) to PNG format.")
+			.option("-i, --input <path>", "Path to a HEIC file or a directory of HEICs.", ".")
+			.option("-r, --recursive", "Recursively search for images in subdirectories.", false)
+			.option("--no-watermark", "Remove dkutils watermark from processed images.")
+			.action(async (options) =>
+				print(
+					await (await import("@package/image/index.js")).convertImages({
+						input: options.input,
+						format: "png",
+						recursive: options.recursive,
+						watermark: await getWatermarkPreference(options.watermark),
+					}),
+				),
+			),
 	);
 
 const pdfCommand = new Command("pdf").description(
