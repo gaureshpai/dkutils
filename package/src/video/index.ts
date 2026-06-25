@@ -6,6 +6,7 @@ import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import vm from "node:vm";
 import type { BatchResult, FileTaskOptions, YouTubeVideoInfo } from "@package/interfaces/index.js";
 import {
@@ -249,7 +250,7 @@ export async function removeVideoBackground(
 
 			for (const frame of frames) {
 				const framePath = path.join(framesDir, frame);
-				const resultBlob = await removeBackground(framePath, config);
+				const resultBlob = await removeBackground(pathToFileURL(framePath).href, config);
 				const arrayBuffer = await resultBlob.arrayBuffer();
 				await fs.writeFile(framePath, Buffer.from(arrayBuffer));
 			}

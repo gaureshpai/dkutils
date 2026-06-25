@@ -2,13 +2,13 @@ const router = require("express").Router();
 const path = require("node:path");
 const { PDFDocument, degrees } = require("pdf-lib");
 const { supabase } = require("@backend/utils/supabaseClient");
-const pdfParse = require("pdf-parse");
 const {
 	handlePdfError,
 	validatePdfFile,
 	validatePageRange,
 } = require("@backend/utils/pdfErrorHandler");
 const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
+const { extractTextFromPdf } = require("@backend/utils/pdfTextExtractor");
 
 // @route   POST /api/convert/merge-pdfs
 // @desc    Merge multiple PDFs into one
@@ -161,7 +161,7 @@ router.post(
 			const pdfBuffer = file.buffer;
 			let data;
 			try {
-				data = await pdfParse(pdfBuffer);
+				data = await extractTextFromPdf(pdfBuffer);
 			} catch (err) {
 				throw new Error(
 					"Failed to parse PDF text. The file might be scanned (image-only) or corrupted.",

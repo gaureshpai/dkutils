@@ -9,7 +9,7 @@
 		"lint": "npx biome lint .",
 		"lint:fix": "npx biome lint --write .",
 		"migrate:total-usage-key": "node scripts/migrateTotalUsageKey.js",
-		"test": "test -d tests && node --test tests/*.test.js || true"
+		"test": "node -e \"const fs=require('node:fs');const path=require('node:path');const {spawnSync}=require('node:child_process');if(!fs.existsSync('tests')) process.exit(0);const files=fs.readdirSync('tests').filter((file)=>file.endsWith('.test.js')).map((file)=>path.join('tests',file));if(files.length===0) process.exit(0);const result=spawnSync(process.execPath,['--test',...files],{stdio:'inherit'});process.exit(result.status ?? 1);\""
 	},
 	"keywords": [
 		"utility tools",
@@ -53,9 +53,11 @@
 		"mongoose": "^8.22.0",
 		"multer": "^2.0.2",
 		"pdf-lib": "catalog:",
+		"pdfjs-dist": "^5.4.530",
 		"pdf-merger-js": "^5.1.2",
 		"pdf-parse": "catalog:",
 		"pdfkit": "catalog:",
+		"sharp": "^0.33.5",
 		"shortid": "^2.2.17",
 		"xlsx": "catalog:",
 		"xml2js": "^0.6.2"

@@ -2,6 +2,7 @@ const PDFDocument = require("pdfkit");
 const router = require("express").Router();
 const archiver = require("archiver");
 const { Jimp } = require("jimp");
+const sharp = require("sharp");
 const path = require("node:path");
 const os = require("node:os");
 const fsp = require("node:fs").promises;
@@ -22,6 +23,10 @@ const stripControlCharacters = (value) =>
 			return code > 31 && code !== 127;
 		})
 		.join("");
+
+const convertImageBufferToFormat = async (buffer, format) => {
+	return sharp(buffer).toFormat(format).toBuffer();
+};
 
 // @route   POST /api/convert/png-to-jpg
 // @desc    Convert PNG images to JPG
@@ -587,9 +592,7 @@ router.post(
 				const sanitizedName = sanitizeFilename(originalname);
 				const nameWithoutExt = path.parse(sanitizedName).name;
 
-				const image = await Jimp.read(imageBuffer);
-				const mime = `image/${normalizedFormat}`;
-				const convertedBuffer = await image.getBuffer(mime);
+				const convertedBuffer = await convertImageBufferToFormat(imageBuffer, normalizedFormat);
 
 				const outputFileName = `${nameWithoutExt}_dkutils_converted_${Date.now()}.${normalizedFormat}`;
 				const { error: uploadError } = await supabase.storage
@@ -626,9 +629,7 @@ router.post(
 					const sanitizedName = sanitizeFilename(originalname);
 					const nameWithoutExt = path.parse(sanitizedName).name;
 
-					const image = await Jimp.read(imageBuffer);
-					const mime = `image/${normalizedFormat}`;
-					const convertedBuffer = await image.getBuffer(mime);
+					const convertedBuffer = await convertImageBufferToFormat(imageBuffer, normalizedFormat);
 
 					archive.append(convertedBuffer, {
 						name: `${nameWithoutExt}_dkutils_converted.${normalizedFormat}`,

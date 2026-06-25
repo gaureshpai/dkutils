@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { copyFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { IMAGE_EXTENSIONS } from "@package/constants/index.js";
 import type {
 	BatchResult,
@@ -287,7 +288,7 @@ export async function removeBackground(options: FileTaskOptions): Promise<BatchR
 
 	for (const file of files) {
 		try {
-			const resultBlob = await runRemoval(file, config);
+			const resultBlob = await runRemoval(pathToFileURL(file).href, config);
 			const arrayBuffer = await resultBlob.arrayBuffer();
 			let buffer: Buffer = Buffer.from(arrayBuffer);
 

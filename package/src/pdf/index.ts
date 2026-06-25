@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
 import type { CompressionLevel } from "@package/interfaces/index.js";
 import {
@@ -10,9 +11,10 @@ import {
 } from "@package/utils/index.js";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { PDFDocument, degrees } from "pdf-lib";
-import pdfParse from "pdf-parse";
 import PDFDocumentKit from "pdfkit";
 import * as XLSX from "xlsx";
+
+const requireFromModule = createRequire(import.meta.url);
 
 /**
  * Merges multiple PDF files into a single output file.
@@ -148,8 +150,7 @@ export async function compressPdf(
  * Extracts text from a PDF and optionally writes it to disk.
  */
 export async function pdfToText(inputFile: string, outputPath?: string): Promise<string> {
-	const parsed = await pdfParse(await readFile(path.resolve(inputFile)));
-	const text = parsed.text.trim();
+	const text = await extractPdfText(inputFile);
 	if (outputPath) {
 		await writeText(outputPath, text);
 		return path.resolve(outputPath);
@@ -188,8 +189,8 @@ export async function textToPdf(
  */
 export async function pdfToWord(inputFile: string, outputPath: string): Promise<string> {
 	const finalPath = await ensureFileOutputPath(outputPath, "output.docx");
-	const parsed = await pdfParse(await readFile(path.resolve(inputFile)));
-	const paragraphs = parsed.text
+	const text = await extractPdfText(inputFile);
+	const paragraphs = text
 		.split(/\r?\n/)
 		.map((line: string) => line.trim())
 		.filter(Boolean)
@@ -214,8 +215,8 @@ export async function pdfToWord(inputFile: string, outputPath: string): Promise<
  */
 export async function pdfToExcel(inputFile: string, outputPath: string): Promise<string> {
 	const finalPath = await ensureFileOutputPath(outputPath, "output.xlsx");
-	const parsed = await pdfParse(await readFile(path.resolve(inputFile)));
-	const rows = parsed.text
+	const text = await extractPdfText(inputFile);
+	const rows = text
 		.split(/\r?\n/)
 		.map((line: string) => line.trim())
 		.filter(Boolean)
@@ -227,6 +228,39 @@ export async function pdfToExcel(inputFile: string, outputPath: string): Promise
 	const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 	await writeBuffer(finalPath, Buffer.from(buffer));
 	return path.resolve(finalPath);
+}
+
+async function extractPdfText(inputFile: string): Promise<string> {
+	const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+	const standardFontDataUrl = `${path
+		.join(path.dirname(requireFromModule.resolve("pdfjs-dist/package.json")), "standard_fonts")
+		.replaceAll(path.sep, "/")}/`;
+	const loadingTask = pdfjs.getDocument({
+		data: new Uint8Array(await readFile(path.resolve(inputFile))),
+		isEvalSupported: false,
+		standardFontDataUrl,
+	});
+	const pdf = await loadingTask.promise;
+	const pages: string[] = [];
+
+	try {
+		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+			const page = await pdf.getPage(pageNumber);
+			const textContent = await page.getTextContent();
+			const pageText = textContent.items
+				.map((item) => ("str" in item ? item.str : ""))
+				.join(" ")
+				.trim();
+
+			if (pageText) {
+				pages.push(pageText);
+			}
+		}
+
+		return pages.join("\n\n").trim();
+	} finally {
+		await pdf.destroy();
+	}
 }
 
 /**
