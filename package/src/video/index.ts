@@ -199,16 +199,12 @@ async function getExpectedFilename(videoId: string, format: string): Promise<str
 }
 
 /**
- * Remove the background from every sampled frame of one or more video files.
+ * Removes the background from sampled frames in video files and reassembles them as transparent WebM outputs.
  *
- * For each input video:
- *  1. ffmpeg extracts frames at `fps` (default 1 fps) as PNG files in a temp dir.
- *  2. Each PNG frame is processed with \`@imgly/background-removal-node\`.
- *  3. The processed PNG frames are reassembled into a WebM file (VP9 + alpha
- *     channel) so the background is truly transparent.
+ * Processes each supported input video independently. Each result contains either the generated output path or an error message for that file.
  *
- * Note: Processing time scales with video duration × fps.  Use fps=1 for quick
- * previews; increase fps for smoother output.
+ * @param options - File task options with an optional frame sampling rate in frames per second.
+ * @returns A result for each input file, including either the output path or an error message.
  */
 export async function removeVideoBackground(
 	options: FileTaskOptions & { fps?: number },

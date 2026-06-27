@@ -271,7 +271,10 @@ export const flipImages = (opts: FlipOptions) =>
 	});
 
 /**
- * AI-powered background remover. Renamed and fixed for proper "spark" integration.
+ * Removes the background from each input image and writes the result as a PNG.
+ *
+ * @param options - File processing options.
+ * @returns The processing results for each input file.
  */
 export async function removeBackground(options: FileTaskOptions): Promise<BatchResult[]> {
 	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);

@@ -147,7 +147,10 @@ export async function compressPdf(
 }
 
 /**
- * Extracts text from a PDF and optionally writes it to disk.
+ * Extracts text from a PDF or writes it to a file.
+ *
+ * @param outputPath - The file path to write the extracted text to
+ * @returns The extracted text, or the resolved output path when `outputPath` is provided
  */
 export async function pdfToText(inputFile: string, outputPath?: string): Promise<string> {
 	const text = await extractPdfText(inputFile);
@@ -186,6 +189,10 @@ export async function textToPdf(
 
 /**
  * Converts extracted PDF text into a DOCX file.
+ *
+ * @param inputFile - Path to the source PDF
+ * @param outputPath - Destination directory or file path
+ * @returns The resolved path to the generated DOCX file
  */
 export async function pdfToWord(inputFile: string, outputPath: string): Promise<string> {
 	const finalPath = await ensureFileOutputPath(outputPath, "output.docx");
@@ -211,7 +218,11 @@ export async function pdfToWord(inputFile: string, outputPath: string): Promise<
 }
 
 /**
- * Converts extracted PDF text into an XLSX file.
+ * Converts PDF text into an XLSX spreadsheet.
+ *
+ * @param inputFile - The PDF file to convert
+ * @param outputPath - The target output path
+ * @returns The resolved path to the written `.xlsx` file
  */
 export async function pdfToExcel(inputFile: string, outputPath: string): Promise<string> {
 	const finalPath = await ensureFileOutputPath(outputPath, "output.xlsx");
@@ -230,6 +241,12 @@ export async function pdfToExcel(inputFile: string, outputPath: string): Promise
 	return path.resolve(finalPath);
 }
 
+/**
+ * Extracts text from every page in a PDF.
+ *
+ * @param inputFile - Path to the source PDF file
+ * @returns The extracted page text, separated by blank lines
+ */
 async function extractPdfText(inputFile: string): Promise<string> {
 	const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 	const standardFontDataUrl = `${path
