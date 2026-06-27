@@ -7,7 +7,6 @@ const extractTextFromPdf = async (pdfBuffer) => {
 		.replaceAll(path.sep, "/")}/`;
 	const loadingTask = pdfjs.getDocument({
 		data: new Uint8Array(pdfBuffer),
-		disableWorker: true,
 		isEvalSupported: false,
 		standardFontDataUrl,
 	});
