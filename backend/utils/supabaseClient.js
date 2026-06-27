@@ -69,20 +69,18 @@ const createLocalStorageClient = () => ({
 						const { normalized, localPath } = getLocalPath(filePath);
 						await fs.mkdir(path.dirname(localPath), { recursive: true });
 
+						const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
 						try {
-							await fs.access(localPath);
-							if (!options.upsert) {
+							await fs.writeFile(localPath, buffer, { flag: options.upsert ? "w" : "wx" });
+						} catch (writeError) {
+							if (writeError?.code === "EEXIST") {
 								return {
 									data: null,
 									error: { message: "File already exists", code: "LOCAL_DUPLICATE" },
 								};
 							}
-						} catch (_err) {
-							// File does not exist yet.
+							throw writeError;
 						}
-
-						const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
-						await fs.writeFile(localPath, buffer);
 						await fs.writeFile(
 							`${localPath}.meta.json`,
 							JSON.stringify({ contentType: options.contentType || "application/octet-stream" }),
@@ -181,6 +179,9 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 if (!supabase) {
+	if (process.env.NODE_ENV === "production" && process.env.ENABLE_LOCAL_STORAGE_FALLBACK !== "true") {
+		throw new Error("Supabase is not initialized; refusing local storage fallback in production.");
+	}
 	console.warn("Using local file storage fallback for generated files.");
 	supabase = createLocalStorageClient();
 }

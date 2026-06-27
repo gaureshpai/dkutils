@@ -249,11 +249,13 @@ export async function pdfToExcel(inputFile: string, outputPath: string): Promise
  */
 async function extractPdfText(inputFile: string): Promise<string> {
 	const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-	const standardFontDataUrl = `${path
-		.join(path.dirname(requireFromModule.resolve("pdfjs-dist/package.json")), "standard_fonts")
-		.replaceAll(path.sep, "/")}/`;
+	const { pathToFileURL } = requireFromModule("node:url");
+	const standardFontDataUrl = `${pathToFileURL(
+		path.join(path.dirname(requireFromModule.resolve("pdfjs-dist/package.json")), "standard_fonts")
+	).href}/`;
 	const loadingTask = pdfjs.getDocument({
 		data: new Uint8Array(await readFile(path.resolve(inputFile))),
+		disableWorker: true,
 		isEvalSupported: false,
 		standardFontDataUrl,
 	});
