@@ -13,6 +13,7 @@ const normalizeStoragePath = (filePath) => {
 	const normalized = path.posix.normalize(filePath.replaceAll("\\", "/"));
 	if (
 		normalized === "." ||
+		normalized === ".." ||
 		normalized.startsWith("../") ||
 		normalized.includes("/../") ||
 		path.isAbsolute(normalized)
