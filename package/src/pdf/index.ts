@@ -255,7 +255,6 @@ async function extractPdfText(inputFile: string): Promise<string> {
 	).href}/`;
 	const loadingTask = pdfjs.getDocument({
 		data: new Uint8Array(await readFile(path.resolve(inputFile))),
-		disableWorker: true,
 		isEvalSupported: false,
 		standardFontDataUrl,
 	});
