@@ -1,10 +1,10 @@
 const router = require("express").Router();
 const path = require("node:path");
-const pdf = require("pdf-parse");
 const { Document, Packer, Paragraph, TextRun } = require("docx");
 const XLSX = require("xlsx");
 const { supabase } = require("@backend/utils/supabaseClient");
 const { sanitizeFilename } = require("@backend/utils/filenameSanitizer");
+const { extractTextFromPdf } = require("@backend/utils/pdfTextExtractor");
 
 // @route   POST /api/convert/pdf-to-word
 // @desc    Convert PDF to Word (Text Extraction)
@@ -82,7 +82,7 @@ router.post(
 					.filter((p) => p.trim().length > 0);
 			};
 
-			const data = await pdf(file.buffer);
+			const data = await extractTextFromPdf(file.buffer);
 			const extractedText = data.text;
 
 			if (!extractedText || extractedText.trim().length === 0) {
@@ -153,7 +153,7 @@ router.post(
 				return res.status(400).json({ msg: "Uploaded file must be a PDF." });
 			}
 
-			const data = await pdf(file.buffer);
+			const data = await extractTextFromPdf(file.buffer);
 			const extractedText = data.text;
 
 			if (!extractedText || extractedText.trim().length === 0) {

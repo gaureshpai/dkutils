@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { copyFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { IMAGE_EXTENSIONS } from "@package/constants/index.js";
 import type {
 	BatchResult,
@@ -270,7 +271,10 @@ export const flipImages = (opts: FlipOptions) =>
 	});
 
 /**
- * AI-powered background remover. Renamed and fixed for proper "spark" integration.
+ * Removes the background from each input image and writes the result as a PNG.
+ *
+ * @param options - File processing options.
+ * @returns The processing results for each input file.
  */
 export async function removeBackground(options: FileTaskOptions): Promise<BatchResult[]> {
 	const files = await collectFiles(options.input, IMAGE_EXTENSIONS, options.recursive);
@@ -287,7 +291,7 @@ export async function removeBackground(options: FileTaskOptions): Promise<BatchR
 
 	for (const file of files) {
 		try {
-			const resultBlob = await runRemoval(file, config);
+			const resultBlob = await runRemoval(pathToFileURL(file).href, config);
 			const arrayBuffer = await resultBlob.arrayBuffer();
 			let buffer: Buffer = Buffer.from(arrayBuffer);
 

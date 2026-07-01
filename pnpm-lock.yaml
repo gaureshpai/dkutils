@@ -78,8 +78,8 @@ importers:
         specifier: ^3.3.3
         version: 3.8.1
       reclaimspace:
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^0.2.4
+        version: 0.2.4
       turbo:
         specifier: 'catalog:'
         version: 2.8.1
@@ -146,9 +146,15 @@ importers:
       pdf-parse:
         specifier: 'catalog:'
         version: 1.1.4
+      pdfjs-dist:
+        specifier: ^5.4.530
+        version: 5.4.530
       pdfkit:
         specifier: 'catalog:'
         version: 0.17.2
+      sharp:
+        specifier: ^0.33.5
+        version: 0.33.5
       shortid:
         specifier: ^2.2.17
         version: 2.2.17
@@ -307,6 +313,9 @@ importers:
       pdf-parse:
         specifier: ^1.1.4
         version: 1.1.4
+      pdfjs-dist:
+        specifier: ^5.4.530
+        version: 5.4.530
       pdfkit:
         specifier: ^0.17.2
         version: 0.17.2
@@ -3528,8 +3537,8 @@ packages:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
 
-  reclaimspace@0.2.1:
-    resolution: {integrity: sha512-1Qnd7/4ysoA+d2QLyVjW83QMB86NH/iBcS5dEtuJtddyoWw7eI7MbR+38hMF/t8jTojfWAmGqherl7w9kBBc/g==}
+  reclaimspace@0.2.4:
+    resolution: {integrity: sha512-9HzYp9xF1c70A8kyPNaLvjXVbOWeqWIoe1sYxWYytwnypSoYwH6QNK7LnYKdBBlCVlizfWPKVoQ5tGSCsuZ83w==}
     engines: {node: '>=18.12.0'}
     hasBin: true
 
@@ -7147,7 +7156,7 @@ snapshots:
     dependencies:
       picomatch: 2.3.1
 
-  reclaimspace@0.2.1: {}
+  reclaimspace@0.2.4: {}
 
   regenerator-runtime@0.13.11:
     optional: true
